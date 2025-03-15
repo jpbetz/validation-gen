@@ -2772,7 +2772,7 @@ func TestValidateCronJob(t *testing.T) {
 				},
 			},
 		},
-		"metadata.name: must be no more than 52 characters": {
+		"metadata.name: must be no more than 52 bytes": {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "10000000002000000000300000000040000000005000000000123",
 				Namespace: metav1.NamespaceDefault,
@@ -2884,7 +2884,7 @@ func TestValidateCronJob(t *testing.T) {
 
 			errs = ValidateCronJobUpdate(&newSpec, &oldSpec, corevalidation.PodValidationOptions{})
 			if len(errs) == 0 {
-				if k == "metadata.name: must be no more than 52 characters" {
+				if k == "metadata.name: must be no more than 52 bytes" {
 					return
 				}
 				t.Errorf("expected failure for %s", k)
