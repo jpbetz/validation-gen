@@ -57,6 +57,16 @@ func Validate_IPStringType(ctx context.Context, op operation.Operation, fldPath 
 	return errs
 }
 
+func Validate_LongNameStringType(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *LongNameStringType) (errs field.ErrorList) {
+	// type LongNameStringType
+	if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+		return nil // no changes
+	}
+	errs = append(errs, validate.LongName(ctx, op, fldPath, obj, oldObj)...)
+
+	return errs
+}
+
 func Validate_ShortNameStringType(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ShortNameStringType) (errs field.ErrorList) {
 	// type ShortNameStringType
 	if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
@@ -123,6 +133,33 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			errs = append(errs, Validate_ShortNameStringType(ctx, op, fldPath, obj, oldObj)...)
 			return
 		}(fldPath.Child("shortNameTypedefField"), &obj.ShortNameTypedefField, safe.Field(oldObj, func(oldObj *Struct) *ShortNameStringType { return &oldObj.ShortNameTypedefField }))...)
+
+	// field Struct.LongNameField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.LongName(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("longNameField"), &obj.LongNameField, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.LongNameField }))...)
+
+	// field Struct.LongNamePtrField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.LongName(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("longNamePtrField"), obj.LongNamePtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.LongNamePtrField }))...)
+
+	// field Struct.LongNameTypedefField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *LongNameStringType) (errs field.ErrorList) {
+			errs = append(errs, Validate_LongNameStringType(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("longNameTypedefField"), &obj.LongNameTypedefField, safe.Field(oldObj, func(oldObj *Struct) *LongNameStringType { return &oldObj.LongNameTypedefField }))...)
 
 	return errs
 }

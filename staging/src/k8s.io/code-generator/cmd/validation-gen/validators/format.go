@@ -50,6 +50,7 @@ func (formatTagValidator) ValidScopes() sets.Set[Scope] {
 var (
 	ipSloppyValidator  = types.Name{Package: libValidationPkg, Name: "IPSloppy"}
 	shortNameValidator = types.Name{Package: libValidationPkg, Name: "ShortName"}
+	longNameValidator  = types.Name{Package: libValidationPkg, Name: "LongName"}
 )
 
 func (formatTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
@@ -79,6 +80,9 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 	if format == "k8s-short-name" {
 		return Function(formatTagName, DefaultFlags, shortNameValidator), nil
 	}
+	if format == "k8s-long-name" {
+		return Function(formatTagName, DefaultFlags, longNameValidator), nil
+	}
 	// TODO: Flesh out the list of validation functions
 
 	return FunctionGen{}, fmt.Errorf("unsupported validation format %q", format)
@@ -95,6 +99,9 @@ func (ftv formatTagValidator) Docs() TagDoc {
 		}, {
 			Description: "k8s-short-name",
 			Docs:        "This field holds a Kubernetes \"short name\", aka a \"DNS label\" value.",
+		}, {
+			Description: "k8s-long-name",
+			Docs:        "This field holds a Kubernetes \"long name\", aka a \"DNS subdomain\" value.",
 		}},
 		PayloadsType:     codetags.ValueTypeString,
 		PayloadsRequired: true,
