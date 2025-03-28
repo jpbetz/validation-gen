@@ -44,6 +44,15 @@ type Struct struct {
 
 	// Note: no validation here
 	ShortNameTypedefField ShortNameStringType `json:"shortNameTypedefField"`
+
+	// +k8s:format=k8s-long-name
+	LongNameField string `json:"longNameField"`
+
+	// +k8s:format=k8s-long-name
+	LongNamePtrField *string `json:"longNamePtrField"`
+
+	// Note: no validation here
+	LongNameTypedefField LongNameStringType `json:"longNameTypedefField"`
 }
 
 // +k8s:format=k8s-ip-sloppy
@@ -51,3 +60,6 @@ type IPStringType string
 
 // +k8s:format=k8s-short-name
 type ShortNameStringType string
+
+// +k8s:format=k8s-long-name
+type LongNameStringType string
