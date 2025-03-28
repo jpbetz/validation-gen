@@ -48,7 +48,9 @@ func (formatTagValidator) ValidScopes() sets.Set[Scope] {
 }
 
 var (
+	// Keep this list alphabetized.
 	ipSloppyValidator  = types.Name{Package: libValidationPkg, Name: "IPSloppy"}
+	longNameValidator  = types.Name{Package: libValidationPkg, Name: "LongName"}
 	shortNameValidator = types.Name{Package: libValidationPkg, Name: "ShortName"}
 )
 
@@ -73,8 +75,13 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 	// all lower-case, dashes between words. See
 	// https://json-schema.org/draft/2020-12/json-schema-validation#name-defined-formats
 	// for more examples.
+
+	// Keep this sequence alphabetized.
 	if format == "k8s-ip" {
 		return Function(formatTagName, DefaultFlags, ipSloppyValidator), nil
+	}
+	if format == "k8s-long-name" {
+		return Function(formatTagName, DefaultFlags, longNameValidator), nil
 	}
 	if format == "k8s-short-name" {
 		return Function(formatTagName, DefaultFlags, shortNameValidator), nil
@@ -89,9 +96,12 @@ func (ftv formatTagValidator) Docs() TagDoc {
 		Tag:         ftv.TagName(),
 		Scopes:      ftv.ValidScopes().UnsortedList(),
 		Description: "Indicates that a string field has a particular format.",
-		Payloads: []TagPayloadDoc{{
+		Payloads: []TagPayloadDoc{{ // Keep this list alphabetized.
 			Description: "k8s-ip",
 			Docs:        "This field holds an IPv4 or IPv6 address value. IPv4 octets may have leading zeros.",
+		}, {
+			Description: "k8s-long-name",
+			Docs:        "This field holds a Kubernetes \"long name\", aka a \"DNS subdomain\" value.",
 		}, {
 			Description: "k8s-short-name",
 			Docs:        "This field holds a Kubernetes \"short name\", aka a \"DNS label\" value.",
