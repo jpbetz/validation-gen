@@ -6335,7 +6335,10 @@ func ValidateServiceStatusUpdate(service, oldService *core.Service) field.ErrorL
 
 // ValidateReplicationController tests if required fields in the replication controller are set.
 func ValidateReplicationController(controller *core.ReplicationController, opts PodValidationOptions) field.ErrorList {
-	allErrs := ValidateObjectMeta2(&controller.ObjectMeta, true, apimachineryvalidation.ValidateNameAsK8sLongName, field.NewPath("metadata"))
+	namefn := func(fldPath *field.Path, name string, prefix bool) field.ErrorList {
+		return apimachineryvalidation.ValidateNameAsK8sLongName(fldPath, name, prefix).MarkCoveredByDeclarative()
+	}
+	allErrs := ValidateObjectMeta2(&controller.ObjectMeta, true, namefn, field.NewPath("metadata"))
 	allErrs = append(allErrs, ValidateReplicationControllerSpec(&controller.Spec, nil, field.NewPath("spec"), opts)...)
 	return allErrs
 }
