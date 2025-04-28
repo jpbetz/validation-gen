@@ -17,6 +17,7 @@ limitations under the License.
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -71,6 +72,8 @@ func TypedToVal(val interface{}) ref.Val {
 		return types.Bytes(typedVal)
 	case metav1.Time:
 		return types.Timestamp{Time: typedVal.Time}
+	case metav1.MicroTime:
+		return types.Timestamp{Time: typedVal.Time}
 	case metav1.Duration:
 		return types.Duration{Duration: typedVal.Duration}
 	case intstr.IntOrString:
@@ -82,6 +85,10 @@ func TypedToVal(val interface{}) ref.Val {
 		}
 	case resource.Quantity:
 		return cel.Quantity{Quantity: &typedVal}
+	case json.Marshaler:
+		// All JSON marshaled types must be mapped to a CEL type in the above switch.
+		// This ensures that all types are purposefully mapped to CEL types.
+		return types.NewErr("unsupported Go type for CEL: %T", typedVal)
 	default:
 		// continue on to the next switch
 	}

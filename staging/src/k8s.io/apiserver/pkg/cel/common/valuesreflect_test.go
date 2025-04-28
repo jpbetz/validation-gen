@@ -60,6 +60,8 @@ type Complex struct {
 	Labels      map[string]string  `json:"labels"`
 	NestedObj   Nested             `json:"nestedObj"`
 	Timeout     metav1.Duration    `json:"timeout"`
+	Time        metav1.Time        `json:"time"`
+	MicroTime   metav1.MicroTime   `json:"microTime"`
 	RawBytes    []byte             `json:"rawBytes"`
 	NilBytes    []byte             `json:"nilBytes"` // Always nil
 	ChildPtr    *Struct            `json:"childPtr"`
@@ -98,6 +100,9 @@ type testCase struct {
 	wantErr    string
 }
 
+const RFC3339Micro = "2006-01-02T15:04:05.000000Z07:00"
+const RFC3339 = "2006-01-02T15:04:05Z07:00"
+
 func TestTypedToVal(t *testing.T) {
 	struct1 := Struct{S: "hello", I: 10, B: true, F: 1.5}
 	struct1Ptr := &struct1
@@ -108,8 +113,18 @@ func TestTypedToVal(t *testing.T) {
 
 	structOmitEmpty1 := StructOmitEmpty{}
 
-	now := metav1.Time{Time: time.Now().Truncate(0)}
+	now := metav1.NewTime(time.Now().Truncate(0))
 	duration1 := metav1.Duration{Duration: 5 * time.Second}
+	time1Parsed, err := time.Parse(RFC3339, "2000-01-01T12:00:00Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	time1 := metav1.Time{Time: time1Parsed}
+	microTime1Parsed, err := time.Parse(RFC3339Micro, "2000-01-01T12:00:00.000001Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	microTime1 := metav1.MicroTime{Time: microTime1Parsed}
 
 	nested1 := Nested{Name: "nested1", Info: struct1}
 
@@ -121,6 +136,8 @@ func TestTypedToVal(t *testing.T) {
 		Labels:      map[string]string{"key1": "val1", "key2": "val2"},
 		NestedObj:   nested1,
 		Timeout:     duration1,
+		Time:        time1,
+		MicroTime:   microTime1,
 		RawBytes:    []byte("bytes1"),
 		NilBytes:    nil,
 		ChildPtr:    &struct2,
@@ -212,27 +229,27 @@ func TestTypedToVal(t *testing.T) {
 			activation: map[string]interface{}{"obj": zeroStructPtr},
 		},
 		{
-			name:       "struct: populated struct jsonTag access",
+			name:       "struct: populated struct field access",
 			expression: "obj.s == 'hello' && obj.i == 10 && obj.b == true && obj.f == 1.5",
 			activation: map[string]interface{}{"obj": struct1},
 		},
 		{
-			name:       "struct: populated struct pointer jsonTag access",
+			name:       "struct: populated struct pointer field access",
 			expression: "obj.s == 'hello' && obj.i == 10 && obj.b == true && obj.f == 1.5",
 			activation: map[string]interface{}{"obj": struct1Ptr},
 		},
 		{
-			name:       "struct: access omitempty jsonTag (has)",
+			name:       "struct: access omitempty field (has)",
 			expression: "!has(obj.s)",
 			activation: map[string]interface{}{"obj": structOmitEmpty1},
 		},
 		{
-			name:       "struct: access non-existent jsonTag (has)",
+			name:       "struct: access non-existent field (has)",
 			expression: "!has(obj.nonExistent)",
 			activation: map[string]interface{}{"obj": struct1},
 		},
 		{
-			name:       "struct: access non-existent jsonTag direct (error)",
+			name:       "struct: access non-existent field direct (error)",
 			expression: "obj.nonExistent",
 			activation: map[string]interface{}{"obj": struct1},
 			wantErr:    "no such key: nonExistent",
@@ -374,7 +391,17 @@ func TestTypedToVal(t *testing.T) {
 		{
 			name:       "compare: time instances (different)",
 			expression: "t1 != t2",
-			activation: map[string]interface{}{"t1": now, "t2": metav1.Time{Time: now.Add(time.Nanosecond)}},
+			activation: map[string]interface{}{"t1": now, "t2": metav1.MicroTime{Time: now.Add(time.Nanosecond)}},
+		},
+		{
+			name:       "compare: microTime instances (equal)",
+			expression: "t1 == t2",
+			activation: map[string]interface{}{"t1": now, "t2": now},
+		},
+		{
+			name:       "compare: microTime instances (different)",
+			expression: "t1 != t2",
+			activation: map[string]interface{}{"t1": now, "t2": metav1.MicroTime{Time: now.Add(time.Nanosecond)}},
 		},
 		{
 			name:       "compare: duration instances (equal)",
@@ -409,7 +436,7 @@ func TestTypedToVal(t *testing.T) {
 
 		// Nested Struct Tests
 		{
-			name:       "nested: access jsonTag",
+			name:       "nested: access field",
 			expression: "c.nestedObj.info.s == 'hello'",
 			activation: map[string]interface{}{"c": complex1},
 		},
@@ -619,100 +646,120 @@ func TestTypedToVal(t *testing.T) {
 
 		// Pointer Tests
 		{
-			name:       "pointer: access through non-nil pointer jsonTag",
+			name:       "pointer: access through non-nil pointer field",
 			expression: "c.childPtr.s == 'world'",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "pointer: compare non-nil pointer jsonTag",
+			name:       "pointer: compare non-nil pointer field",
 			expression: "c.childPtr == s2",
 			activation: map[string]interface{}{"c": complex1, "s2": struct2},
 		},
 		{
-			name:       "pointer: access through nil pointer jsonTag (error)",
+			name:       "pointer: access through nil pointer field (error)",
 			expression: "c.nilPtr.s",
 			activation: map[string]interface{}{"c": complex1},
-			wantErr:    "no such key: s", // Accessing jsonTag 's' on a null object
+			wantErr:    "no such key: s", // Accessing field 's' on a null object
 		},
 		{
-			name:       "pointer: check if nil pointer jsonTag is null",
+			name:       "pointer: check if nil pointer field is null",
 			expression: "c.nilPtr == null",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "pointer: has() on nil pointer jsonTag subfield",
+			name:       "pointer: has() on nil pointer field subfield",
 			expression: "!has(c.nilPtr.s)",
 			activation: map[string]interface{}{"c": complex1},
 		},
 
 		// Type Tests
 		{
-			name:       "type: string jsonTag",
+			name:       "type: string",
 			expression: "type(obj.s) == string",
 			activation: map[string]interface{}{"obj": struct1},
 		},
 		{
-			name:       "type: int jsonTag",
+			name:       "type: int",
 			expression: "type(obj.i) == int",
 			activation: map[string]interface{}{"obj": struct1},
 		},
 		{
-			name:       "type: bool jsonTag",
+			name:       "type: bool",
 			expression: "type(obj.b) == bool",
 			activation: map[string]interface{}{"obj": struct1},
 		},
 		{
-			name:       "type: float jsonTag",
+			name:       "type: float",
 			expression: "type(obj.f) == double",
 			activation: map[string]interface{}{"obj": struct1},
 		},
 		{
-			name:       "type: slice jsonTag",
+			name:       "type: slice",
 			expression: "type(c.tags) == list",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "type: map jsonTag",
+			name:       "type: map",
 			expression: "type(c.labels) == map",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "type: duration jsonTag",
+			name:       "type: time",
+			expression: "type(c.time) == google.protobuf.Timestamp",
+			activation: map[string]interface{}{"c": complex1},
+		},
+		{
+			name:       "type: microTime",
+			expression: "type(c.microTime) == google.protobuf.Timestamp",
+			activation: map[string]interface{}{"c": complex1},
+		},
+		{
+			name:       "type: duration",
 			expression: "type(c.timeout) == google.protobuf.Duration",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "type: bytes jsonTag",
+			name:       "type: bytes",
 			expression: "type(c.rawBytes) == bytes",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "type: nil pointer jsonTag",
+			name:       "type: nil pointer",
 			expression: "type(c.nilPtr) == null_type",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "type: int32 jsonTag",
+			name:       "type: int32",
 			expression: "type(c.i32) == int",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "type: int64 jsonTag",
+			name:       "type: int64",
 			expression: "type(c.i64) == int",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "type: float32 jsonTag",
+			name:       "type: float32",
 			expression: "type(c.f32) == double",
 			activation: map[string]interface{}{"c": complex1},
 		},
 		{
-			name:       "type: enum jsonTag",
+			name:       "type: enum",
 			expression: "type(c.enum) == string",
 			activation: map[string]interface{}{"c": complex1},
 		},
 
 		// Special K8s Types
+		{
+			name:       "time: comparison equals",
+			expression: "c.time == timestamp('2000-01-01T12:00:00Z')",
+			activation: map[string]interface{}{"c": complex1},
+		},
+		{
+			name:       "microTime: comparison equals",
+			expression: "c.microTime == timestamp('2000-01-01T12:00:00.000001Z')",
+			activation: map[string]interface{}{"c": complex1},
+		},
 		{
 			name:       "duration: comparison equals",
 			expression: "c.timeout == duration('5s')",
