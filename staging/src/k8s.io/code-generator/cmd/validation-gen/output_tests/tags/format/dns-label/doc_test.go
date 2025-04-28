@@ -27,50 +27,32 @@ func Test(t *testing.T) {
 	st := localSchemeBuilder.Test(t)
 
 	st.Value(&Struct{
-		IPField:              "1.2.3.4",
-		IPPtrField:           ptr.To("1.2.3.4"),
-		IPTypedefField:       "1.2.3.4",
 		DNSLabelField:        "foo-bar",
 		DNSLabelPtrField:     ptr.To("foo-bar"),
 		DNSLabelTypedefField: "foo-bar",
 	}).ExpectValid()
 
 	st.Value(&Struct{
-		IPField:              "abcd::1234",
-		IPPtrField:           ptr.To("abcd::1234"),
-		IPTypedefField:       "abcd::1234",
 		DNSLabelField:        "1234",
 		DNSLabelPtrField:     ptr.To("1234"),
 		DNSLabelTypedefField: "1234",
 	}).ExpectValid()
 
 	st.Value(&Struct{
-		IPField:              "",
-		IPPtrField:           ptr.To(""),
-		IPTypedefField:       "",
 		DNSLabelField:        "",
 		DNSLabelPtrField:     ptr.To(""),
 		DNSLabelTypedefField: "",
 	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
-		field.Invalid(field.NewPath("ipField"), nil, "").WithOrigin("format=ip-sloppy"),
-		field.Invalid(field.NewPath("ipPtrField"), nil, "").WithOrigin("format=ip-sloppy"),
-		field.Invalid(field.NewPath("ipTypedefField"), nil, "").WithOrigin("format=ip-sloppy"),
 		field.Invalid(field.NewPath("dnsLabelField"), nil, "").WithOrigin("format=dns-label"),
 		field.Invalid(field.NewPath("dnsLabelPtrField"), nil, "").WithOrigin("format=dns-label"),
 		field.Invalid(field.NewPath("dnsLabelTypedefField"), nil, "").WithOrigin("format=dns-label"),
 	})
 
 	st.Value(&Struct{
-		IPField:              "Not an IP",
-		IPPtrField:           ptr.To("Not an IP"),
-		IPTypedefField:       "Not an IP",
 		DNSLabelField:        "Not a DNS label",
 		DNSLabelPtrField:     ptr.To("Not a DNS label"),
 		DNSLabelTypedefField: "Not a DNS label",
 	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
-		field.Invalid(field.NewPath("ipField"), nil, "").WithOrigin("format=ip-sloppy"),
-		field.Invalid(field.NewPath("ipPtrField"), nil, "").WithOrigin("format=ip-sloppy"),
-		field.Invalid(field.NewPath("ipTypedefField"), nil, "").WithOrigin("format=ip-sloppy"),
 		field.Invalid(field.NewPath("dnsLabelField"), nil, "").WithOrigin("format=dns-label"),
 		field.Invalid(field.NewPath("dnsLabelPtrField"), nil, "").WithOrigin("format=dns-label"),
 		field.Invalid(field.NewPath("dnsLabelTypedefField"), nil, "").WithOrigin("format=dns-label"),

@@ -76,6 +76,7 @@ func (stv subfieldTagValidator) GetValidations(context Context, args []string, p
 		Scope:  ScopeField,
 		Type:   submemb.Type,
 		Parent: t,
+		Member: submemb,
 		Path:   context.Path.Child(subname),
 	}
 	if validations, err := stv.validator.ExtractValidations(subContext, fakeComments); err != nil {
@@ -103,6 +104,7 @@ func (stv subfieldTagValidator) GetValidations(context Context, args []string, p
 			}
 			getFn.Body = fmt.Sprintf("return %so.%s", fieldExprPrefix, submemb.Name)
 			f := Function(subfieldTagName, vfn.Flags, validateSubfield, subname, getFn, WrapperFunction{vfn, submemb.Type})
+			f.Cohort = subname
 			result.Functions = append(result.Functions, f)
 			result.Variables = append(result.Variables, validations.Variables...)
 		}
