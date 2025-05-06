@@ -987,7 +987,7 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 				}
 				sw.Do("// field $.inType|raw$.$.fieldName$\n", targs)
 				sw.Do("errs = append(errs,\n", targs)
-				sw.Do("  func(fldPath *$.field.Path|raw$, obj, oldObj $.fieldTypePfx$$.fieldType|raw$) (errs $.field.ErrorList|raw$) {\n", targs)
+				sw.Do("  func(fldPath *$.field.Path|raw$, obj, oldObj $.fieldTypePfx$$.fieldType|raw$, parent *$.inType|raw$) (errs $.field.ErrorList|raw$) {\n", targs)
 				if err := sw.Merge(buf, bufsw); err != nil {
 					panic(fmt.Sprintf("failed to merge buffer: %v", err))
 				}
@@ -998,6 +998,7 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 				sw.Do("        func(oldObj *$.inType|raw$) $.fieldTypePfx$$.fieldType|raw$ {", targs)
 				sw.Do("            return $.fieldExprPfx$oldObj.$.fieldName$", targs)
 				sw.Do("        }),", targs)
+				sw.Do("    obj, \n", targs)
 				sw.Do("    )...)\n", targs)
 				sw.Do("\n", nil)
 			} else {
@@ -1214,6 +1215,8 @@ func toGolangSourceDataLiteral(sw *generator.SnippetWriter, c *generator.Context
 		sw.Do(fmt.Sprintf("%q", str), nil)
 	case *types.Type:
 		sw.Do("$.|raw$", v)
+	case validators.ParentField:
+		sw.Do("parent."+v.Member.Name, nil)
 	case types.Member:
 		sw.Do("obj."+v.Name, nil)
 	case validators.Identifier:

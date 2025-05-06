@@ -28,12 +28,19 @@ const (
 	maxLengthTagName = "k8s:maxLength"
 	maxItemsTagName  = "k8s:maxItems"
 	minimumTagName   = "k8s:minimum"
+	maximumTagName   = "k8s:maximum"
 )
 
 func init() {
 	RegisterTagValidator(maxLengthTagValidator{})
 	RegisterTagValidator(maxItemsTagValidator{})
+
 	RegisterTagValidator(minimumTagValidator{})
+	RegisterTagValidator(maximumTagValidator{})
+}
+
+type refLimit struct {
+	min, max *string // name of the field that is referenced and provides a min or max limit
 }
 
 type maxLengthTagValidator struct{}
@@ -158,16 +165,31 @@ func (minimumTagValidator) ValidScopes() sets.Set[Scope] {
 }
 
 var (
-	minimumValidator = types.Name{Package: libValidationPkg, Name: "Minimum"}
+	minimumValidator      = types.Name{Package: libValidationPkg, Name: "Minimum"}
+	minimumFieldValidator = types.Name{Package: libValidationPkg, Name: "MinimumField"}
 )
 
-func (minimumTagValidator) GetValidations(context Context, _ []string, payload string) (Validations, error) {
+func (mtv minimumTagValidator) GetValidations(context Context, args []string, payload string) (Validations, error) {
 	var result Validations
+
+	if field, ok, err := FieldReference(context, payload); ok {
+		if err != nil {
+			return result, err
+		}
+		vfn := Function(minimumTagName, DefaultFlags, minimumFieldValidator, field, field.FieldName)
+		result.Functions = append(result.Functions, vfn)
+		return result, nil
+	}
 
 	// This tag can apply to value and pointer fields, as well as typedefs
 	// (which should never be pointers). We need to check the concrete type.
 	if t := nonPointer(nativeType(context.Type)); !types.IsInteger(t) {
 		return result, fmt.Errorf("can only be used on integer types (%s)", rootTypeString(context.Type, t))
+	}
+
+	if len(args) == 1 {
+		// TODO
+		panic("not implemented")
 	}
 
 	intVal, err := strconv.Atoi(payload)
@@ -186,6 +208,63 @@ func (mtv minimumTagValidator) Docs() TagDoc {
 		Payloads: []TagPayloadDoc{{
 			Description: "<integer>",
 			Docs:        "This field must be greater than or equal to x.",
+		}},
+	}
+}
+
+type maximumTagValidator struct{}
+
+func (maximumTagValidator) Init(_ Config) {}
+
+func (maximumTagValidator) TagName() string {
+	return maximumTagName
+}
+
+var maximumTagValidScopes = sets.New(
+	ScopeAny,
+)
+
+func (maximumTagValidator) ValidScopes() sets.Set[Scope] {
+	return maximumTagValidScopes
+}
+
+var (
+	maximumValidator      = types.Name{Package: libValidationPkg, Name: "Maximum"}
+	maximumFieldValidator = types.Name{Package: libValidationPkg, Name: "MaximumField"}
+)
+
+func (mtv maximumTagValidator) GetValidations(context Context, args []string, payload string) (Validations, error) {
+	var result Validations
+
+	if field, ok, err := FieldReference(context, payload); ok {
+		if err != nil {
+			return result, err
+		}
+		vfn := Function(maximumTagName, DefaultFlags, maximumFieldValidator, field, field.FieldName)
+		result.Functions = append(result.Functions, vfn)
+		return result, nil
+	}
+
+	if t := nonPointer(nativeType(context.Type)); !types.IsInteger(t) {
+		return result, fmt.Errorf("can only be used on integer types (%s)", rootTypeString(context.Type, t))
+	}
+
+	intVal, err := strconv.Atoi(payload)
+	if err != nil {
+		return result, fmt.Errorf("failed to parse tag payload as int: %w", err)
+	}
+	result.AddFunction(Function(maximumTagName, DefaultFlags, maximumValidator, intVal))
+	return result, nil
+}
+
+func (mtv maximumTagValidator) Docs() TagDoc {
+	return TagDoc{
+		Tag:         mtv.TagName(),
+		Scopes:      mtv.ValidScopes().UnsortedList(),
+		Description: "Indicates that a numeric field has a maximum value.",
+		Payloads: []TagPayloadDoc{{
+			Description: "<integer>",
+			Docs:        "This field must be less than or equal to x.",
 		}},
 	}
 }

@@ -17,10 +17,14 @@ limitations under the License.
 package validators
 
 import (
+	"fmt"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/gengo/v2/generator"
 	"k8s.io/gengo/v2/types"
+	pointer "k8s.io/utils/ptr"
 )
 
 // TagValidator describes a single validation tag and how to use it.
@@ -320,6 +324,11 @@ type Identifier types.Name
 // PrivateVars are generated using the PrivateNamer strategy.
 type PrivateVar types.Name
 
+type ParentField struct {
+	FieldName string
+	Member    types.Member
+}
+
 // Function creates a FunctionGen for a given function name and extraArgs.
 func Function(tagName string, flags FunctionFlags, function types.Name, extraArgs ...any) FunctionGen {
 	return FunctionGen{
@@ -427,4 +436,24 @@ type FunctionLiteral struct {
 type ParamResult struct {
 	Name string
 	Type *types.Type
+}
+
+// FieldReference returns the field referenced by the payload. The field must be a field of content.Parent.
+func FieldReference(context Context, payload string) (ParentField, bool, error) {
+	if refFieldName, ok := funcStyleValue(payload, "field"); ok {
+		limit := refLimit{max: pointer.To(refFieldName)}
+		ref := getMemberByJSON(context.Parent, *limit.max)
+		if ref == nil {
+			return ParentField{}, false, fmt.Errorf("no field for json name %q", *limit.max)
+		}
+		return ParentField{FieldName: refFieldName, Member: *ref}, true, nil
+	}
+	return ParentField{}, false, nil
+}
+
+func funcStyleValue(value, functionName string) (string, bool) {
+	if strings.HasPrefix(value, functionName+"(") && strings.HasSuffix(value, ")") {
+		return strings.TrimSuffix(strings.TrimPrefix(value, functionName+"("), ")"), true
+	}
+	return fmt.Sprintf("%s(%s)", functionName, value), false
 }

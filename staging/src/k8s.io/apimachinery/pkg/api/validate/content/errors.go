@@ -28,6 +28,20 @@ func MinError[T constraints.Integer](min T) string {
 	return fmt.Sprintf("must be greater than or equal to %d", min)
 }
 
+func MinFieldError(minField string) string {
+	return fmt.Sprintf("must be greater than or equal to %s", minField)
+}
+
+// MaxError returns a string explanation of a "must be less than or equal"
+// validation failure.
+func MaxError[T constraints.Integer](max T) string {
+	return fmt.Sprintf("must be less than or equal to %d", max)
+}
+
+func MaxFieldError(maxField string) string {
+	return fmt.Sprintf("must be less than or equal to %s", maxField)
+}
+
 // MaxLenError returns a string explanation of a "string too long" validation
 // failure.
 func MaxLenError(length int) string {
