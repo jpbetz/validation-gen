@@ -48,10 +48,10 @@ func Validate_Scale(ctx context.Context, op operation.Operation, fldPath *field.
 
 	// field Scale.Spec
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *ScaleSpec) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *ScaleSpec, parent *Scale) (errs field.ErrorList) {
 			errs = append(errs, Validate_ScaleSpec(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("spec"), &obj.Spec, safe.Field(oldObj, func(oldObj *Scale) *ScaleSpec { return &oldObj.Spec }))...)
+		}(fldPath.Child("spec"), &obj.Spec, safe.Field(oldObj, func(oldObj *Scale) *ScaleSpec { return &oldObj.Spec }), obj)...)
 
 	// field Scale.Status has no validation
 	return errs
@@ -60,11 +60,11 @@ func Validate_Scale(ctx context.Context, op operation.Operation, fldPath *field.
 func Validate_ScaleSpec(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ScaleSpec) (errs field.ErrorList) {
 	// field ScaleSpec.Replicas
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *int32) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *int32, parent *ScaleSpec) (errs field.ErrorList) {
 			// optional value-type fields with zero-value defaults are purely documentation
 			errs = append(errs, validate.Minimum(ctx, op, fldPath, obj, oldObj, 0)...)
 			return
-		}(fldPath.Child("replicas"), &obj.Replicas, safe.Field(oldObj, func(oldObj *ScaleSpec) *int32 { return &oldObj.Replicas }))...)
+		}(fldPath.Child("replicas"), &obj.Replicas, safe.Field(oldObj, func(oldObj *ScaleSpec) *int32 { return &oldObj.Replicas }), obj)...)
 
 	return errs
 }

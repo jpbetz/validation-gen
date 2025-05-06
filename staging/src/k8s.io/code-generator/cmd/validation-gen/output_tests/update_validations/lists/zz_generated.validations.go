@@ -48,10 +48,10 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 func Validate_M1(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *M1) (errs field.ErrorList) {
 	// field M1.S
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *string, parent *M1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "M1.S")...)
 			return
-		}(fldPath.Child("s"), &obj.S, safe.Field(oldObj, func(oldObj *M1) *string { return &oldObj.S }))...)
+		}(fldPath.Child("s"), &obj.S, safe.Field(oldObj, func(oldObj *M1) *string { return &oldObj.S }), obj)...)
 
 	return errs
 }
@@ -59,10 +59,10 @@ func Validate_M1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *T1) (errs field.ErrorList) {
 	// field T1.LM1
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj []M1) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj []M1, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, nil, Validate_M1)...)
 			return
-		}(fldPath.Child("lm1"), obj.LM1, safe.Field(oldObj, func(oldObj *T1) []M1 { return oldObj.LM1 }))...)
+		}(fldPath.Child("lm1"), obj.LM1, safe.Field(oldObj, func(oldObj *T1) []M1 { return oldObj.LM1 }), obj)...)
 
 	return errs
 }

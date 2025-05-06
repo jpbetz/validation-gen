@@ -51,7 +51,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 
 	// field Struct.ListField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj []string) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj []string, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.ListField #1")...)
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.ListField #2")...)
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, nil, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
@@ -61,7 +61,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.ListField[*] #2")
 			})...)
 			return
-		}(fldPath.Child("listField"), obj.ListField, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.ListField }))...)
+		}(fldPath.Child("listField"), obj.ListField, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.ListField }), obj)...)
 
 	// field Struct.UnvalidatedListField has no validation
 	return errs

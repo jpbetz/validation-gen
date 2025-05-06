@@ -55,39 +55,39 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 
 	// field Struct.U1M1
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *M1) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *M1, parent *Struct) (errs field.ErrorList) {
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				return // do not proceed
 			}
 			return
-		}(fldPath.Child("u1m1"), obj.U1M1, safe.Field(oldObj, func(oldObj *Struct) *M1 { return oldObj.U1M1 }))...)
+		}(fldPath.Child("u1m1"), obj.U1M1, safe.Field(oldObj, func(oldObj *Struct) *M1 { return oldObj.U1M1 }), obj)...)
 
 	// field Struct.U1M2
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *M2) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *M2, parent *Struct) (errs field.ErrorList) {
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				return // do not proceed
 			}
 			return
-		}(fldPath.Child("u1m2"), obj.U1M2, safe.Field(oldObj, func(oldObj *Struct) *M2 { return oldObj.U1M2 }))...)
+		}(fldPath.Child("u1m2"), obj.U1M2, safe.Field(oldObj, func(oldObj *Struct) *M2 { return oldObj.U1M2 }), obj)...)
 
 	// field Struct.U2M1
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *M1) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *M1, parent *Struct) (errs field.ErrorList) {
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				return // do not proceed
 			}
 			return
-		}(fldPath.Child("u2m1"), obj.U2M1, safe.Field(oldObj, func(oldObj *Struct) *M1 { return oldObj.U2M1 }))...)
+		}(fldPath.Child("u2m1"), obj.U2M1, safe.Field(oldObj, func(oldObj *Struct) *M1 { return oldObj.U2M1 }), obj)...)
 
 	// field Struct.U2M2
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *M2) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *M2, parent *Struct) (errs field.ErrorList) {
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				return // do not proceed
 			}
 			return
-		}(fldPath.Child("u2m2"), obj.U2M2, safe.Field(oldObj, func(oldObj *Struct) *M2 { return oldObj.U2M2 }))...)
+		}(fldPath.Child("u2m2"), obj.U2M2, safe.Field(oldObj, func(oldObj *Struct) *M2 { return oldObj.U2M2 }), obj)...)
 
 	return errs
 }

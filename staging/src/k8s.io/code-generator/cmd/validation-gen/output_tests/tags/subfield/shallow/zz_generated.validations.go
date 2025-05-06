@@ -47,7 +47,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 
 	// field Struct.StructField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *OtherStruct) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *OtherStruct, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *OtherStruct) *string { return &o.StringField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.StringField")
 			})...)
@@ -64,11 +64,11 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.MapField")
 			})...)
 			return
-		}(fldPath.Child("structField"), &obj.StructField, safe.Field(oldObj, func(oldObj *Struct) *OtherStruct { return &oldObj.StructField }))...)
+		}(fldPath.Child("structField"), &obj.StructField, safe.Field(oldObj, func(oldObj *Struct) *OtherStruct { return &oldObj.StructField }), obj)...)
 
 	// field Struct.StructPtrField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *OtherStruct) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *OtherStruct, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *OtherStruct) *string { return &o.StringField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.StringField")
 			})...)
@@ -85,7 +85,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.MapField")
 			})...)
 			return
-		}(fldPath.Child("structPtrField"), obj.StructPtrField, safe.Field(oldObj, func(oldObj *Struct) *OtherStruct { return oldObj.StructPtrField }))...)
+		}(fldPath.Child("structPtrField"), obj.StructPtrField, safe.Field(oldObj, func(oldObj *Struct) *OtherStruct { return oldObj.StructPtrField }), obj)...)
 
 	return errs
 }

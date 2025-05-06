@@ -54,73 +54,73 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 
 	// field Struct.StringField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *string, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByCompare(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("stringField"), &obj.StringField, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.StringField }))...)
+		}(fldPath.Child("stringField"), &obj.StringField, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.StringField }), obj)...)
 
 	// field Struct.StringPtrField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *string, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByCompare(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("stringPtrField"), obj.StringPtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.StringPtrField }))...)
+		}(fldPath.Child("stringPtrField"), obj.StringPtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.StringPtrField }), obj)...)
 
 	// field Struct.StructField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *ComparableStruct) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *ComparableStruct, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByReflect(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("structField"), &obj.StructField, safe.Field(oldObj, func(oldObj *Struct) *ComparableStruct { return &oldObj.StructField }))...)
+		}(fldPath.Child("structField"), &obj.StructField, safe.Field(oldObj, func(oldObj *Struct) *ComparableStruct { return &oldObj.StructField }), obj)...)
 
 	// field Struct.StructPtrField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *ComparableStruct) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *ComparableStruct, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByReflect(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("structPtrField"), obj.StructPtrField, safe.Field(oldObj, func(oldObj *Struct) *ComparableStruct { return oldObj.StructPtrField }))...)
+		}(fldPath.Child("structPtrField"), obj.StructPtrField, safe.Field(oldObj, func(oldObj *Struct) *ComparableStruct { return oldObj.StructPtrField }), obj)...)
 
 	// field Struct.NonComparableStructField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *NonComparableStruct) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *NonComparableStruct, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByReflect(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("noncomparableStructField"), &obj.NonComparableStructField, safe.Field(oldObj, func(oldObj *Struct) *NonComparableStruct { return &oldObj.NonComparableStructField }))...)
+		}(fldPath.Child("noncomparableStructField"), &obj.NonComparableStructField, safe.Field(oldObj, func(oldObj *Struct) *NonComparableStruct { return &oldObj.NonComparableStructField }), obj)...)
 
 	// field Struct.NonComparableStructPtrField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *NonComparableStruct) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *NonComparableStruct, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByReflect(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("noncomparableStructPtrField"), obj.NonComparableStructPtrField, safe.Field(oldObj, func(oldObj *Struct) *NonComparableStruct { return oldObj.NonComparableStructPtrField }))...)
+		}(fldPath.Child("noncomparableStructPtrField"), obj.NonComparableStructPtrField, safe.Field(oldObj, func(oldObj *Struct) *NonComparableStruct { return oldObj.NonComparableStructPtrField }), obj)...)
 
 	// field Struct.SliceField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj []string) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj []string, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByReflect(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("sliceField"), obj.SliceField, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.SliceField }))...)
+		}(fldPath.Child("sliceField"), obj.SliceField, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.SliceField }), obj)...)
 
 	// field Struct.MapField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj map[string]string) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj map[string]string, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByReflect(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("mapField"), obj.MapField, safe.Field(oldObj, func(oldObj *Struct) map[string]string { return oldObj.MapField }))...)
+		}(fldPath.Child("mapField"), obj.MapField, safe.Field(oldObj, func(oldObj *Struct) map[string]string { return oldObj.MapField }), obj)...)
 
 	// field Struct.ImmutableField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *ImmutableType) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *ImmutableType, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, Validate_ImmutableType(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("immutableField"), &obj.ImmutableField, safe.Field(oldObj, func(oldObj *Struct) *ImmutableType { return &oldObj.ImmutableField }))...)
+		}(fldPath.Child("immutableField"), &obj.ImmutableField, safe.Field(oldObj, func(oldObj *Struct) *ImmutableType { return &oldObj.ImmutableField }), obj)...)
 
 	// field Struct.ImmutablePtrField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *ImmutableType) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *ImmutableType, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, Validate_ImmutableType(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("immutablePtrField"), obj.ImmutablePtrField, safe.Field(oldObj, func(oldObj *Struct) *ImmutableType { return oldObj.ImmutablePtrField }))...)
+		}(fldPath.Child("immutablePtrField"), obj.ImmutablePtrField, safe.Field(oldObj, func(oldObj *Struct) *ImmutableType { return oldObj.ImmutablePtrField }), obj)...)
 
 	return errs
 }

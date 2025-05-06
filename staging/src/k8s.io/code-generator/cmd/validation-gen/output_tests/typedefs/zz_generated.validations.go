@@ -69,10 +69,10 @@ func Validate_E4(ctx context.Context, op operation.Operation, fldPath *field.Pat
 
 	// field E4.S
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *string, parent *E4) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T2.S")...)
 			return
-		}(fldPath.Child("s"), &obj.S, safe.Field(oldObj, func(oldObj *E4) *string { return &oldObj.S }))...)
+		}(fldPath.Child("s"), &obj.S, safe.Field(oldObj, func(oldObj *E4) *string { return &oldObj.S }), obj)...)
 
 	return errs
 }
@@ -85,83 +85,83 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 
 	// field T1.E1
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *E1) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *E1, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.E1")...)
 			errs = append(errs, Validate_E1(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("e1"), &obj.E1, safe.Field(oldObj, func(oldObj *T1) *E1 { return &oldObj.E1 }))...)
+		}(fldPath.Child("e1"), &obj.E1, safe.Field(oldObj, func(oldObj *T1) *E1 { return &oldObj.E1 }), obj)...)
 
 	// field T1.PE1
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *E1) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *E1, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.PE1")...)
 			errs = append(errs, Validate_E1(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("pe1"), obj.PE1, safe.Field(oldObj, func(oldObj *T1) *E1 { return oldObj.PE1 }))...)
+		}(fldPath.Child("pe1"), obj.PE1, safe.Field(oldObj, func(oldObj *T1) *E1 { return oldObj.PE1 }), obj)...)
 
 	// field T1.E2
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *E2) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *E2, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.E2")...)
 			errs = append(errs, Validate_E2(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("e2"), &obj.E2, safe.Field(oldObj, func(oldObj *T1) *E2 { return &oldObj.E2 }))...)
+		}(fldPath.Child("e2"), &obj.E2, safe.Field(oldObj, func(oldObj *T1) *E2 { return &oldObj.E2 }), obj)...)
 
 	// field T1.PE2
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *E2) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *E2, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.PE2")...)
 			errs = append(errs, Validate_E2(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("pe2"), obj.PE2, safe.Field(oldObj, func(oldObj *T1) *E2 { return oldObj.PE2 }))...)
+		}(fldPath.Child("pe2"), obj.PE2, safe.Field(oldObj, func(oldObj *T1) *E2 { return oldObj.PE2 }), obj)...)
 
 	// field T1.E3
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *E3) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *E3, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.E3")...)
 			errs = append(errs, Validate_E3(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("e3"), &obj.E3, safe.Field(oldObj, func(oldObj *T1) *E3 { return &oldObj.E3 }))...)
+		}(fldPath.Child("e3"), &obj.E3, safe.Field(oldObj, func(oldObj *T1) *E3 { return &oldObj.E3 }), obj)...)
 
 	// field T1.PE3
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *E3) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *E3, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.PE3")...)
 			errs = append(errs, Validate_E3(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("pe3"), obj.PE3, safe.Field(oldObj, func(oldObj *T1) *E3 { return oldObj.PE3 }))...)
+		}(fldPath.Child("pe3"), obj.PE3, safe.Field(oldObj, func(oldObj *T1) *E3 { return oldObj.PE3 }), obj)...)
 
 	// field T1.E4
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *E4) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *E4, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.E4")...)
 			errs = append(errs, Validate_E4(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("e4"), &obj.E4, safe.Field(oldObj, func(oldObj *T1) *E4 { return &oldObj.E4 }))...)
+		}(fldPath.Child("e4"), &obj.E4, safe.Field(oldObj, func(oldObj *T1) *E4 { return &oldObj.E4 }), obj)...)
 
 	// field T1.PE4
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *E4) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *E4, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.PE4")...)
 			errs = append(errs, Validate_E4(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("pe4"), obj.PE4, safe.Field(oldObj, func(oldObj *T1) *E4 { return oldObj.PE4 }))...)
+		}(fldPath.Child("pe4"), obj.PE4, safe.Field(oldObj, func(oldObj *T1) *E4 { return oldObj.PE4 }), obj)...)
 
 	// field T1.T2
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *T2) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *T2, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.T2")...)
 			errs = append(errs, Validate_T2(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("t2"), &obj.T2, safe.Field(oldObj, func(oldObj *T1) *T2 { return &oldObj.T2 }))...)
+		}(fldPath.Child("t2"), &obj.T2, safe.Field(oldObj, func(oldObj *T1) *T2 { return &oldObj.T2 }), obj)...)
 
 	// field T1.PT2
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *T2) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *T2, parent *T1) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T1.PT2")...)
 			errs = append(errs, Validate_T2(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("pt2"), obj.PT2, safe.Field(oldObj, func(oldObj *T1) *T2 { return oldObj.PT2 }))...)
+		}(fldPath.Child("pt2"), obj.PT2, safe.Field(oldObj, func(oldObj *T1) *T2 { return oldObj.PT2 }), obj)...)
 
 	return errs
 }
@@ -172,10 +172,10 @@ func Validate_T2(ctx context.Context, op operation.Operation, fldPath *field.Pat
 
 	// field T2.S
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *string, parent *T2) (errs field.ErrorList) {
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field T2.S")...)
 			return
-		}(fldPath.Child("s"), &obj.S, safe.Field(oldObj, func(oldObj *T2) *string { return &oldObj.S }))...)
+		}(fldPath.Child("s"), &obj.S, safe.Field(oldObj, func(oldObj *T2) *string { return &oldObj.S }), obj)...)
 
 	return errs
 }

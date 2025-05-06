@@ -45,31 +45,31 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Struct) (errs field.ErrorList) {
 	// field Struct.S
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *string, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByCompare(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("s"), &obj.S, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.S }))...)
+		}(fldPath.Child("s"), &obj.S, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.S }), obj)...)
 
 	// field Struct.I
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *int) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *int, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByCompare(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("i"), &obj.I, safe.Field(oldObj, func(oldObj *Struct) *int { return &oldObj.I }))...)
+		}(fldPath.Child("i"), &obj.I, safe.Field(oldObj, func(oldObj *Struct) *int { return &oldObj.I }), obj)...)
 
 	// field Struct.B
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *bool) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *bool, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByCompare(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("b"), &obj.B, safe.Field(oldObj, func(oldObj *Struct) *bool { return &oldObj.B }))...)
+		}(fldPath.Child("b"), &obj.B, safe.Field(oldObj, func(oldObj *Struct) *bool { return &oldObj.B }), obj)...)
 
 	// field Struct.F
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *float64) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *float64, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.ImmutableByCompare(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("f"), &obj.F, safe.Field(oldObj, func(oldObj *Struct) *float64 { return &oldObj.F }))...)
+		}(fldPath.Child("f"), &obj.F, safe.Field(oldObj, func(oldObj *Struct) *float64 { return &oldObj.F }), obj)...)
 
 	return errs
 }

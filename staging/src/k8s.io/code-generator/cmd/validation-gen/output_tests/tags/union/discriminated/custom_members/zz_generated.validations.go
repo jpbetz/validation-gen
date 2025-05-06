@@ -53,21 +53,21 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 
 	// field Struct.M1
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *M1) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *M1, parent *Struct) (errs field.ErrorList) {
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				return // do not proceed
 			}
 			return
-		}(fldPath.Child("m1"), obj.M1, safe.Field(oldObj, func(oldObj *Struct) *M1 { return oldObj.M1 }))...)
+		}(fldPath.Child("m1"), obj.M1, safe.Field(oldObj, func(oldObj *Struct) *M1 { return oldObj.M1 }), obj)...)
 
 	// field Struct.M2
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *M2) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *M2, parent *Struct) (errs field.ErrorList) {
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				return // do not proceed
 			}
 			return
-		}(fldPath.Child("m2"), obj.M2, safe.Field(oldObj, func(oldObj *Struct) *M2 { return oldObj.M2 }))...)
+		}(fldPath.Child("m2"), obj.M2, safe.Field(oldObj, func(oldObj *Struct) *M2 { return oldObj.M2 }), obj)...)
 
 	return errs
 }

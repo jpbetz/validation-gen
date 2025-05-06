@@ -23,7 +23,6 @@ package maximum
 
 import (
 	context "context"
-	fmt "fmt"
 
 	operation "k8s.io/apimachinery/pkg/api/operation"
 	safe "k8s.io/apimachinery/pkg/api/safe"
@@ -37,11 +36,8 @@ func init() { localSchemeBuilder.Register(RegisterValidations) }
 // RegisterValidations adds validation functions to the given scheme.
 // Public to allow building arbitrary schemes.
 func RegisterValidations(scheme *testscheme.Scheme) error {
-	scheme.AddValidationFunc((*Struct)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}, subresources ...string) field.ErrorList {
-		if len(subresources) == 0 {
-			return Validate_Struct(ctx, op, nil /* fldPath */, obj.(*Struct), safe.Cast[*Struct](oldObj))
-		}
-		return field.ErrorList{field.InternalError(nil, fmt.Errorf("no validation found for %T, subresources: %v", obj, subresources))}
+	scheme.AddValidationFunc((*Struct)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}) field.ErrorList {
+		return Validate_Struct(ctx, op, nil /* fldPath */, obj.(*Struct), safe.Cast[*Struct](oldObj))
 	})
 	return nil
 }
@@ -58,89 +54,90 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 
 	// field Struct.IntField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *int) (errs field.ErrorList) {
-			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
+		func(fldPath *field.Path, obj, oldObj *int, parent *Struct) (errs field.ErrorList) {
+			errs = append(errs, validate.MaximumField(ctx, op, fldPath, obj, oldObj, parent.IntLimit, "intLimit")...)
 			return
-		}(fldPath.Child("intField"), &obj.IntField, safe.Field(oldObj, func(oldObj *Struct) *int { return &oldObj.IntField }))...)
+		}(fldPath.Child("intField"), &obj.IntField, safe.Field(oldObj, func(oldObj *Struct) *int { return &oldObj.IntField }), obj)...)
 
 	// field Struct.IntPtrField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *int) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *int, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
-		}(fldPath.Child("intPtrField"), obj.IntPtrField, safe.Field(oldObj, func(oldObj *Struct) *int { return oldObj.IntPtrField }))...)
+		}(fldPath.Child("intPtrField"), obj.IntPtrField, safe.Field(oldObj, func(oldObj *Struct) *int { return oldObj.IntPtrField }), obj)...)
 
 	// field Struct.Int16Field
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *int16) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *int16, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
-		}(fldPath.Child("int16Field"), &obj.Int16Field, safe.Field(oldObj, func(oldObj *Struct) *int16 { return &oldObj.Int16Field }))...)
+		}(fldPath.Child("int16Field"), &obj.Int16Field, safe.Field(oldObj, func(oldObj *Struct) *int16 { return &oldObj.Int16Field }), obj)...)
 
 	// field Struct.Int32Field
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *int32) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *int32, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
-		}(fldPath.Child("int32Field"), &obj.Int32Field, safe.Field(oldObj, func(oldObj *Struct) *int32 { return &oldObj.Int32Field }))...)
+		}(fldPath.Child("int32Field"), &obj.Int32Field, safe.Field(oldObj, func(oldObj *Struct) *int32 { return &oldObj.Int32Field }), obj)...)
 
 	// field Struct.Int64Field
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *int64) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *int64, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
-		}(fldPath.Child("int64Field"), &obj.Int64Field, safe.Field(oldObj, func(oldObj *Struct) *int64 { return &oldObj.Int64Field }))...)
+		}(fldPath.Child("int64Field"), &obj.Int64Field, safe.Field(oldObj, func(oldObj *Struct) *int64 { return &oldObj.Int64Field }), obj)...)
 
 	// field Struct.UintField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *uint) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *uint, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
-		}(fldPath.Child("uintField"), &obj.UintField, safe.Field(oldObj, func(oldObj *Struct) *uint { return &oldObj.UintField }))...)
+		}(fldPath.Child("uintField"), &obj.UintField, safe.Field(oldObj, func(oldObj *Struct) *uint { return &oldObj.UintField }), obj)...)
 
 	// field Struct.UintPtrField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *uint) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *uint, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
-		}(fldPath.Child("uintPtrField"), obj.UintPtrField, safe.Field(oldObj, func(oldObj *Struct) *uint { return oldObj.UintPtrField }))...)
+		}(fldPath.Child("uintPtrField"), obj.UintPtrField, safe.Field(oldObj, func(oldObj *Struct) *uint { return oldObj.UintPtrField }), obj)...)
 
 	// field Struct.Uint16Field
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *uint16) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *uint16, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
-		}(fldPath.Child("uint16Field"), &obj.Uint16Field, safe.Field(oldObj, func(oldObj *Struct) *uint16 { return &oldObj.Uint16Field }))...)
+		}(fldPath.Child("uint16Field"), &obj.Uint16Field, safe.Field(oldObj, func(oldObj *Struct) *uint16 { return &oldObj.Uint16Field }), obj)...)
 
 	// field Struct.Uint32Field
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *uint32) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *uint32, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
-		}(fldPath.Child("uint32Field"), &obj.Uint32Field, safe.Field(oldObj, func(oldObj *Struct) *uint32 { return &oldObj.Uint32Field }))...)
+		}(fldPath.Child("uint32Field"), &obj.Uint32Field, safe.Field(oldObj, func(oldObj *Struct) *uint32 { return &oldObj.Uint32Field }), obj)...)
 
 	// field Struct.Uint64Field
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *uint64) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *uint64, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
-		}(fldPath.Child("uint64Field"), &obj.Uint64Field, safe.Field(oldObj, func(oldObj *Struct) *uint64 { return &oldObj.Uint64Field }))...)
+		}(fldPath.Child("uint64Field"), &obj.Uint64Field, safe.Field(oldObj, func(oldObj *Struct) *uint64 { return &oldObj.Uint64Field }), obj)...)
 
 	// field Struct.TypedefField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *IntType) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *IntType, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			errs = append(errs, Validate_IntType(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("typedefField"), &obj.TypedefField, safe.Field(oldObj, func(oldObj *Struct) *IntType { return &oldObj.TypedefField }))...)
+		}(fldPath.Child("typedefField"), &obj.TypedefField, safe.Field(oldObj, func(oldObj *Struct) *IntType { return &oldObj.TypedefField }), obj)...)
 
 	// field Struct.TypedefPtrField
 	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *IntType) (errs field.ErrorList) {
+		func(fldPath *field.Path, obj, oldObj *IntType, parent *Struct) (errs field.ErrorList) {
 			errs = append(errs, validate.Maximum(ctx, op, fldPath, obj, oldObj, 1)...)
 			errs = append(errs, Validate_IntType(ctx, op, fldPath, obj, oldObj)...)
 			return
-		}(fldPath.Child("typedefPtrField"), obj.TypedefPtrField, safe.Field(oldObj, func(oldObj *Struct) *IntType { return oldObj.TypedefPtrField }))...)
+		}(fldPath.Child("typedefPtrField"), obj.TypedefPtrField, safe.Field(oldObj, func(oldObj *Struct) *IntType { return oldObj.TypedefPtrField }), obj)...)
 
+	// field Struct.IntLimit has no validation
 	return errs
 }

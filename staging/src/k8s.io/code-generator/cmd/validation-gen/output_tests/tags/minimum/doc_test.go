@@ -32,8 +32,10 @@ func Test(t *testing.T) {
 		IntPtrField:     ptr.To(0),
 		UintPtrField:    ptr.To(uint(0)),
 		TypedefPtrField: ptr.To(IntType(0)),
+
+		IntLimit: 2,
 	}).ExpectInvalid(
-		field.Invalid(field.NewPath("intField"), 0, content.MinError(1)),
+		field.Invalid(field.NewPath("intField"), 0, content.MinFieldError("intLimit")),
 		field.Invalid(field.NewPath("intPtrField"), 0, content.MinError(1)),
 		field.Invalid(field.NewPath("int16Field"), 0, content.MinError(1)),
 		field.Invalid(field.NewPath("int32Field"), 0, content.MinError(1)),
