@@ -58,7 +58,7 @@ func Validate_ImmutableStruct(ctx context.Context, op operation.Operation, fldPa
 	// field ImmutableStruct.SliceSetComparableField
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []ComparableStruct) (errs field.ErrorList) {
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj)...)
+			errs = append(errs, validate.UniqueByCompare(ctx, op, fldPath, obj, oldObj)...)
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a ComparableStruct, b ComparableStruct) bool { return a == b }, validate.ImmutableByReflect)...)
 			return
 		}(fldPath.Child("sliceSetComparableField"), obj.SliceSetComparableField, safe.Field(oldObj, func(oldObj *ImmutableStruct) []ComparableStruct { return oldObj.SliceSetComparableField }))...)
@@ -73,7 +73,7 @@ func Validate_ImmutableStruct(ctx context.Context, op operation.Operation, fldPa
 	// field ImmutableStruct.SliceSetNonComparableField
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []NonComparableStruct) (errs field.ErrorList) {
-			errs = append(errs, validate.UniqueNonComparable(ctx, op, fldPath, obj, oldObj)...)
+			errs = append(errs, validate.UniqueByReflect(ctx, op, fldPath, obj, oldObj)...)
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, validate.SemanticDeepEqual, validate.ImmutableByReflect)...)
 			return
 		}(fldPath.Child("sliceSetNonComparableField"), obj.SliceSetNonComparableField, safe.Field(oldObj, func(oldObj *ImmutableStruct) []NonComparableStruct { return oldObj.SliceSetNonComparableField }))...)
