@@ -1778,6 +1778,8 @@ func isDirectComparable(t *types.Type) bool {
 			}
 		}
 		return true
+	case types.Array:
+		return isDirectComparable(t.Elem)
 	case types.Alias:
 		return isDirectComparable(t.Underlying)
 	}
