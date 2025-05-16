@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-	"unicode"
 )
 
 // ExtractCommentTags parses comments for lines of the form:
@@ -269,12 +268,6 @@ func parseTagArgs(input string) ([]string, error) {
 	// needed.
 	runes := []rune(input)
 	for i, r := range runes {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			continue
-		}
-		if r == ',' {
-			return nil, fmt.Errorf("multiple arguments are not supported: %q", input)
-		}
 		if r == ')' {
 			if i != len(runes)-1 {
 				return nil, fmt.Errorf("unexpected characters after ')': %q", string(runes[i:]))
@@ -284,7 +277,6 @@ func parseTagArgs(input string) ([]string, error) {
 			}
 			return []string{string(runes[:i])}, nil
 		}
-		return nil, fmt.Errorf("unsupported character: %q", string(r))
 	}
 	return nil, fmt.Errorf("no closing ')' found: %q", input)
 }

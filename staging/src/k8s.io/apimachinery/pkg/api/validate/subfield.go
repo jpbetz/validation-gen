@@ -27,6 +27,9 @@ import (
 // nilable value.
 type GetFieldFunc[Tstruct any, Tfield any] func(*Tstruct) Tfield
 
+// MatchFn takes a pointer to an item and returns true if it matches the criteria.
+type MatchFn[T any] func(*T) bool
+
 // Subfield validates a subfield of a struct against a validator function.
 func Subfield[Tstruct any, Tfield any](ctx context.Context, op operation.Operation, fldPath *field.Path, newStruct, oldStruct *Tstruct,
 	fldName string, getField GetFieldFunc[Tstruct, Tfield], validator ValidateFunc[Tfield]) field.ErrorList {
@@ -38,4 +41,36 @@ func Subfield[Tstruct any, Tfield any](ctx context.Context, op operation.Operati
 	}
 	errs = append(errs, validator(ctx, op, fldPath.Child(fldName), newVal, oldVal)...)
 	return errs
+}
+
+// ListMapElementByKey validates a subfield of a list item where one of the selectors
+// is the listMapKey=... against a selector function.
+func ListMapElementByKey[TList ~[]TItem, TItem any](
+	ctx context.Context, op operation.Operation, fldPath *field.Path,
+	newList, oldList TList,
+	matches MatchFn[TItem],
+	elementValidator func(ctx context.Context, op operation.Operation, fldPath *field.Path, newObj, oldObj *TItem) field.ErrorList,
+) field.ErrorList {
+	var matchedNew, matchedOld *TItem
+	var matchedIdx int
+
+	for i := range oldList {
+		if matches(&oldList[i]) {
+			matchedOld = &oldList[i]
+			matchedIdx = i
+			break
+		}
+	}
+	for i := range newList {
+		if matches(&newList[i]) {
+			matchedNew = &newList[i]
+			matchedIdx = i
+			break
+		}
+	}
+	if matchedNew == nil && matchedOld == nil {
+		return nil
+	}
+
+	return elementValidator(ctx, op, fldPath.Index(matchedIdx), matchedNew, matchedOld)
 }
