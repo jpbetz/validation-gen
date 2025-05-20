@@ -52,6 +52,9 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil // no changes
 			}
+			errs = append(errs, validate.UniqueByFunc(ctx, op, fldPath, obj, oldObj, func(a OtherStruct, b OtherStruct) bool {
+				return a.Key1Field == b.Key1Field && a.Key2Field == b.Key2Field
+			})...)
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a OtherStruct, b OtherStruct) bool {
 				return a.Key1Field == b.Key1Field && a.Key2Field == b.Key2Field
 			}, validate.ImmutableByReflect)...)
@@ -64,6 +67,9 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil // no changes
 			}
+			errs = append(errs, validate.UniqueByFunc(ctx, op, fldPath, obj, oldObj, func(a OtherTypedefStruct, b OtherTypedefStruct) bool {
+				return a.Key1Field == b.Key1Field && a.Key2Field == b.Key2Field
+			})...)
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a OtherTypedefStruct, b OtherTypedefStruct) bool {
 				return a.Key1Field == b.Key1Field && a.Key2Field == b.Key2Field
 			}, validate.ImmutableByReflect)...)

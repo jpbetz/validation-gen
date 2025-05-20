@@ -62,6 +62,18 @@ func Test(t *testing.T) {
 		},
 	}
 
+	// Invalid duplicate keys
+	structC := Struct{
+		ListField: []OtherStruct{
+			{"key1", 1, "one"},
+			{"key1", 1, "two"},
+		},
+		ListTypedefField: []OtherTypedefStruct{
+			{"key1", 1, "one"},
+			{"key1", 1, "two"},
+		},
+	}
+
 	st.Value(&structA1).OldValue(&structA2).ExpectValid()
 
 	st.Value(&structA2).OldValue(&structA1).ExpectValid()
@@ -80,5 +92,10 @@ func Test(t *testing.T) {
 		field.Forbidden(field.NewPath("listTypedefField").Index(0), "field is immutable"),
 		field.Forbidden(field.NewPath("listTypedefField").Index(1), "field is immutable"),
 		field.Forbidden(field.NewPath("listTypedefField").Index(2), "field is immutable"),
+	)
+
+	st.Value(&structC).ExpectInvalid(
+		field.Duplicate(field.NewPath("listField").Index(1), structC.ListField[1]),
+		field.Duplicate(field.NewPath("listTypedefField").Index(1), structC.ListTypedefField[1]),
 	)
 }
