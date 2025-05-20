@@ -182,17 +182,20 @@ func (reg *registry) sortTagsIntoPhases(tags map[string][]gengo.Tag) [][]string 
 	sort.Strings(sortedTags)
 
 	// Now split them into phases.
-	phase0 := []string{} // regular tags
-	phase1 := []string{} // "late" tags
+	phase0 := []string{} // "early" tags
+	phase1 := []string{} // regular tags
+	phase2 := []string{} // "late" tags
 	for _, tn := range sortedTags {
 		tv := reg.tagValidators[tn]
-		if _, ok := tv.(LateTagValidator); ok {
-			phase1 = append(phase1, tn)
-		} else {
+		if _, ok := tv.(EarlyTagValidator); ok {
 			phase0 = append(phase0, tn)
+		} else if _, ok := tv.(LateTagValidator); ok {
+			phase2 = append(phase2, tn)
+		} else {
+			phase1 = append(phase1, tn)
 		}
 	}
-	return [][]string{phase0, phase1}
+	return [][]string{phase0, phase1, phase2}
 }
 
 // Docs returns documentation for each tag in this registry.

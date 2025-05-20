@@ -61,6 +61,7 @@ type listMetadata struct {
 	declaredAsMap bool
 	declaredAsSet bool
 	keyFields     []string
+	cmpFunc       any
 }
 
 type listTypeTagValidator struct {
@@ -80,6 +81,7 @@ func (listTypeTagValidator) ValidScopes() sets.Set[Scope] {
 var (
 	validateUniqueByCompare = types.Name{Package: libValidationPkg, Name: "UniqueByCompare"}
 	validateUniqueByReflect = types.Name{Package: libValidationPkg, Name: "UniqueByReflect"}
+	validateUniqueByFunc    = types.Name{Package: libValidationPkg, Name: "UniqueByFunc"}
 )
 
 func (lttv listTypeTagValidator) GetValidations(context Context, _ []string, payload string) (Validations, error) {
@@ -119,6 +121,23 @@ func (lttv listTypeTagValidator) GetValidations(context Context, _ []string, pay
 		}
 		lm := lttv.byFieldPath[context.Path.String()]
 		lm.declaredAsMap = true
+		cmpFn := FunctionLiteral{
+			Parameters: []ParamResult{{"a", t.Elem}, {"b", t.Elem}},
+			Results:    []ParamResult{{"", types.Bool}},
+		}
+		buf := strings.Builder{}
+		buf.WriteString("return ")
+		// Note: this does not handle pointer fields, which are not
+		// supposed to be used as listMap keys.
+		for i, fld := range lm.keyFields {
+			if i > 0 {
+				buf.WriteString(" && ")
+			}
+			buf.WriteString(fmt.Sprintf("a.%s == b.%s", fld, fld))
+		}
+		cmpFn.Body = buf.String()
+		lm.cmpFunc = cmpFn
+		return Validations{Functions: []FunctionGen{Function(listTypeTagName, DefaultFlags, validateUniqueByFunc, cmpFn)}}, nil
 	default:
 		return Validations{}, fmt.Errorf("unknown list type %q", payload)
 	}
@@ -144,6 +163,11 @@ func (lttv listTypeTagValidator) Docs() TagDoc {
 type listMapKeyTagValidator struct {
 	byFieldPath map[string]*listMetadata
 }
+
+// listMapKeyTagValidator should always run before listTypeTagValidator
+// and eachValTagValidator so that it can collect all the listMapKeys to
+// construct the cmpFunc for each listType=map.
+func (listMapKeyTagValidator) EarlyTagValidator() {}
 
 func (listMapKeyTagValidator) Init(Config) {}
 
@@ -300,22 +324,10 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 		var cmpArg any = Literal("nil")
 		if listMetadata != nil {
 			if listMetadata.declaredAsMap {
-				cmpFn := FunctionLiteral{
-					Parameters: []ParamResult{{"a", t.Elem}, {"b", t.Elem}},
-					Results:    []ParamResult{{"", types.Bool}},
+				if listMetadata.cmpFunc == nil {
+					return Validations{}, fmt.Errorf("found listType=map without cmpFunc")
 				}
-				buf := strings.Builder{}
-				buf.WriteString("return ")
-				// Note: this does not handle pointer fields, which are not
-				// supposed to be used as listMap keys.
-				for i, fld := range listMetadata.keyFields {
-					if i > 0 {
-						buf.WriteString(" && ")
-					}
-					buf.WriteString(fmt.Sprintf("a.%s == b.%s", fld, fld))
-				}
-				cmpFn.Body = buf.String()
-				cmpArg = cmpFn
+				cmpArg = listMetadata.cmpFunc
 			} else if listMetadata.declaredAsSet {
 				// Emit the cmpArg as a simple comparison when possible.
 				// Slices and maps are not comparable, and structs might hold
