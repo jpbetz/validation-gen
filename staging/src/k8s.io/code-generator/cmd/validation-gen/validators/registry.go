@@ -190,17 +190,20 @@ func (reg *registry) sortTagsIntoPhases(tags []codetags.Tag) [][]codetags.Tag {
 	})
 
 	// Now split them into phases.
-	phase0 := []codetags.Tag{} // regular tags
-	phase1 := []codetags.Tag{} // "late" tags
+	phase0 := []codetags.Tag{} // "early" tags
+	phase1 := []codetags.Tag{} // regular tags
+	phase2 := []codetags.Tag{} // "late" tags
 	for _, tn := range sortedTags {
 		tv := reg.tagValidators[tn.Name]
-		if _, ok := tv.(LateTagValidator); ok {
-			phase1 = append(phase1, tn)
-		} else {
+		if _, ok := tv.(EarlyTagValidator); ok {
 			phase0 = append(phase0, tn)
+		} else if _, ok := tv.(LateTagValidator); ok {
+			phase2 = append(phase2, tn)
+		} else {
+			phase1 = append(phase1, tn)
 		}
 	}
-	return [][]codetags.Tag{phase0, phase1}
+	return [][]codetags.Tag{phase0, phase1, phase2}
 }
 
 // Docs returns documentation for each tag in this registry.

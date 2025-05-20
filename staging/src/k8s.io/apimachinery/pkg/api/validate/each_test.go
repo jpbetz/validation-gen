@@ -323,3 +323,27 @@ func testUniqueByReflect[T any](t *testing.T, name string, input []T, wantErrs i
 		}
 	})
 }
+
+type listItem struct {
+	key1 string
+	key2 string
+	val  string
+}
+
+func TestUniqueByFunc(t *testing.T) {
+	testUniqueByFunc(t, "valid", []listItem{{"key1", "key2", "val1"}, {"key1", "key2", "val2"}, {"key1", "key3", "val3"}}, 1)
+	testUniqueByFunc(t, "valid", []listItem{{"key1", "key2", "val1"}, {"key1", "key2", "val2"}, {"key1", "key2", "val3"}}, 2)
+	testUniqueByFunc(t, "valid", []listItem{{"key1", "key2", "val1"}, {"key3", "key4", "val2"}, {"key5", "key6", "val3"}}, 0)
+}
+
+func testUniqueByFunc(t *testing.T, name string, input []listItem, wantErrs int) {
+	t.Helper()
+	t.Run(name, func(t *testing.T) {
+		errs := UniqueByFunc(context.Background(), operation.Operation{}, field.NewPath("test"), input, nil, func(a listItem, b listItem) bool {
+			return a.key1 == b.key1 && a.key2 == b.key2
+		})
+		if len(errs) != wantErrs {
+			t.Errorf("expected %d errors, got %d: %s", wantErrs, len(errs), fmtErrs(errs))
+		}
+	})
+}

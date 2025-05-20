@@ -63,6 +63,7 @@ type listMetadata struct {
 	declaredAsMap bool
 	declaredAsSet bool
 	keyFields     []string
+	matchFn       any
 }
 
 type listTypeTagValidator struct {
@@ -82,6 +83,7 @@ func (listTypeTagValidator) ValidScopes() sets.Set[Scope] {
 var (
 	validateUniqueByCompare = types.Name{Package: libValidationPkg, Name: "UniqueByCompare"}
 	validateUniqueByReflect = types.Name{Package: libValidationPkg, Name: "UniqueByReflect"}
+	validateUniqueByFunc    = types.Name{Package: libValidationPkg, Name: "UniqueByFunc"}
 )
 
 func (lttv listTypeTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
@@ -121,6 +123,23 @@ func (lttv listTypeTagValidator) GetValidations(context Context, tag codetags.Ta
 		}
 		lm := lttv.byFieldPath[context.Path.String()]
 		lm.declaredAsMap = true
+		matchFn := FunctionLiteral{
+			Parameters: []ParamResult{{"a", t.Elem}, {"b", t.Elem}},
+			Results:    []ParamResult{{"", types.Bool}},
+		}
+		buf := strings.Builder{}
+		buf.WriteString("return ")
+		// Note: this does not handle pointer fields, which are not
+		// supposed to be used as listMap keys.
+		for i, fld := range lm.keyFields {
+			if i > 0 {
+				buf.WriteString(" && ")
+			}
+			buf.WriteString(fmt.Sprintf("a.%s == b.%s", fld, fld))
+		}
+		matchFn.Body = buf.String()
+		lm.matchFn = matchFn
+		return Validations{Functions: []FunctionGen{Function(listTypeTagName, DefaultFlags, validateUniqueByFunc, matchFn)}}, nil
 	default:
 		return Validations{}, fmt.Errorf("unknown list type %q", tag.Value)
 	}
@@ -148,6 +167,11 @@ func (lttv listTypeTagValidator) Docs() TagDoc {
 type listMapKeyTagValidator struct {
 	byFieldPath map[string]*listMetadata
 }
+
+// listMapKeyTagValidator should always run before listTypeTagValidator
+// and eachValTagValidator so that it can collect all the listMapKeys to
+// construct the cmpFunc for each listType=map.
+func (listMapKeyTagValidator) EarlyTagValidator() {}
 
 func (listMapKeyTagValidator) Init(Config) {}
 
@@ -319,23 +343,10 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 		directComparable := util.IsDirectComparable(util.NonPointer(util.NativeType(t.Elem)))
 		switch {
 		case listMetadata != nil && listMetadata.declaredAsMap:
-			// Emit the comparison by keys when listType=map
-			matchFn := FunctionLiteral{
-				Parameters: []ParamResult{{"a", t.Elem}, {"b", t.Elem}},
-				Results:    []ParamResult{{"", types.Bool}},
+			if listMetadata.matchFn == nil {
+				return Validations{}, fmt.Errorf("found listType=map without listMapKey")
 			}
-			buf := strings.Builder{}
-			buf.WriteString("return ")
-			// Note: this does not handle pointer fields, which are not
-			// supposed to be used as listMap keys.
-			for i, fld := range listMetadata.keyFields {
-				if i > 0 {
-					buf.WriteString(" && ")
-				}
-				buf.WriteString(fmt.Sprintf("a.%s == b.%s", fld, fld))
-			}
-			matchFn.Body = buf.String()
-			matchArg = matchFn
+			matchArg = listMetadata.matchFn
 			if directComparable {
 				equivArg = Identifier(validateDirectEqual)
 			} else {

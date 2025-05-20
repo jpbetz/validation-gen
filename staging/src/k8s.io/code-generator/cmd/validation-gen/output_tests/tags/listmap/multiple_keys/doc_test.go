@@ -113,4 +113,20 @@ func Test(t *testing.T) {
 		field.Invalid(field.NewPath("listNonComparableField").Index(1), "", ""),
 	})
 	st.Value(&structC).OldValue(&structC2).ExpectValid()
+
+	// Invalid duplicate keys
+	structD := Struct{
+		ListField: []OtherStruct{
+			{"key1", 1, "one"},
+			{"key1", 1, "two"},
+		},
+		ListTypedefField: []OtherTypedefStruct{
+			{"key1", 1, "one"},
+			{"key1", 1, "two"},
+		},
+	}
+	st.Value(&structD).ExpectInvalid(
+		field.Duplicate(field.NewPath("listField").Index(1), structD.ListField[1]),
+		field.Duplicate(field.NewPath("listTypedefField").Index(1), structD.ListTypedefField[1]),
+	)
 }

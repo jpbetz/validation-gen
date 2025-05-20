@@ -52,6 +52,13 @@ type LateTagValidator interface {
 	LateTagValidator()
 }
 
+// EarlyTagValidator is an optional extension to TagValidator. Any TagValidator
+// which implements this interface will be evaluated before all TagValidators
+// which do not.
+type EarlyTagValidator interface {
+	EarlyTagValidator()
+}
+
 // TypeValidator describes a validator which runs on every type definition.
 type TypeValidator interface {
 	// Init initializes the implementation.  This will be called exactly once.

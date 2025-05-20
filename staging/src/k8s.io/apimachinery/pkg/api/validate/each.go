@@ -119,6 +119,13 @@ func UniqueByReflect[T any](_ context.Context, op operation.Operation, fldPath *
 	return unique(fldPath, newSlice, SemanticDeepEqual)
 }
 
+// UniqueByFunc verifies that each element in the list map is unique by using the provided comparison function.
+// The comparison function (cmp) determines when two elements are considered equal, and if any elements
+// are found to be equal according to this function, they are reported as duplicates.
+func UniqueByFunc[T any](_ context.Context, op operation.Operation, fldPath *field.Path, newSlice, _ []T, cmp CompareFunc[T]) field.ErrorList {
+	return unique(fldPath, newSlice, cmp)
+}
+
 // unique compares every element of the slice with every other element and
 // returns errors for non-unique items.
 func unique[T any](fldPath *field.Path, slice []T, cmp func(T, T) bool) field.ErrorList {
