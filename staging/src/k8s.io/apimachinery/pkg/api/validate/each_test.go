@@ -32,6 +32,23 @@ type TestStruct struct {
 	D string
 }
 
+type TestStructWithKey struct {
+	Key string
+	I   int
+	D   string
+}
+
+type NonComparableStruct struct {
+	I int
+	S []string
+}
+
+type NonComparableStructWithKey struct {
+	Key string
+	I   int
+	S   []string
+}
+
 func TestEachSliceVal(t *testing.T) {
 	testEachSliceVal(t, "valid", []int{11, 12, 13})
 	testEachSliceVal(t, "valid", []string{"a", "b", "c"})
@@ -70,7 +87,7 @@ func testEachSliceVal[T any](t *testing.T, name string, input []T) {
 			calls++
 			return nil
 		}
-		_ = EachSliceVal(context.Background(), operation.Operation{}, field.NewPath("test"), input, nil, nil, vfn)
+		_ = EachSliceVal(context.Background(), operation.Operation{}, field.NewPath("test"), input, nil, nil, false, vfn)
 		if calls != len(input) {
 			t.Errorf("expected %d calls, got %d", len(input), calls)
 		}
@@ -96,9 +113,116 @@ func testEachSliceValUpdate[T any](t *testing.T, name string, input []T) {
 		copy(old, input)
 		slices.Reverse(old)
 		cmp := func(a, b T) bool { return reflect.DeepEqual(a, b) }
-		_ = EachSliceVal(context.Background(), operation.Operation{}, field.NewPath("test"), input, old, cmp, vfn)
+		_ = EachSliceVal(context.Background(), operation.Operation{}, field.NewPath("test"), input, old, cmp, true, vfn)
 		if calls != len(input) {
 			t.Errorf("expected %d calls, got %d", len(input), calls)
+		}
+	})
+}
+
+func TestEachSliceValComparable(t *testing.T) {
+	testEachSliceValComparable(t, "valid", []int{11, 12, 13})
+	testEachSliceValComparable(t, "valid", []string{"a", "b", "c"})
+	testEachSliceValComparable(t, "valid", []TestStruct{{11, "a"}, {12, "b"}, {13, "c"}})
+}
+func testEachSliceValComparable[T comparable](t *testing.T, name string, input []T) {
+	t.Helper()
+	var zero T
+	t.Run(fmt.Sprintf("%s(%T)", name, zero), func(t *testing.T) {
+		calls := 0
+		vfn := func(ctx context.Context, op operation.Operation, fldPath *field.Path, newVal, oldVal *T) field.ErrorList {
+			if oldVal != nil {
+				t.Errorf("expected nil oldVal, got %v", *oldVal)
+			}
+			calls++
+			return nil
+		}
+		_ = EachSliceValComparable(context.Background(), operation.Operation{}, field.NewPath("test"), input, nil, nil, false, vfn)
+		if calls != len(input) {
+			t.Errorf("expected %d calls, got %d", len(input), calls)
+		}
+	})
+}
+
+func TestEachSliceValRatcheting(t *testing.T) {
+	testEachSliceValRatcheting(t, "same data different order",
+		[]NonComparableStruct{
+			{11, []string{"a"}}, {12, []string{"b"}}, {13, []string{"c"}},
+		},
+		[]NonComparableStruct{
+			{11, []string{"a"}}, {12, []string{"b"}}, {13, []string{"c"}},
+		},
+		SemanticDeepEqual,
+		true,
+	)
+	testEachSliceValRatcheting(t, "less data in new, exist in old",
+		[]NonComparableStruct{
+			{11, []string{"a"}}, {12, []string{"b"}}, {13, []string{"c"}},
+		},
+		[]NonComparableStruct{
+			{11, []string{"a"}}, {13, []string{"c"}},
+		},
+		SemanticDeepEqual,
+		true,
+	)
+	testEachSliceValRatcheting(t, "same data different order with key",
+		[]NonComparableStructWithKey{
+			{Key: "a", I: 11, S: []string{"a"}}, {Key: "b", I: 12, S: []string{"b"}}, {Key: "c", I: 13, S: []string{"c"}},
+		},
+		[]NonComparableStructWithKey{
+			{Key: "a", I: 11, S: []string{"a"}}, {Key: "b", I: 12, S: []string{"b"}}, {Key: "c", I: 13, S: []string{"c"}},
+		},
+		CompareFunc[NonComparableStructWithKey](func(a, b NonComparableStructWithKey) bool {
+			return a.Key == b.Key
+		}),
+		false,
+	)
+	testEachSliceValComparableRatcheting(t, "same data different order", []int{11, 13, 12}, []int{11, 12, 13}, DirectEqual, true)
+	testEachSliceValComparableRatcheting(t, "same data different order", []string{"a", "c", "b"}, []string{"a", "b", "c"}, DirectEqual, true)
+	testEachSliceValComparableRatcheting(t, "less data in new, not exist in old", []string{"a", "c", "b"}, []string{"b", "c"}, DirectEqual, true)
+	testEachSliceValComparableRatcheting(t, "same data different order", []TestStruct{{11, "a"}, {13, "c"}, {12, "b"}}, []TestStruct{{11, "a"}, {12, "b"}, {13, "c"}}, DirectEqual, true)
+	testEachSliceValComparableRatcheting(t, "less data in new, not exist in old", []TestStruct{{11, "a"}, {13, "c"}, {12, "b"}}, []TestStruct{{12, "b"}, {13, "c"}}, DirectEqual, true)
+	testEachSliceValComparableRatcheting(t, "same data different order with key", []TestStructWithKey{
+		{Key: "a", I: 11, D: "a"},
+		{Key: "b", I: 12, D: "b"},
+		{Key: "c", I: 13, D: "c"},
+	},
+		[]TestStructWithKey{
+			{Key: "a", I: 11, D: "a"},
+			{Key: "c", I: 13, D: "c"},
+			{Key: "b", I: 12, D: "b"},
+		},
+		func(a, b TestStructWithKey) bool {
+			return a.Key == b.Key
+		},
+		false,
+	)
+}
+
+func testEachSliceValRatcheting[T any](t *testing.T, name string, old, new []T, cmp CompareFunc[T], isEquivalenceCompare bool) {
+	t.Helper()
+	var zero T
+	t.Run(fmt.Sprintf("%s(%T)", name, zero), func(t *testing.T) {
+		vfn := func(ctx context.Context, op operation.Operation, fldPath *field.Path, newVal, oldVal *T) field.ErrorList {
+			return field.ErrorList{field.Invalid(fldPath, *newVal, "expected no calls")}
+		}
+		errs := EachSliceVal(context.Background(), operation.Operation{Type: operation.Update}, field.NewPath("test"), new, old, cmp, isEquivalenceCompare, vfn)
+		if len(errs) > 0 {
+			t.Errorf("expected no errors, got %d: %s", len(errs), fmtErrs(errs))
+		}
+	})
+}
+
+func testEachSliceValComparableRatcheting[T comparable](t *testing.T, name string, old, new []T, cmp CompareFunc[T], isEquivalenceCompare bool) {
+	t.Helper()
+	var zero T
+	t.Run(fmt.Sprintf("%s(%T)", name, zero), func(t *testing.T) {
+		vfn := func(ctx context.Context, op operation.Operation, fldPath *field.Path, newVal, oldVal *T) field.ErrorList {
+			return field.ErrorList{field.Invalid(fldPath, *newVal, "expected no calls")}
+		}
+		errs := EachSliceValComparable(context.Background(), operation.Operation{Type: operation.Update}, field.NewPath("test"), new, old, cmp, isEquivalenceCompare, vfn)
+		if len(errs) > 0 {
+			t.Errorf("expected no errors, got %d: %s", len(errs), fmtErrs(errs))
 		}
 	})
 }

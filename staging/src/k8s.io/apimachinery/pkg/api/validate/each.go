@@ -33,12 +33,40 @@ type CompareFunc[T any] func(T, T) bool
 // corresponding value in oldSlice.  The value-type of the slices is assumed to
 // not be nilable.
 func EachSliceVal[T any](ctx context.Context, op operation.Operation, fldPath *field.Path, newSlice, oldSlice []T,
-	cmp CompareFunc[T], validator ValidateFunc[*T]) field.ErrorList {
+	cmp CompareFunc[T], isEquivalenceCompare bool, validator ValidateFunc[*T]) field.ErrorList {
 	var errs field.ErrorList
 	for i, val := range newSlice {
 		var old *T
 		if cmp != nil && len(oldSlice) > 0 {
 			old = lookup(oldSlice, val, cmp)
+		}
+		// If the operation is an update, for validation ratcheting, skip if the old
+		// value is present when the cmp is equivalence compare or the old value is
+		// equal to the new value.
+		if op.Type == operation.Update && old != nil && (isEquivalenceCompare || SemanticDeepEqual(val, *old)) {
+			continue
+		}
+		errs = append(errs, validator(ctx, op, fldPath.Index(i), &val, old)...)
+	}
+	return errs
+}
+
+// EachSliceValComparable is similar to EachSliceVal, but it assumes that the
+// elements of the slices are "direct comparable". It can use direct comparision to check
+// the equality of the correlated old and new values.
+func EachSliceValComparable[T comparable](ctx context.Context, op operation.Operation, fldPath *field.Path, newSlice, oldSlice []T,
+	cmp CompareFunc[T], isEquivalenceCompare bool, validator ValidateFunc[*T]) field.ErrorList {
+	var errs field.ErrorList
+	for i, val := range newSlice {
+		var old *T
+		if cmp != nil && len(oldSlice) > 0 {
+			old = lookup(oldSlice, val, cmp)
+		}
+		// If the operation is an update, for validation ratcheting, skip if the old
+		// value is present when the cmp is equivalence compare or the old value is
+		// equal to the new value.
+		if op.Type == operation.Update && old != nil && (isEquivalenceCompare || DirectEqual(val, *old)) {
+			continue
 		}
 		errs = append(errs, validator(ctx, op, fldPath.Index(i), &val, old)...)
 	}
