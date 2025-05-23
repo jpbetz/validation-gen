@@ -811,7 +811,7 @@ func (g *genValidations) emitRegisterFunction(c *generator.Context, schemeRegist
 			"safe":      mkSymbolArgs(c, safePkgSymbols),
 			"context":   mkSymbolArgs(c, contextPkgSymbols),
 		}
-		if !isNilableType(rootType) {
+		if !validators.IsNilableType(rootType) {
 			targs["typePfx"] = "*"
 		}
 
@@ -845,7 +845,7 @@ func (g *genValidations) emitValidationFunction(c *generator.Context, t *types.T
 		"context":    mkSymbolArgs(c, contextPkgSymbols),
 		"objTypePfx": "*",
 	}
-	if isNilableType(t) {
+	if validators.IsNilableType(t) {
 		targs["objTypePfx"] = ""
 	}
 
@@ -1314,7 +1314,7 @@ func toGolangSourceDataLiteral(sw *generator.SnippetWriter, c *generator.Context
 				"objType":    v.ObjType,
 				"objTypePfx": "*",
 			}
-			if isNilableType(v.ObjType) {
+			if validators.IsNilableType(v.ObjType) {
 				targs["objTypePfx"] = ""
 			}
 
@@ -1411,16 +1411,6 @@ func toGolangSourceDataLiteral(sw *generator.SnippetWriter, c *generator.Context
 	}
 }
 
-// isNilableType returns true if the argument type can be compared to nil.
-func isNilableType(t *types.Type) bool {
-	t = validators.NativeType(t)
-	switch t.Kind {
-	case types.Pointer, types.Map, types.Slice, types.Interface: // Note: Arrays are not nilable
-		return true
-	}
-	return false
-}
-
 // getLeafTypeAndPrefixes returns the "leaf value type" for a given type, as
 // well as type and expression prefix strings for the input type.  The type
 // prefix can be prepended to the given type's name to produce the nilable form
@@ -1446,7 +1436,7 @@ func getLeafTypeAndPrefixes(inType *types.Type) (*types.Type, string, string) {
 		nPtrs++
 		leafType = leafType.Elem
 	}
-	if !isNilableType(leafType) {
+	if !validators.IsNilableType(leafType) {
 		typePfx = "*"
 		if nPtrs == 0 {
 			exprPfx = "&"
