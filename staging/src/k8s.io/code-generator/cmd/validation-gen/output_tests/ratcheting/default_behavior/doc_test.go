@@ -24,51 +24,51 @@ import (
 )
 
 func Test_StructPrimitive(t *testing.T) {
+	mkTest := func() *StructPrimitive {
+		return &StructPrimitive{
+			IntField:    1,
+			IntPtrField: ptr.To(1), // Different pointers each call, but same value.
+		}
+	}
+
 	st := localSchemeBuilder.Test(t)
-	st.Value(&StructPrimitive{
-		IntField:    1,
-		IntPtrField: ptr.To(1),
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
+	st.Value(mkTest()).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
 		field.Invalid(field.NewPath("intField"), "", ""),
 		field.Invalid(field.NewPath("intPtrField"), "", ""),
 	})
-	st.Value(&StructPrimitive{
-		IntField:    1,
-		IntPtrField: ptr.To(1),
-	}).OldValue(&StructPrimitive{
-		IntField:    1,
-		IntPtrField: ptr.To(1), // Different pointers but value unchanged.
-	}).ExpectValid()
+	st.Value(mkTest()).OldValue(mkTest()).ExpectValid()
 }
 
 func Test_StructSlice(t *testing.T) {
+	mkTest := func() *StructSlice {
+		return &StructSlice{
+			SliceField:        []S{""},
+			TypeDefSliceField: MySlice{1},
+		}
+	}
+
 	st := localSchemeBuilder.Test(t)
-	st.Value(&StructSlice{
-		SliceField:        []S{""},
-		TypeDefSliceField: MySlice{1},
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
+	st.Value(mkTest()).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
 		field.Invalid(field.NewPath("sliceField"), "", ""),
 		field.Invalid(field.NewPath("sliceField[0]"), "", ""),
 		field.Invalid(field.NewPath("typedefSliceField"), "", ""),
 	})
 
-	st.Value(&StructSlice{
-		SliceField:        []S{""},
-		TypeDefSliceField: MySlice{1},
-	}).OldValue(&StructSlice{
-		SliceField:        []S{""},
-		TypeDefSliceField: MySlice{1},
-	}).ExpectValid()
+	st.Value(mkTest()).OldValue(mkTest()).ExpectValid()
 }
 
 func Test_StructMap(t *testing.T) {
+	mkTest := func() *StructMap {
+		return &StructMap{
+			MapKeyField:            map[S]string{S("k"): "v"},
+			MapValueField:          map[string]S{"k": "v"},
+			AliasMapKeyTypeField:   AliasMapKeyType{"k": "v"},
+			AliasMapValueTypeField: AliasMapValueType{"k": "v"},
+		}
+	}
+
 	st := localSchemeBuilder.Test(t)
-	st.Value(&StructMap{
-		MapKeyField:            map[S]string{S("k"): "v"},
-		MapValueField:          map[string]S{"k": "v"},
-		AliasMapKeyTypeField:   AliasMapKeyType{"k": "v"},
-		AliasMapValueTypeField: AliasMapValueType{"k": "v"},
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
+	st.Value(mkTest()).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
 		field.Invalid(field.NewPath("mapKeyField"), "", ""),
 		field.Invalid(field.NewPath("mapValueField"), "", ""),
 		field.Invalid(field.NewPath("mapValueField[k]"), "", ""),
@@ -77,35 +77,29 @@ func Test_StructMap(t *testing.T) {
 		field.Invalid(field.NewPath("aliasMapValueTypeField[k]"), "", ""),
 	})
 
-	st.Value(&StructMap{
-		MapKeyField:            map[S]string{S("k"): "v"},
-		MapValueField:          map[string]S{"k": "v"},
-		AliasMapKeyTypeField:   AliasMapKeyType{"k": "v"},
-		AliasMapValueTypeField: AliasMapValueType{"k": "v"},
-	}).OldValue(&StructMap{
-		MapKeyField:            map[S]string{S("k"): "v"},
-		MapValueField:          map[string]S{"k": "v"},
-		AliasMapKeyTypeField:   AliasMapKeyType{"k": "v"},
-		AliasMapValueTypeField: AliasMapValueType{"k": "v"},
-	}).ExpectValid()
+	st.Value(mkTest()).OldValue(mkTest()).ExpectValid()
 }
 
 func Test_StructStruct(t *testing.T) {
+	mkTest := func() *StructStruct {
+		return &StructStruct{
+			DirectComparableStructField: DirectComparableStruct{
+				IntField: 1,
+			},
+			NonDirectComparableStructField: NonDirectComparableStruct{
+				IntPtrField: ptr.To(1),
+			},
+			DirectComparableStructPtr: &DirectComparableStruct{
+				IntField: 1,
+			},
+			NonDirectComparableStructPtr: &NonDirectComparableStruct{
+				IntPtrField: ptr.To(1),
+			},
+		}
+	}
+
 	st := localSchemeBuilder.Test(t)
-	st.Value(&StructStruct{
-		DirectComparableStructField: DirectComparableStruct{
-			IntField: 1,
-		},
-		NonDirectComparableStructField: NonDirectComparableStruct{
-			IntPtrField: ptr.To(1),
-		},
-		DirectComparableStructPtr: &DirectComparableStruct{
-			IntField: 1,
-		},
-		NonDirectComparableStructPtr: &NonDirectComparableStruct{
-			IntPtrField: ptr.To(1),
-		},
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
+	st.Value(mkTest()).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
 		field.Invalid(field.NewPath("directComparableStructField"), "", ""),
 		field.Invalid(field.NewPath("nonDirectComparableStructField"), "", ""),
 		field.Invalid(field.NewPath("directComparableStructField").Child("intField"), "", ""),
@@ -120,45 +114,33 @@ func Test_StructStruct(t *testing.T) {
 		field.Invalid(field.NewPath("NonDirectComparableStruct").Child("intPtrField"), "", ""),
 	})
 
-	st.Value(&StructStruct{
-		DirectComparableStructField: DirectComparableStruct{
-			IntField: 1,
-		},
-		NonDirectComparableStructField: NonDirectComparableStruct{
-			IntPtrField: ptr.To(1),
-		},
-		DirectComparableStructPtr: &DirectComparableStruct{
-			IntField: 1,
-		},
-		NonDirectComparableStructPtr: &NonDirectComparableStruct{
-			IntPtrField: ptr.To(1),
-		},
-	}).OldValue(&StructStruct{
-		DirectComparableStructField: DirectComparableStruct{
-			IntField: 1,
-		},
-		NonDirectComparableStructField: NonDirectComparableStruct{
-			IntPtrField: ptr.To(1),
-		},
-		DirectComparableStructPtr: &DirectComparableStruct{
-			IntField: 1,
-		},
-		NonDirectComparableStructPtr: &NonDirectComparableStruct{
-			IntPtrField: ptr.To(1),
-		},
-	}).ExpectValid()
+	st.Value(mkTest()).OldValue(mkTest()).ExpectValid()
 }
 
 func Test_StructEmbedded(t *testing.T) {
+	mkTest := func() *StructEmbedded {
+		return &StructEmbedded{
+			DirectComparableStruct: DirectComparableStruct{
+				IntField: 1,
+			},
+			NonDirectComparableStruct: NonDirectComparableStruct{
+				IntPtrField: ptr.To(1),
+			},
+			NestedDirectComparableStructField: NestedDirectComparableStruct{
+				DirectComparableStructField: DirectComparableStruct{
+					IntField: 1,
+				},
+			},
+			NestedNonDirectComparableStructField: NestedNonDirectComparableStruct{
+				NonDirectComparableStructField: NonDirectComparableStruct{
+					IntPtrField: ptr.To(1),
+				},
+			},
+		}
+	}
+
 	st := localSchemeBuilder.Test(t)
-	st.Value(&StructEmbedded{
-		DirectComparableStruct: DirectComparableStruct{
-			IntField: 1,
-		},
-		NonDirectComparableStruct: NonDirectComparableStruct{
-			IntPtrField: ptr.To(1),
-		},
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
+	st.Value(mkTest()).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
 		field.Invalid(field.NewPath("directComparableStruct"), "", ""),
 		field.Invalid(field.NewPath("nonDirectComparableStruct"), "", ""),
 		field.Invalid(field.NewPath("directComparableStruct").Child("intField"), "", ""),
@@ -171,39 +153,5 @@ func Test_StructEmbedded(t *testing.T) {
 		field.Invalid(field.NewPath("nestedNonDirectComparableStructField").Child("nonDirectComparableStructField").Child("intPtrField"), "", ""),
 	})
 
-	st.Value(&StructEmbedded{
-		DirectComparableStruct: DirectComparableStruct{
-			IntField: 1,
-		},
-		NonDirectComparableStruct: NonDirectComparableStruct{
-			IntPtrField: ptr.To(1),
-		},
-		NestedDirectComparableStructField: NestedDirectComparableStruct{
-			DirectComparableStructField: DirectComparableStruct{
-				IntField: 1,
-			},
-		},
-		NestedNonDirectComparableStructField: NestedNonDirectComparableStruct{
-			NonDirectComparableStructField: NonDirectComparableStruct{
-				IntPtrField: ptr.To(1),
-			},
-		},
-	}).OldValue(&StructEmbedded{
-		DirectComparableStruct: DirectComparableStruct{
-			IntField: 1,
-		},
-		NonDirectComparableStruct: NonDirectComparableStruct{
-			IntPtrField: ptr.To(1),
-		},
-		NestedDirectComparableStructField: NestedDirectComparableStruct{
-			DirectComparableStructField: DirectComparableStruct{
-				IntField: 1,
-			},
-		},
-		NestedNonDirectComparableStructField: NestedNonDirectComparableStruct{
-			NonDirectComparableStructField: NonDirectComparableStruct{
-				IntPtrField: ptr.To(1),
-			},
-		},
-	}).ExpectValid()
+	st.Value(mkTest()).OldValue(mkTest()).ExpectValid()
 }
