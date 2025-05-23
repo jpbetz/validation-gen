@@ -32,30 +32,30 @@ type CompareFunc[T any] func(T, T) bool
 // validation function.  The comparison function is used to find the
 // corresponding value in oldSlice.  The value-type of the slices is assumed to
 // not be nilable.
+//
+// The skipEquivalenceCheck parameter controls validation ratcheting behavior during updates:
+// - When true, validation is skipped for any element that has a corresponding old value
+// - When false, validation is only skipped if the old value equals the new value
 func EachSliceVal[T any](ctx context.Context, op operation.Operation, fldPath *field.Path, newSlice, oldSlice []T,
-	cmp CompareFunc[T], isEquivalenceCompare bool, validator ValidateFunc[*T]) field.ErrorList {
-	var errs field.ErrorList
-	for i, val := range newSlice {
-		var old *T
-		if cmp != nil && len(oldSlice) > 0 {
-			old = lookup(oldSlice, val, cmp)
-		}
-		// If the operation is an update, for validation ratcheting, skip if the old
-		// value is present when the cmp is equivalence compare or the old value is
-		// equal to the new value.
-		if op.Type == operation.Update && old != nil && (isEquivalenceCompare || SemanticDeepEqual(val, *old)) {
-			continue
-		}
-		errs = append(errs, validator(ctx, op, fldPath.Index(i), &val, old)...)
-	}
-	return errs
+	cmp CompareFunc[T], skipEquivalenceCheck bool, validator ValidateFunc[*T]) field.ErrorList {
+	return eachSliceValImpl(ctx, op, fldPath, newSlice, oldSlice, cmp, SemanticDeepEqual[T], skipEquivalenceCheck, validator)
 }
 
 // EachSliceValComparable is similar to EachSliceVal, but it assumes that the
-// elements of the slices are "direct comparable". It can use direct comparision to check
+// elements of the slices are "directly comparable". It can use direct comparison to check
 // the equality of the correlated old and new values.
+//
+// The skipEquivalenceCheck parameter controls validation ratcheting behavior during updates:
+// - When true, validation is skipped for any element that has a corresponding old value
+// - When false, validation is only skipped if the old value equals the new value
 func EachSliceValComparable[T comparable](ctx context.Context, op operation.Operation, fldPath *field.Path, newSlice, oldSlice []T,
-	cmp CompareFunc[T], isEquivalenceCompare bool, validator ValidateFunc[*T]) field.ErrorList {
+	cmp CompareFunc[T], skipEquivalenceCheck bool, validator ValidateFunc[*T]) field.ErrorList {
+	return eachSliceValImpl(ctx, op, fldPath, newSlice, oldSlice, cmp, DirectEqual[T], skipEquivalenceCheck, validator)
+}
+
+// eachSliceValImpl is the common implementation for EachSliceVal and EachSliceValComparable.
+func eachSliceValImpl[T any](ctx context.Context, op operation.Operation, fldPath *field.Path, newSlice, oldSlice []T,
+	cmp, equalFunc CompareFunc[T], skipEquivalenceCheck bool, validator ValidateFunc[*T]) field.ErrorList {
 	var errs field.ErrorList
 	for i, val := range newSlice {
 		var old *T
@@ -65,7 +65,7 @@ func EachSliceValComparable[T comparable](ctx context.Context, op operation.Oper
 		// If the operation is an update, for validation ratcheting, skip if the old
 		// value is present when the cmp is equivalence compare or the old value is
 		// equal to the new value.
-		if op.Type == operation.Update && old != nil && (isEquivalenceCompare || DirectEqual(val, *old)) {
+		if op.Type == operation.Update && old != nil && (skipEquivalenceCheck || equalFunc(val, *old)) {
 			continue
 		}
 		errs = append(errs, validator(ctx, op, fldPath.Index(i), &val, old)...)
