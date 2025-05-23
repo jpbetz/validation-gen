@@ -44,6 +44,7 @@ func init() {
 	shared := map[string]*listMetadata{} // keyed by the fieldpath
 	RegisterTagValidator(listTypeTagValidator{byFieldPath: shared})
 	RegisterTagValidator(listMapKeyTagValidator{byFieldPath: shared})
+	RegisterTagValidator(&listMapItemTagValidator{byFieldPath: shared})
 
 	globalEachVal = &eachValTagValidator{byFieldPath: shared, validator: nil}
 	RegisterTagValidator(globalEachVal)
