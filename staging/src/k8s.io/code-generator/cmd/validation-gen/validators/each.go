@@ -221,10 +221,11 @@ func (eachValTagValidator) ValidScopes() sets.Set[Scope] {
 func (eachValTagValidator) LateTagValidator() {}
 
 var (
-	validateEachSliceVal      = types.Name{Package: libValidationPkg, Name: "EachSliceVal"}
-	validateEachMapVal        = types.Name{Package: libValidationPkg, Name: "EachMapVal"}
-	validateSemanticDeepEqual = types.Name{Package: libValidationPkg, Name: "SemanticDeepEqual"}
-	validateDirectEqual       = types.Name{Package: libValidationPkg, Name: "DirectEqual"}
+	validateEachSliceVal           = types.Name{Package: libValidationPkg, Name: "EachSliceVal"}
+	validateEachSliceValComparable = types.Name{Package: libValidationPkg, Name: "EachSliceValComparable"}
+	validateEachMapVal             = types.Name{Package: libValidationPkg, Name: "EachMapVal"}
+	validateSemanticDeepEqual      = types.Name{Package: libValidationPkg, Name: "SemanticDeepEqual"}
+	validateDirectEqual            = types.Name{Package: libValidationPkg, Name: "DirectEqual"}
 )
 
 func (evtv eachValTagValidator) GetValidations(context Context, _ []string, payload string) (Validations, error) {
@@ -298,38 +299,50 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 
 	for _, vfn := range validations.Functions {
 		var cmpArg any = Literal("nil")
-		if listMetadata != nil {
-			if listMetadata.declaredAsMap {
-				cmpFn := FunctionLiteral{
-					Parameters: []ParamResult{{"a", t.Elem}, {"b", t.Elem}},
-					Results:    []ParamResult{{"", types.Bool}},
-				}
-				buf := strings.Builder{}
-				buf.WriteString("return ")
-				// Note: this does not handle pointer fields, which are not
-				// supposed to be used as listMap keys.
-				for i, fld := range listMetadata.keyFields {
-					if i > 0 {
-						buf.WriteString(" && ")
-					}
-					buf.WriteString(fmt.Sprintf("a.%s == b.%s", fld, fld))
-				}
-				cmpFn.Body = buf.String()
-				cmpArg = cmpFn
-			} else if listMetadata.declaredAsSet {
-				// Emit the cmpArg as a simple comparison when possible.
-				// Slices and maps are not comparable, and structs might hold
-				// pointer fields, which are directly comparable but not what we need.
-				//
-				// Note: This compares the pointee, not the pointer itself.
-				if NonPointer(NativeType(t.Elem)).Kind == types.Builtin {
-					cmpArg = Identifier(validateDirectEqual)
-				} else {
-					cmpArg = Identifier(validateSemanticDeepEqual)
-				}
+		// isEquivalenceCompareArg indicates that whether the cmpArg is a equivalence comparison.
+		// When it is "true", we can skip equivalence comparison when old correlated element found.
+		isEquivalenceCompareArg := Literal("false")
+		// directComparable is used to determine whether we can use the direct
+		// comparison operator "==" or need to use the semantic DeepEqual when
+		// comparing correlated list elements for validation ratcheting.
+		directComparable := IsDirectComparable(NonPointer(NativeType(t.Elem)))
+		switch {
+		case listMetadata != nil && listMetadata.declaredAsMap:
+			// Emit the comparison by keys when listType=map
+			cmpFn := FunctionLiteral{
+				Parameters: []ParamResult{{"a", t.Elem}, {"b", t.Elem}},
+				Results:    []ParamResult{{"", types.Bool}},
 			}
+			buf := strings.Builder{}
+			buf.WriteString("return ")
+			// Note: this does not handle pointer fields, which are not
+			// supposed to be used as listMap keys.
+			for i, fld := range listMetadata.keyFields {
+				if i > 0 {
+					buf.WriteString(" && ")
+				}
+				buf.WriteString(fmt.Sprintf("a.%s == b.%s", fld, fld))
+			}
+			cmpFn.Body = buf.String()
+			cmpArg = cmpFn
+		case NonPointer(NativeType(t.Elem)).Kind == types.Builtin:
+			// Emit the cmpArg as a simple comparison when possible.
+			// Slices and maps are not comparable, and structs might hold
+			// pointer fields, which are directly comparable but not what we need.
+			//
+			// Note: This compares the pointee, not the pointer itself.
+			cmpArg = Identifier(validateDirectEqual)
+			isEquivalenceCompareArg = Literal("true")
+		default:
+			// Emit semantic comparison by default when the element cannot be
+			// directly compared.
+			cmpArg = Identifier(validateSemanticDeepEqual)
+			isEquivalenceCompareArg = Literal("true")
 		}
-		f := Function(eachValTagName, vfn.Flags, validateEachSliceVal, cmpArg, WrapperFunction{vfn, t.Elem})
+		f := Function(eachValTagName, vfn.Flags, validateEachSliceVal, cmpArg, isEquivalenceCompareArg, WrapperFunction{vfn, t.Elem})
+		if directComparable {
+			f = Function(eachValTagName, vfn.Flags, validateEachSliceValComparable, cmpArg, isEquivalenceCompareArg, WrapperFunction{vfn, t.Elem})
+		}
 		result.Functions = append(result.Functions, f)
 	}
 
