@@ -7106,7 +7106,7 @@ func TestValidateEnvVarValueFromFileKeyRef(t *testing.T) {
 					Field:    field.NewPath("valueFrom.fileKeyRef.volumeName").String(),
 					BadValue: "INVALID_NAME!",
 					Detail:   "a lowercase RFC 1123 label must consist of",
-					Origin:   "format=k8s-short-name",
+					Origin:   "format=dns-label",
 				},
 			},
 		},
@@ -7164,7 +7164,7 @@ func TestValidateEnvVarValueFromFileKeyRef(t *testing.T) {
 					Field:    field.NewPath("valueFrom.fileKeyRef.volumeName").String(),
 					BadValue: "!badname",
 					Detail:   "a lowercase RFC 1123 label must consist of",
-					Origin:   "format=k8s-short-name",
+					Origin:   "format=dns-label",
 				},
 				field.Invalid(field.NewPath("valueFrom.fileKeyRef.path"), "../badpath", "must not contain '..'"),
 			},
@@ -22398,7 +22398,7 @@ func TestValidateEndpointsCreate(t *testing.T) {
 				}},
 			},
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("subsets[0].addresses[0].ip"), nil, "").WithOrigin("format=k8s-ip"),
+				field.Invalid(field.NewPath("subsets[0].addresses[0].ip"), nil, "").WithOrigin("format=k8s-ip-sloppy"),
 			},
 		},
 		"invalid legacy IP with strict validation": {
@@ -22410,7 +22410,7 @@ func TestValidateEndpointsCreate(t *testing.T) {
 				}},
 			},
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("subsets[0].addresses[0].ip"), nil, "").WithOrigin("format=k8s-ip"),
+				field.Invalid(field.NewPath("subsets[0].addresses[0].ip"), nil, "").WithOrigin("format=k8s-ip-sloppy"),
 			},
 		},
 		"Multiple ports, one without name": {
@@ -22458,7 +22458,7 @@ func TestValidateEndpointsCreate(t *testing.T) {
 				}},
 			},
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("subsets[0].addresses[0].ip"), nil, "").WithOrigin("format=k8s-ip"),
+				field.Invalid(field.NewPath("subsets[0].addresses[0].ip"), nil, "").WithOrigin("format=k8s-ip-sloppy"),
 			},
 		},
 		"Port missing number": {
