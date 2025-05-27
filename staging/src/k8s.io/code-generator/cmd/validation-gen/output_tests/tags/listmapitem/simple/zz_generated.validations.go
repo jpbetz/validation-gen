@@ -46,7 +46,7 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Struct) (errs field.ErrorList) {
 	// field Struct.TypeMeta has no validation
 
-	// field Struct.SingleKeyItems
+	// field Struct.SingleKey
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []Item) (errs field.ErrorList) {
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
@@ -56,14 +56,56 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				if item == nil {
 					return false
 				}
-				return item.Key == "Target"
+				return item.Key == "target"
 			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
-				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem SingleKeyItems[key=Target]")
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem SingleKey[key=target]")
 			})...)
+			errs = append(errs, validate.ListMapItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *Item) bool {
+				if item == nil {
+					return false
+				}
+				return item.Key == "fixed"
+			}, validate.ImmutableByCompare)...)
 			return
-		}(fldPath.Child("singleKeyItems"), obj.SingleKeyItems, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.SingleKeyItems }))...)
+		}(fldPath.Child("singleKey"), obj.SingleKey, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.SingleKey }))...)
 
-	// field Struct.MultipleKeyItems
+	// field Struct.MultiKey
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj []MultiItem) (errs field.ErrorList) {
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.ListMapItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *MultiItem) bool {
+				if item == nil {
+					return false
+				}
+				return item.Key1 == "a" && item.Key2 == "b"
+			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *MultiItem) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem MultiKey[key1=a,key2=b]")
+			})...)
+			return
+		}(fldPath.Child("multiKey"), obj.MultiKey, safe.Field(oldObj, func(oldObj *Struct) []MultiItem { return oldObj.MultiKey }))...)
+
+	// field Struct.WithSubfield
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj []SubfieldItem) (errs field.ErrorList) {
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.ListMapItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *SubfieldItem) bool {
+				if item == nil {
+					return false
+				}
+				return item.Key == "target"
+			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *SubfieldItem) field.ErrorList {
+				return validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *SubfieldItem) *string { return &o.StringField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem WithSubfield[key=target].stringField")
+				})
+			})...)
+			return
+		}(fldPath.Child("withSubfield"), obj.WithSubfield, safe.Field(oldObj, func(oldObj *Struct) []SubfieldItem { return oldObj.WithSubfield }))...)
+
+	// field Struct.EmptyKey
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []Item) (errs field.ErrorList) {
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
@@ -73,12 +115,62 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				if item == nil {
 					return false
 				}
-				return item.Key == "Target" && item.Key2 == "Target2"
+				return item.Key == ""
 			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
-				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem MultipleKeyItems[key=Target,key2=Target2]")
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem EmptyKey[key=]")
 			})...)
 			return
-		}(fldPath.Child("multipleKeyItems"), obj.MultipleKeyItems, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.MultipleKeyItems }))...)
+		}(fldPath.Child("emptyKey"), obj.EmptyKey, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.EmptyKey }))...)
+
+	// field Struct.Special
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj []Item) (errs field.ErrorList) {
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.ListMapItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *Item) bool {
+				if item == nil {
+					return false
+				}
+				return item.Key == "with\"quotes"
+			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem Special[key=with\"quotes]")
+			})...)
+			errs = append(errs, validate.ListMapItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *Item) bool {
+				if item == nil {
+					return false
+				}
+				return item.Key == "multi\nline"
+			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem Special[key=multi\nline]")
+			})...)
+			errs = append(errs, validate.ListMapItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *Item) bool {
+				if item == nil {
+					return false
+				}
+				return item.Key == "unicode-🚀"
+			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem Special[key=unicode-🚀]")
+			})...)
+			return
+		}(fldPath.Child("special"), obj.Special, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.Special }))...)
+
+	// field Struct.OpaqueList
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj []OpaqueItem) (errs field.ErrorList) {
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.ListMapItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *OpaqueItem) bool {
+				if item == nil {
+					return false
+				}
+				return item.Key == "validated"
+			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *OpaqueItem) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "listMapItem OpaqueList[key=validated]")
+			})...)
+			return
+		}(fldPath.Child("opaqueList"), obj.OpaqueList, safe.Field(oldObj, func(oldObj *Struct) []OpaqueItem { return oldObj.OpaqueList }))...)
 
 	return errs
 }
