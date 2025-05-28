@@ -53,7 +53,7 @@ var (
 	safePkg             = "k8s.io/apimachinery/pkg/api/safe"
 	safePkgSymbols      = mkPkgNames(safePkg, "Field", "Cast", "Value")
 	operationPkg        = "k8s.io/apimachinery/pkg/api/operation"
-	operationPkgSymbols = mkPkgNames(operationPkg, "Operation", "MatchesSubresource", "Update")
+	operationPkgSymbols = mkPkgNames(operationPkg, "Operation", "SubresourcePath", "Update")
 	contextPkg          = "context"
 	contextPkgSymbols   = mkPkgNames(contextPkg, "Context")
 	equalityPkg         = "k8s.io/apimachinery/pkg/api/equality"
@@ -1220,8 +1220,20 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 				if len(v.Conditions.OptionDisabled) > 0 {
 					if !firstCondition {
 						sw.Do(" && ", nil)
+						firstCondition = false
 					}
 					sw.Do("!op.HasOption($.$)", strconv.Quote(v.Conditions.OptionDisabled))
+				}
+				if len(v.Conditions.IsSubresource) > 0 || len(v.Conditions.IsNotSubresource) > 0 {
+					if !firstCondition {
+						sw.Do(" && ", nil)
+						firstCondition = false
+					}
+					if len(v.Conditions.IsSubresource) > 0 {
+						sw.Do("op.Request.SubresourcePath() == $.$", strconv.Quote(v.Conditions.IsSubresource))
+					} else {
+						sw.Do("op.Request.SubresourcePath() != $.$", strconv.Quote(v.Conditions.IsNotSubresource))
+					}
 				}
 				sw.Do(" {\n", nil)
 				sw.Do("    return ", nil)

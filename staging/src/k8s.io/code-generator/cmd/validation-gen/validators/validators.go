@@ -376,10 +376,16 @@ type Conditions struct {
 
 	// OptionDisabled specifies an option name that must be set to false for the condition to be true.
 	OptionDisabled string
+
+	// IsSubresource specifies a subresource name that must match the request for the condition to be true.
+	IsSubresource string
+
+	// IsNotSubresource specifies a subresource name that must not match the request for the condition to be true.
+	IsNotSubresource string
 }
 
 func (c Conditions) Empty() bool {
-	return len(c.OptionEnabled) == 0 && len(c.OptionDisabled) == 0
+	return len(c.OptionEnabled) == 0 && len(c.OptionDisabled) == 0 && len(c.IsSubresource) == 0 && len(c.IsNotSubresource) == 0
 }
 
 // Identifier is a name that the generator will output as an identifier.
