@@ -413,6 +413,9 @@ func (ektv eachKeyTagValidator) GetValidations(context Context, _ []string, payl
 		Parent: t,
 		Path:   context.Path.Child("(keys)"),
 	}
+	if NativeType(t.Key) != types.String {
+		return Validations{}, fmt.Errorf("map key must be a string")
+	}
 	if validations, err := ektv.validator.ExtractValidations(elemContext, fakeComments); err != nil {
 		return Validations{}, err
 	} else {
