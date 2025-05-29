@@ -117,14 +117,15 @@ func (stv *listMapItemTagValidator) GetValidations(context Context, args []strin
 
 	// Generates context path like Struct.Conditions[status="true",type="Approved"].
 	subContextPath := generatePathForMap(parsedArg.MatcherPairs)
+	fakeMember := createFakeMember(elemT, parsedArg.MatcherPairs)
+
 	subContext := Context{
-		Scope: ScopeField,
-		Type:  elemT,
+		Member: fakeMember,
+		Scope:  ScopeField,
+		Type:   elemT,
 		// TODO(aaron-prindle) for +k8s:unionMember support need to plumb this.
 		Parent: nil,
 		Path:   context.Path.Key(subContextPath),
-		// TODO(aaron-prindle) for +k8s:unionMember support need to plumb this.
-		Member: nil,
 	}
 
 	if validations, err := stv.validator.ExtractValidations(subContext, fakeComments); err != nil {
@@ -215,6 +216,24 @@ func generatePathForMap(matcherPairs [][2]string) string {
 		sb.WriteString(fmt.Sprintf("%s=%q", pair[0], pair[1]))
 	}
 	return sb.String()
+}
+
+func createFakeMember(itemType *types.Type, matcherPairs [][2]string) *types.Member {
+	var keyParts []string
+	for _, pair := range matcherPairs {
+		keyParts = append(keyParts, fmt.Sprintf("%s=%s", pair[0], pair[1]))
+	}
+	memberName := fmt.Sprintf("_listItem[%s]", strings.Join(keyParts, ","))
+
+	fakeMember := &types.Member{
+		Name:         memberName,
+		Type:         itemType,
+		Embedded:     false,
+		CommentLines: []string{},
+		Tags:         "",
+	}
+
+	return fakeMember
 }
 
 func (stv listMapItemTagValidator) Docs() TagDoc {

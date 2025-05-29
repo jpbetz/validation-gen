@@ -18,7 +18,7 @@ limitations under the License.
 // +k8s:validation-gen-scheme-registry=k8s.io/code-generator/cmd/validation-gen/testscheme.Scheme
 
 // This is a test package.
-package empty
+package multiple_keys
 
 import "k8s.io/code-generator/cmd/validation-gen/testscheme"
 
@@ -28,13 +28,14 @@ type Struct struct {
 	TypeMeta int `json:"typeMeta"`
 
 	// +k8s:listType=map
-	// +k8s:listMapKey=key
-	// +k8s:listMapItem(`[["key","fail"]]`)=+k8s:validateFalse="listMapItem ListField[key=fail]"
-	// +k8s:listMapItem(`[["key","fixed"]]`)=+k8s:immutable
-	ListField []Item `json:"listField"`
+	// +k8s:listMapKey=key1
+	// +k8s:listMapKey=key2
+	// +k8s:listMapItem(`[["key1","a"],["key2","b"]]`)=+k8s:validateFalse="listMapItem Items[key1=a,key2=b]"
+	Items []Item `json:"items"`
 }
 
 type Item struct {
-	Key  string `json:"key"`
+	Key1 string `json:"key1"`
+	Key2 string `json:"key2"`
 	Data string `json:"data"`
 }
