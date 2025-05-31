@@ -45,6 +45,21 @@ func EachSliceVal[T any](ctx context.Context, op operation.Operation, fldPath *f
 	return errs
 }
 
+// EachMapValNilable validates each element of newMap with the specified validation
+// function. Unlike EachMapVal, this doesn't add an extra pointer layer.
+func EachMapValNilable[K ~string, V any](ctx context.Context, op operation.Operation,
+	fldPath *field.Path, newMap, oldMap map[K]V, validator ValidateFunc[V]) field.ErrorList {
+	var errs field.ErrorList
+	for key, val := range newMap {
+		var old V
+		if oldMap != nil {
+			old = oldMap[key]
+		}
+		errs = append(errs, validator(ctx, op, fldPath.Key(string(key)), val, old)...)
+	}
+	return errs
+}
+
 // lookup returns a pointer to the first element in the list that matches the
 // target, according to the provided comparison function, or else nil.
 func lookup[T any](list []T, target T, cmp func(T, T) bool) *T {
