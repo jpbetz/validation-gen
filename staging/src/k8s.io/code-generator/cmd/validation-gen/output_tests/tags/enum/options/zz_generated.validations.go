@@ -58,21 +58,21 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 }
 
 var exclusionsForConditionalEnum = []validate.EnumExclusion[ConditionalEnum]{
-	{
+	validate.EnumExclusion[ConditionalEnum]{
 		Value: ConditionalA, Option: "FeatureA", ExcludeWhen: true},
-	{
+	validate.EnumExclusion[ConditionalEnum]{
 		Value: ConditionalB, Option: "FeatureB", ExcludeWhen: false},
-	{
+	validate.EnumExclusion[ConditionalEnum]{
 		Value: ConditionalD, Option: "FeatureA", ExcludeWhen: true},
-	{
+	validate.EnumExclusion[ConditionalEnum]{
 		Value: ConditionalD, Option: "FeatureB", ExcludeWhen: true},
-	{
+	validate.EnumExclusion[ConditionalEnum]{
 		Value: ConditionalE, Option: "FeatureC", ExcludeWhen: false},
-	{
+	validate.EnumExclusion[ConditionalEnum]{
 		Value: ConditionalE, Option: "FeatureD", ExcludeWhen: false},
-	{
+	validate.EnumExclusion[ConditionalEnum]{
 		Value: ConditionalF, Option: "FeatureC", ExcludeWhen: false},
-	{
+	validate.EnumExclusion[ConditionalEnum]{
 		Value: ConditionalF, Option: "FeatureD", ExcludeWhen: true},
 }
 var symbolsForConditionalEnum = sets.New(ConditionalA, ConditionalB, ConditionalC, ConditionalD, ConditionalE, ConditionalF)
