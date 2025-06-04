@@ -1,0 +1,51 @@
+{
+  "*mapofprimitive.Struct": {
+    "": [
+      "type Struct"
+    ],
+    "mapField": [
+      "field Struct.MapField"
+    ],
+    "mapField[偩j0âȰ轷N巆Åʛ,^籿Ź]": [
+      "field Struct.MapField[*]"
+    ],
+    "mapField[偩j0âȰ轷N巆Åʛ,^籿Ź][0]": [
+      "field Struct.MapField[*][*]"
+    ],
+    "mapField[偩j0âȰ轷N巆Åʛ,^籿Ź][1]": [
+      "field Struct.MapField[*][*]"
+    ],
+    "mapField[岯Ȉ\u0026\u003c沲3]": [
+      "field Struct.MapField[*]"
+    ],
+    "mapField[岯Ȉ\u0026\u003c沲3][0]": [
+      "field Struct.MapField[*][*]"
+    ],
+    "mapField[岯Ȉ\u0026\u003c沲3][1]": [
+      "field Struct.MapField[*][*]"
+    ],
+    "mapTypedefField": [
+      "field Struct.MapTypedefField"
+    ],
+    "mapTypedefField[:ŽƔA苩xǼ]": [
+      "field Struct.MapTypedefField[*]",
+      "type StringSliceType"
+    ],
+    "mapTypedefField[:ŽƔA苩xǼ][0]": [
+      "field Struct.MapTypedefField[*][*]"
+    ],
+    "mapTypedefField[:ŽƔA苩xǼ][1]": [
+      "field Struct.MapTypedefField[*][*]"
+    ],
+    "mapTypedefField[ʅȀʙĄĥ腲ʤaǇ趴]": [
+      "field Struct.MapTypedefField[*]",
+      "type StringSliceType"
+    ],
+    "mapTypedefField[ʅȀʙĄĥ腲ʤaǇ趴][0]": [
+      "field Struct.MapTypedefField[*][*]"
+    ],
+    "mapTypedefField[ʅȀʙĄĥ腲ʤaǇ趴][1]": [
+      "field Struct.MapTypedefField[*][*]"
+    ]
+  }
+}

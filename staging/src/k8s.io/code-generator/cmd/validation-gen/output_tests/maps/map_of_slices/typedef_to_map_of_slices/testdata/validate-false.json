@@ -1,0 +1,33 @@
+{
+  "*typedeftomap.Struct": {
+    "": [
+      "type Struct"
+    ],
+    "mapField": [
+      "field Struct.MapField",
+      "type MapType"
+    ],
+    "mapField[偩j0âȰ轷N巆Åʛ,^籿Ź]": [
+      "field Struct.MapField[*]",
+      "type MapType[*]"
+    ],
+    "mapField[岯Ȉ\u0026\u003c沲3]": [
+      "field Struct.MapField[*]",
+      "type MapType[*]"
+    ],
+    "mapTypedefField": [
+      "field Struct.MapTypedefField",
+      "type MapTypedefType"
+    ],
+    "mapTypedefField[:ŽƔA苩xǼ]": [
+      "field Struct.MapTypedefField[*]",
+      "type MapTypedefType[*]",
+      "type StringSliceType"
+    ],
+    "mapTypedefField[ʅȀʙĄĥ腲ʤaǇ趴]": [
+      "field Struct.MapTypedefField[*]",
+      "type MapTypedefType[*]",
+      "type StringSliceType"
+    ]
+  }
+}

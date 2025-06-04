@@ -89,6 +89,21 @@ func EachMapVal[K ~string, V any](ctx context.Context, op operation.Operation, f
 	return errs
 }
 
+// EachMapValNilable validates each element of newMap with the specified validation
+// function. Unlike EachMapVal, this doesn't add an extra pointer layer.
+func EachMapValNilable[K ~string, V any](ctx context.Context, op operation.Operation,
+	fldPath *field.Path, newMap, oldMap map[K]V, validator ValidateFunc[V]) field.ErrorList {
+	var errs field.ErrorList
+	for key, val := range newMap {
+		var old V
+		if oldMap != nil {
+			old = oldMap[key]
+		}
+		errs = append(errs, validator(ctx, op, fldPath.Key(string(key)), val, old)...)
+	}
+	return errs
+}
+
 // EachMapKey validates each element of newMap with the specified
 // validation function.  The oldMap argument is not used.
 func EachMapKey[K ~string, T any](ctx context.Context, op operation.Operation, fldPath *field.Path, newMap, oldMap map[K]T,

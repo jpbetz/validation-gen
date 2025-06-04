@@ -223,6 +223,7 @@ func (eachValTagValidator) LateTagValidator() {}
 var (
 	validateEachSliceVal      = types.Name{Package: libValidationPkg, Name: "EachSliceVal"}
 	validateEachMapVal        = types.Name{Package: libValidationPkg, Name: "EachMapVal"}
+	validateEachMapValNilable = types.Name{Package: libValidationPkg, Name: "EachMapValNilable"}
 	validateSemanticDeepEqual = types.Name{Package: libValidationPkg, Name: "SemanticDeepEqual"}
 	validateDirectEqual       = types.Name{Package: libValidationPkg, Name: "DirectEqual"}
 )
@@ -356,7 +357,12 @@ func (evtv eachValTagValidator) getMapValidations(t *types.Type, validations Val
 	result.OpaqueValType = validations.OpaqueType
 
 	for _, vfn := range validations.Functions {
-		f := Function(eachValTagName, vfn.Flags, validateEachMapVal, WrapperFunction{vfn, t.Elem})
+		validateFunc := validateEachMapVal
+		if isNilableType(t.Elem) {
+			validateFunc = validateEachMapValNilable
+		}
+
+		f := Function(eachValTagName, vfn.Flags, validateFunc, WrapperFunction{vfn, t.Elem})
 		result.Functions = append(result.Functions, f)
 	}
 
@@ -406,7 +412,7 @@ func (ektv eachKeyTagValidator) GetValidations(context Context, _ []string, payl
 	fakeComments := []string{payload}
 	elemContext := Context{
 		Scope:  ScopeMapKey,
-		Type:   t.Elem,
+		Type:   t.Key,
 		Parent: t,
 		Path:   context.Path.Child("(keys)"),
 	}
