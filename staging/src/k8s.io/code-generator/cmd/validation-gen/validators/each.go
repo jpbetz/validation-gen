@@ -354,9 +354,12 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 func (evtv eachValTagValidator) getMapValidations(t *types.Type, validations Validations) (Validations, error) {
 	result := Validations{}
 	result.OpaqueValType = validations.OpaqueType
-
+	equivArg := Identifier(validateSemanticDeepEqual)
+	if IsDirectComparable(NonPointer(NativeType(t.Elem))) {
+		equivArg = Identifier(validateDirectEqual)
+	}
 	for _, vfn := range validations.Functions {
-		f := Function(eachValTagName, vfn.Flags, validateEachMapVal, WrapperFunction{vfn, t.Elem})
+		f := Function(eachValTagName, vfn.Flags, validateEachMapVal, equivArg, WrapperFunction{vfn, t.Elem})
 		result.Functions = append(result.Functions, f)
 	}
 
@@ -409,6 +412,9 @@ func (ektv eachKeyTagValidator) GetValidations(context Context, _ []string, payl
 		Type:   t.Elem,
 		Parent: t,
 		Path:   context.Path.Child("(keys)"),
+	}
+	if NativeType(t.Key) != types.String {
+		return Validations{}, fmt.Errorf("map key must be a string")
 	}
 	if validations, err := ektv.validator.ExtractValidations(elemContext, fakeComments); err != nil {
 		return Validations{}, err
