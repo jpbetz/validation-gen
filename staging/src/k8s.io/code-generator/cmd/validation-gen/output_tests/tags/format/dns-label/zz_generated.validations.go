@@ -57,45 +57,8 @@ func Validate_DNSLabelStringType(ctx context.Context, op operation.Operation, fl
 	return errs
 }
 
-func Validate_IPStringType(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *IPStringType) (errs field.ErrorList) {
-	// type IPStringType
-	if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
-		return nil // no changes
-	}
-	errs = append(errs, validate.IPSloppy(ctx, op, fldPath, obj, oldObj)...)
-
-	return errs
-}
-
 func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Struct) (errs field.ErrorList) {
 	// field Struct.TypeMeta has no validation
-
-	// field Struct.IPField
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
-			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
-				return nil // no changes
-			}
-			errs = append(errs, validate.IPSloppy(ctx, op, fldPath, obj, oldObj)...)
-			return
-		}(fldPath.Child("ipField"), &obj.IPField, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.IPField }))...)
-
-	// field Struct.IPPtrField
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
-			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
-				return nil // no changes
-			}
-			errs = append(errs, validate.IPSloppy(ctx, op, fldPath, obj, oldObj)...)
-			return
-		}(fldPath.Child("ipPtrField"), obj.IPPtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.IPPtrField }))...)
-
-	// field Struct.IPTypedefField
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj *IPStringType) (errs field.ErrorList) {
-			errs = append(errs, Validate_IPStringType(ctx, op, fldPath, obj, oldObj)...)
-			return
-		}(fldPath.Child("ipTypedefField"), &obj.IPTypedefField, safe.Field(oldObj, func(oldObj *Struct) *IPStringType { return &oldObj.IPTypedefField }))...)
 
 	// field Struct.DNSLabelField
 	errs = append(errs,
