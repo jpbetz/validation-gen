@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	subfieldTagName = "k8s:subfield"
+	subfieldTagName = "subfield"
 )
 
 func init() {
