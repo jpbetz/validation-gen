@@ -27,16 +27,16 @@ var localSchemeBuilder = testscheme.New()
 type StructWithMaps struct {
 	TypeMeta int
 
-	// +k8s:eachVal=+k8s:validateFalse="field MapTest.MapPrimitiveField[*]"
+	// +k8s:eachVal=+validateFalse="field MapTest.MapPrimitiveField[*]"
 	MapPrimitiveField map[string]string `json:"mapPrimitiveField"`
 
-	// +k8s:eachVal=+k8s:validateFalse="field MapTest.MapTypedefField[*]"
+	// +k8s:eachVal=+validateFalse="field MapTest.MapTypedefField[*]"
 	MapTypedefField map[string]StringType `json:"mapTypedefField"`
 
-	// +k8s:eachVal=+k8s:validateFalse="field MapTest.MapComparableStructField[*]"
+	// +k8s:eachVal=+validateFalse="field MapTest.MapComparableStructField[*]"
 	MapComparableStructField map[string]ComparableStruct `json:"mapComparableStructField"`
 
-	// +k8s:eachVal=+k8s:validateFalse="field MapTest.MapNonComparableStructField[*]"
+	// +k8s:eachVal=+validateFalse="field MapTest.MapNonComparableStructField[*]"
 	MapNonComparableStructField map[string]NonComparableStruct `json:"mapNonComparableStructField"`
 }
 

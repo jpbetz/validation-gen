@@ -29,8 +29,8 @@ type Struct struct {
 
 	// +k8s:listType=map
 	// +k8s:listMapKey=name
-	// +k8s:item(name: "succeeded")=+k8s:unionMember
-	// +k8s:item(name: "failed")=+k8s:unionMember
+	// +k8s:item(name: "succeeded")=+unionMember
+	// +k8s:item(name: "failed")=+unionMember
 	Tasks []Task `json:"tasks"`
 }
 

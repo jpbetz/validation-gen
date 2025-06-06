@@ -27,20 +27,20 @@ var localSchemeBuilder = testscheme.New()
 type Struct struct {
 	TypeMeta int
 
-	// +k8s:subfield(stringField)=+k8s:neq="disallowed-subfield"
+	// +k8s:subfield(stringField)=+neq="disallowed-subfield"
 	StructField InnerStruct `json:"structField"`
 
 	// +k8s:optional
-	// +k8s:subfield(stringField)=+k8s:neq="disallowed-subfield-ptr"
+	// +k8s:subfield(stringField)=+neq="disallowed-subfield-ptr"
 	StructPtrField *InnerStruct `json:"structPtrField"`
 
-	// +k8s:eachVal=+k8s:neq="disallowed-slice"
+	// +k8s:eachVal=+neq="disallowed-slice"
 	StringSliceField []string `json:"stringSliceField"`
 
-	// +k8s:eachVal=+k8s:neq="disallowed-map-val"
+	// +k8s:eachVal=+neq="disallowed-map-val"
 	StringMapField map[string]string `json:"stringMapField"`
 
-	// +k8s:eachKey=+k8s:neq="disallowed-key"
+	// +k8s:eachKey=+neq="disallowed-key"
 	StringMapKeyField map[string]string `json:"stringMapKeyField"`
 
 	ValidatedSliceField ValidatedStringSlice `json:"validatedSliceField"`
@@ -52,8 +52,8 @@ type InnerStruct struct {
 	StringField string `json:"stringField"`
 }
 
-// +k8s:eachVal=+k8s:neq="disallowed-typedef"
+// +k8s:eachVal=+neq="disallowed-typedef"
 type ValidatedStringSlice []string
 
-// +k8s:subfield(stringField)=+k8s:neq="disallowed-typedef-struct"
+// +k8s:subfield(stringField)=+neq="disallowed-typedef-struct"
 type ValidatedInnerStruct InnerStruct

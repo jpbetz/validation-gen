@@ -29,8 +29,8 @@ type Struct struct {
 
 	// +k8s:listType=map
 	// +k8s:listMapKey=key1
-	// +k8s:item(key1: a)=+k8s:immutable
-	// +k8s:item(key1: b)=+k8s:subfield(stringField)=+k8s:immutable
+	// +k8s:item(key1: a)=+immutable
+	// +k8s:item(key1: b)=+subfield(stringField)=+immutable
 	ListField []Item `json:"listField"`
 }
 

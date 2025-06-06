@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	opaqueTypeTagName = "k8s:opaqueType"
+	opaqueTypeTagName = "opaqueType"
 )
 
 type opaqueTypeTagValidator struct{}

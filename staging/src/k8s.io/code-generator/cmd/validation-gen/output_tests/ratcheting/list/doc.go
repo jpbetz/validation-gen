@@ -27,34 +27,34 @@ var localSchemeBuilder = testscheme.New()
 type StructSlice struct {
 	TypeMeta int
 
-	// +k8s:eachVal=+k8s:validateFalse="field AtomicSliceStringField[*]"
+	// +k8s:eachVal=+validateFalse="field AtomicSliceStringField[*]"
 	AtomicSliceStringField []StringType `json:"atomicSliceStringField"`
 
-	// +k8s:eachVal=+k8s:validateFalse="field AtomicSliceTypeField[*]"
+	// +k8s:eachVal=+validateFalse="field AtomicSliceTypeField[*]"
 	AtomicSliceTypeField IntSliceType `json:"atomicSliceTypeField"`
 
-	// +k8s:eachVal=+k8s:validateFalse="field AtomicSliceComparableField[*]"
+	// +k8s:eachVal=+validateFalse="field AtomicSliceComparableField[*]"
 	AtomicSliceComparableField []ComparableStruct `json:"atomicSliceComparableField"`
 
-	// +k8s:eachVal=+k8s:validateFalse="field AtomicSliceNonComparableField[*]"
+	// +k8s:eachVal=+validateFalse="field AtomicSliceNonComparableField[*]"
 	AtomicSliceNonComparableField []NonComparableStruct `json:"atomicSliceNonComparableField"`
 
 	// +k8s:listType=set
-	// +k8s:eachVal=+k8s:validateFalse="field SetSliceComparableField[*]"
+	// +k8s:eachVal=+validateFalse="field SetSliceComparableField[*]"
 	SetSliceComparableField []ComparableStruct `json:"setSliceComparableField"`
 
 	// +k8s:listType=set
-	// +k8s:eachVal=+k8s:validateFalse="field SetSliceNonComparableField[*]"
+	// +k8s:eachVal=+validateFalse="field SetSliceNonComparableField[*]"
 	SetSliceNonComparableField []NonComparableStruct `json:"setSliceNonComparableField"`
 
 	// +k8s:listType=map
 	// +k8s:listMapKey=key
-	// +k8s:eachVal=+k8s:validateFalse="field MapSliceComparableField[*]"
+	// +k8s:eachVal=+validateFalse="field MapSliceComparableField[*]"
 	MapSliceComparableField []ComparableStructWithKey `json:"mapSliceComparableField"`
 
 	// +k8s:listType=map
 	// +k8s:listMapKey=key
-	// +k8s:eachVal=+k8s:validateFalse="field MapSliceNonComparableField[*]"
+	// +k8s:eachVal=+validateFalse="field MapSliceNonComparableField[*]"
 	MapSliceNonComparableField []NonComparableStructWithKey `json:"mapSliceNonComparableField"`
 }
 

@@ -65,7 +65,7 @@ func (ztfv zeroOrOneOfTypeOrFieldValidator) GetValidations(context Context) (Val
 }
 
 const (
-	zeroOrOneOfMemberTagName = "k8s:zeroOrOneOfMember"
+	zeroOrOneOfMemberTagName = "zeroOrOneOfMember"
 )
 
 type zeroOrOneOfMemberTagValidator struct {
