@@ -6,28 +6,28 @@ This document lists the supported validation tags and their related information.
 
 | Tag | Usage | Args | Description | Scopes |
 |-----|-------------|------|-------------|----------|
-| [`k8s:eachKey`](#k8seachkey) | k8s:eachKey=\<validation-tag\> | N/A | Declares a validation for each value in a map or list. | anywhere |
-| [`k8s:eachVal`](#k8seachval) | k8s:eachVal=\<validation-tag\> | N/A | Declares a validation for each value in a map or list. | anywhere |
-| [`k8s:enum`](#k8senum) | k8s:enum | N/A | Indicates that a string type is an enum. All const values of this type are considered values in the enum. | type definitions |
-| [`k8s:forbidden`](#k8sforbidden) | k8s:forbidden | N/A | Indicates that a field may not be specified. | struct fields |
-| [`k8s:format`](#k8sformat) | k8s:format=\<payload\> | N/A | Indicates that a string field has a particular format. | anywhere |
-| [`k8s:ifOptionDisabled`](#k8sifoptiondisabled) | k8s:ifOptionDisabled(\<option\>)=\<validation-tag\> | <option> | Declares a validation that only applies when an option is disabled. | anywhere |
-| [`k8s:ifOptionEnabled`](#k8sifoptionenabled) | k8s:ifOptionEnabled(\<option\>)=\<validation-tag\> | <option> | Declares a validation that only applies when an option is enabled. | anywhere |
-| [`k8s:immutable`](#k8simmutable) | k8s:immutable | N/A | Indicates that a field may not be updated. | list values, map values, struct fields, type definitions |
-| [`k8s:listMapKey`](#k8slistmapkey) | k8s:listMapKey=\<field-json-name\> | N/A | Declares a named sub-field of a list's value-type to be part of the list-map key. | anywhere |
-| [`k8s:listType`](#k8slisttype) | k8s:listType=\<type\> | N/A | Declares a list field's semantic type. | anywhere |
-| [`k8s:maxItems`](#k8smaxitems) | k8s:maxItems=\<non-negative integer\> | N/A | Indicates that a list field has a limit on its size. | list values, map values, struct fields, type definitions |
-| [`k8s:maxLength`](#k8smaxlength) | k8s:maxLength=\<non-negative integer\> | N/A | Indicates that a string field has a limit on its length. | anywhere |
-| [`k8s:minimum`](#k8sminimum) | k8s:minimum=\<integer\> | N/A | Indicates that a numeric field has a minimum value. | anywhere |
-| [`k8s:opaqueType`](#k8sopaquetype) | k8s:opaqueType | N/A | Indicates that any validations declared on the referenced type will be ignored. If a referenced type's package is not included in the generator's current flags, this tag must be set, or code generation will fail (preventing silent mistakes). If the validations should not be ignored, add the type's package to the generator using the --readonly-pkg flag. | struct fields |
-| [`k8s:optional`](#k8soptional) | k8s:optional | N/A | Indicates that a field is optional to clients. | struct fields |
-| [`k8s:required`](#k8srequired) | k8s:required | N/A | Indicates that a field must be specified by clients. | struct fields |
-| [`k8s:subfield`](#k8ssubfield) | k8s:subfield(\<field-json-name\>)=\<validation-tag\> | <field-json-name> | Declares a validation for a subfield of a struct. | anywhere |
-| [`k8s:unionDiscriminator`](#k8suniondiscriminator) | k8s:unionDiscriminator(\<string\>) | <string> | Indicates that this field is the discriminator for a union. | struct fields |
-| [`k8s:unionMember`](#k8sunionmember) | k8s:unionMember(\<string\>, \<string\>) | <string>,<string> | Indicates that this field is a member of a union. | struct fields |
-| [`k8s:validateError`](#k8svalidateerror) | k8s:validateError=\<string\> | N/A | Always fails code generation (useful for testing). | anywhere |
-| [`k8s:validateFalse`](#k8svalidatefalse) | k8s:validateFalse(\<comma-separated-list-of-flag-string\>, \<string\>)=\<payload\> | <comma-separated-list-of-flag-string>,<string> | Always fails validation (useful for testing). | anywhere |
-| [`k8s:validateTrue`](#k8svalidatetrue) | k8s:validateTrue(\<comma-separated-list-of-flag-string\>, \<string\>)=\<payload\> | <comma-separated-list-of-flag-string>,<string> | Always passes validation (useful for testing). | anywhere |
+| [`k8s:eachKey`](#k8seachkey) | `eachKey=<validation-tag>` | N/A | Declares a validation for each value in a map or list. | anywhere |
+| [`k8s:eachVal`](#k8seachval) | `eachVal=<validation-tag>` | N/A | Declares a validation for each value in a map or list. | anywhere |
+| [`k8s:enum`](#k8senum) | `enum` | N/A | Indicates that a string type is an enum. All const values of this type are considered values in the enum. | type definitions |
+| [`k8s:forbidden`](#k8sforbidden) | `forbidden` | N/A | Indicates that a field may not be specified. | struct fields |
+| [`k8s:format`](#k8sformat) | `format=<payload>` | N/A | Indicates that a string field has a particular format. | anywhere |
+| [`k8s:ifOptionDisabled`](#k8sifoptiondisabled) | `ifOptionDisabled(<option>)=<validation-tag>` | \<option\> | Declares a validation that only applies when an option is disabled. | anywhere |
+| [`k8s:ifOptionEnabled`](#k8sifoptionenabled) | `ifOptionEnabled(<option>)=<validation-tag>` | \<option\> | Declares a validation that only applies when an option is enabled. | anywhere |
+| [`k8s:immutable`](#k8simmutable) | `immutable` | N/A | Indicates that a field may not be updated. | list values, map values, struct fields, type definitions |
+| [`k8s:listMapKey`](#k8slistmapkey) | `listMapKey=<field-json-name>` | N/A | Declares a named sub-field of a list's value-type to be part of the list-map key. | anywhere |
+| [`k8s:listType`](#k8slisttype) | `listType=<type>` | N/A | Declares a list field's semantic type. | anywhere |
+| [`k8s:maxItems`](#k8smaxitems) | `maxItems=<non-negative integer>` | N/A | Indicates that a list field has a limit on its size. | list values, map values, struct fields, type definitions |
+| [`k8s:maxLength`](#k8smaxlength) | `maxLength=<non-negative integer>` | N/A | Indicates that a string field has a limit on its length. | anywhere |
+| [`k8s:minimum`](#k8sminimum) | `minimum=<integer>` | N/A | Indicates that a numeric field has a minimum value. | anywhere |
+| [`k8s:opaqueType`](#k8sopaquetype) | `opaqueType` | N/A | Indicates that any validations declared on the referenced type will be ignored. If a referenced type's package is not included in the generator's current flags, this tag must be set, or code generation will fail (preventing silent mistakes). If the validations should not be ignored, add the type's package to the generator using the --readonly-pkg flag. | struct fields |
+| [`k8s:optional`](#k8soptional) | `optional` | N/A | Indicates that a field is optional to clients. | struct fields |
+| [`k8s:required`](#k8srequired) | `required` | N/A | Indicates that a field must be specified by clients. | struct fields |
+| [`k8s:subfield`](#k8ssubfield) | `subfield(<field-json-name>)=<validation-tag>` | \<field-json-name\> | Declares a validation for a subfield of a struct. | anywhere |
+| [`k8s:unionDiscriminator`](#k8suniondiscriminator) | `unionDiscriminator(<string>)` | \<string\> | Indicates that this field is the discriminator for a union. | struct fields |
+| [`k8s:unionMember`](#k8sunionmember) | `unionMember(<string>, <string>)` | \<string\>,\<string\> | Indicates that this field is a member of a union. | struct fields |
+| [`k8s:validateError`](#k8svalidateerror) | `validateError=<string>` | N/A | Always fails code generation (useful for testing). | anywhere |
+| [`k8s:validateFalse`](#k8svalidatefalse) | `validateFalse(<comma-separated-list-of-flag-string>, <string>)=<payload>` | \<comma-separated-list-of-flag-string\>,\<string\> | Always fails validation (useful for testing). | anywhere |
+| [`k8s:validateTrue`](#k8svalidatetrue) | `validateTrue(<comma-separated-list-of-flag-string>, <string>)=<payload>` | \<comma-separated-list-of-flag-string\>,\<string\> | Always passes validation (useful for testing). | anywhere |
 
 ## Tag Details
 
