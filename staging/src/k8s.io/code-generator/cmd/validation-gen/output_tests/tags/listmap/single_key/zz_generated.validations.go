@@ -63,6 +63,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a OtherStruct, b OtherStruct) bool { return a.KeyField == b.KeyField }, validate.DirectEqual, validate.ImmutableByCompare)...)
+			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a OtherStruct, b OtherStruct) bool { return a.KeyField == b.KeyField })...)
 			return
 		}(fldPath.Child("listField"), obj.ListField, safe.Field(oldObj, func(oldObj *Struct) []OtherStruct { return oldObj.ListField }))...)
 
@@ -75,6 +76,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a OtherTypedefStruct, b OtherTypedefStruct) bool { return a.KeyField == b.KeyField }, validate.DirectEqual, validate.ImmutableByCompare)...)
+			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a OtherTypedefStruct, b OtherTypedefStruct) bool { return a.KeyField == b.KeyField })...)
 			return
 		}(fldPath.Child("listTypedefField"), obj.ListTypedefField, safe.Field(oldObj, func(oldObj *Struct) []OtherTypedefStruct { return oldObj.ListTypedefField }))...)
 
@@ -101,6 +103,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a OtherStruct, b OtherStruct) bool { return a.KeyField == b.KeyField }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *OtherStruct) field.ErrorList {
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.ListComparableField[*]")
 			})...)
+			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a OtherStruct, b OtherStruct) bool { return a.KeyField == b.KeyField })...)
 			return
 		}(fldPath.Child("listComparableField"), obj.ListComparableField, safe.Field(oldObj, func(oldObj *Struct) []OtherStruct { return oldObj.ListComparableField }))...)
 
@@ -115,6 +118,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a NonComparableStruct, b NonComparableStruct) bool { return a.KeyField == b.KeyField }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *NonComparableStruct) field.ErrorList {
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.ListNonComparableField[*]")
 			})...)
+			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a NonComparableStruct, b NonComparableStruct) bool { return a.KeyField == b.KeyField })...)
 			return
 		}(fldPath.Child("listNonComparableField"), obj.ListNonComparableField, safe.Field(oldObj, func(oldObj *Struct) []NonComparableStruct { return oldObj.ListNonComparableField }))...)
 
