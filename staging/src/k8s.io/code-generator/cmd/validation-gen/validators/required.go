@@ -29,9 +29,9 @@ import (
 )
 
 const (
-	requiredTagName  = "k8s:required"
-	optionalTagName  = "k8s:optional"
-	forbiddenTagName = "k8s:forbidden"
+	requiredTagName  = "required"
+	optionalTagName  = "optional"
+	forbiddenTagName = "forbidden"
 	defaultTagName   = "default" // TODO: this should evenually be +k8s:default
 )
 
@@ -100,7 +100,7 @@ func (rtv requirednessTagValidator) doRequired(context Context) (Validations, er
 	case types.Pointer:
 		return Validations{Functions: []FunctionGen{Function(requiredTagName, ShortCircuit, requiredPointerValidator)}}, nil
 	case types.Struct:
-		// The +k8s:required tag on a non-pointer struct is not supported.
+		// The `required` tag on a non-pointer struct is not supported.
 		// If you encounter this error and believe you have a valid use case
 		// for forbiddening a non-pointer struct, please let us know! We need
 		// to understand your scenario to determine if we need to adjust
@@ -171,7 +171,7 @@ func (rtv requirednessTagValidator) doOptional(context Context) (Validations, er
 	case types.Pointer:
 		return Validations{Functions: []FunctionGen{Function(optionalTagName, ShortCircuit|NonError, optionalPointerValidator)}}, nil
 	case types.Struct:
-		// The +k8s:optional tag on a non-pointer struct is not supported.
+		// The `optional` tag on a non-pointer struct is not supported.
 		// If you encounter this error and believe you have a valid use case
 		// for forbiddening a non-pointer struct, please let us know! We need
 		// to understand your scenario to determine if we need to adjust
@@ -286,7 +286,7 @@ func (requirednessTagValidator) doForbidden(context Context) (Validations, error
 			},
 		}, nil
 	case types.Struct:
-		// The +k8s:forbidden tag on a non-pointer struct is not supported.
+		// The forbidden tag on a non-pointer struct is not supported.
 		// If you encounter this error and believe you have a valid use case
 		// for forbiddening a non-pointer struct, please let us know! We need
 		// to understand your scenario to determine if we need to adjust
