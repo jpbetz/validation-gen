@@ -27,15 +27,6 @@ var localSchemeBuilder = testscheme.New()
 type Struct struct {
 	TypeMeta int
 
-	// +k8s:format=k8s-ip-sloppy
-	IPField string `json:"ipField"`
-
-	// +k8s:format=k8s-ip-sloppy
-	IPPtrField *string `json:"ipPtrField"`
-
-	// Note: no validation here
-	IPTypedefField IPStringType `json:"ipTypedefField"`
-
 	// +k8s:format=k8s-short-name
 	ShortNameField string `json:"shortNameField"`
 
@@ -45,9 +36,6 @@ type Struct struct {
 	// Note: no validation here
 	ShortNameTypedefField ShortNameStringType `json:"shortNameTypedefField"`
 }
-
-// +k8s:format=k8s-ip-sloppy
-type IPStringType string
 
 // +k8s:format=k8s-short-name
 type ShortNameStringType string

@@ -18,6 +18,7 @@ package validators
 
 import (
 	"fmt"
+	"regexp"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/code-generator/cmd/validation-gen/util"
@@ -48,8 +49,11 @@ func (formatTagValidator) ValidScopes() sets.Set[Scope] {
 }
 
 var (
-	ipSloppyValidator  = types.Name{Package: libValidationPkg, Name: "IPSloppy"}
-	shortNameValidator = types.Name{Package: libValidationPkg, Name: "ShortName"}
+	// Keep this list alphabetized.
+	generateNameValidator = types.Name{Package: libValidationPkg, Name: "GenerateName"}
+	ipSloppyValidator     = types.Name{Package: libValidationPkg, Name: "IPSloppy"}
+	longNameValidator     = types.Name{Package: libValidationPkg, Name: "LongName"}
+	shortNameValidator    = types.Name{Package: libValidationPkg, Name: "ShortName"}
 )
 
 func (formatTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
@@ -60,7 +64,7 @@ func (formatTagValidator) GetValidations(context Context, tag codetags.Tag) (Val
 	}
 
 	var result Validations
-	if formatFunction, err := getFormatValidationFunction(tag.Value); err != nil {
+	if formatFunction, err := getFormatValidationFunction(tag.Value, context.Type); err != nil {
 		return result, err
 	} else {
 		result.AddFunction(formatFunction)
@@ -68,13 +72,31 @@ func (formatTagValidator) GetValidations(context Context, tag codetags.Tag) (Val
 	return result, nil
 }
 
-func getFormatValidationFunction(format string) (FunctionGen, error) {
+func getFormatValidationFunction(format string, objType *types.Type) (FunctionGen, error) {
 	// The naming convention for these formats follows the JSON schema style:
 	// all lower-case, dashes between words. See
 	// https://json-schema.org/draft/2020-12/json-schema-validation#name-defined-formats
 	// for more examples.
+
+	// Keep this list alphabetized.
+	// FIXME: Decide syntax: generate-name, generateName, k8s.io/generate-name, etc?
+	// FIXME: just parse all formats?
+	if format, arg := parseFormat(format); format == "generate-name" {
+		wrappee, err := getFormatValidationFunction(arg, objType)
+		if err != nil {
+			return FunctionGen{}, err
+		}
+		wrapper := WrapperFunction{
+			Function: wrappee,
+			ObjType:  objType,
+		}
+		return Function(formatTagName, DefaultFlags, generateNameValidator, wrapper), nil
+	}
 	if format == "k8s-ip-sloppy" {
 		return Function(formatTagName, DefaultFlags, ipSloppyValidator), nil
+	}
+	if format == "k8s-long-name" {
+		return Function(formatTagName, DefaultFlags, longNameValidator), nil
 	}
 	if format == "k8s-short-name" {
 		return Function(formatTagName, DefaultFlags, shortNameValidator), nil
@@ -84,14 +106,32 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 	return FunctionGen{}, fmt.Errorf("unsupported validation format %q", format)
 }
 
+// Matches for ^<anything>(<anything-or-nothing>)$
+var functionalFormatRE = regexp.MustCompile(`^([^(]+)\(([^)]*)\)$`)
+
+// parseFormat parses a format string of the form `format(arg)`.
+// This is not very robust, but we don't need a lot from it (yet).
+func parseFormat(format string) (string, string) {
+	if matches := functionalFormatRE.FindStringSubmatch(format); len(matches) == 3 {
+		return matches[1], matches[2]
+	}
+	return format, ""
+}
+
 func (ftv formatTagValidator) Docs() TagDoc {
 	return TagDoc{
 		Tag:         ftv.TagName(),
 		Scopes:      ftv.ValidScopes().UnsortedList(),
 		Description: "Indicates that a string field has a particular format.",
-		Payloads: []TagPayloadDoc{{
+		Payloads: []TagPayloadDoc{{ // Keep this list alphabetized.
+			Description: "generate-name(<other-format>)",
+			Docs:        "This field holds a value which is validated as <other-format>, and may be used as metadata.generateName.",
+		}, {
 			Description: "k8s-ip-sloppy",
 			Docs:        "This field holds an IPv4 or IPv6 address value. IPv4 octets may have leading zeros.",
+		}, {
+			Description: "k8s-long-name",
+			Docs:        "This field holds a Kubernetes \"long name\", aka a \"DNS subdomain\" value.",
 		}, {
 			Description: "k8s-short-name",
 			Docs:        "This field holds a Kubernetes \"short name\", aka a \"DNS label\" value.",
