@@ -54,3 +54,8 @@ func RegexError(msg string, re string, examples ...string) string {
 	msg += "regex used for validation is '" + re + "')"
 	return msg
 }
+
+// NEQStringError returns a string explanation of a "must not be equal to <string-value>" validation failure.
+func NEQStringError(disallowedValue string) string {
+	return fmt.Sprintf("must not be equal to %q", disallowedValue)
+}
