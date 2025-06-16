@@ -41,6 +41,8 @@ func init() {
 	RegisterTypeValidator(unionTypeValidator{shared})
 	RegisterTagValidator(unionDiscriminatorTagValidator{shared})
 	RegisterTagValidator(unionMemberTagValidator{shared})
+
+	SetValidatorUsesExtractorPattern(unionMemberTagName)
 }
 
 type unionTypeValidator struct {
@@ -101,12 +103,20 @@ func (utv unionTypeValidator) GetValidations(context Context) (Validations, erro
 				extractorArgs = append(extractorArgs, discriminatorExtractor)
 
 				for _, member := range u.fieldMembers {
-					extractor := FunctionLiteral{
-						Parameters: []ParamResult{{Name: "obj", Type: ptrType}},
-						Results:    []ParamResult{{Type: types.Any}},
-						Body:       fmt.Sprintf("return obj.%s", member.Name),
+					switch m := member.(type) {
+					case *types.Member:
+						extractor := FunctionLiteral{
+							Parameters: []ParamResult{{Name: "obj", Type: ptrType}},
+							Results:    []ParamResult{{Type: types.Any}},
+							Body:       fmt.Sprintf("return obj.%s", m.Name),
+						}
+						extractorArgs = append(extractorArgs, extractor)
+					case FunctionLiteral:
+						// Virtual member, use the function literal directly.
+						extractorArgs = append(extractorArgs, m)
+					default:
+						return result, fmt.Errorf("unexpected field member type: %T", member)
 					}
-					extractorArgs = append(extractorArgs, extractor)
 				}
 
 				fn := Function(unionMemberTagName, DefaultFlags, discriminatedUnionValidator, extractorArgs...)
@@ -119,12 +129,20 @@ func (utv unionTypeValidator) GetValidations(context Context) (Validations, erro
 				extractorArgs = append(extractorArgs, supportVarName)
 
 				for _, member := range u.fieldMembers {
-					extractor := FunctionLiteral{
-						Parameters: []ParamResult{{Name: "obj", Type: ptrType}},
-						Results:    []ParamResult{{Type: types.Any}},
-						Body:       fmt.Sprintf("return obj.%s", member.Name),
+					switch m := member.(type) {
+					case *types.Member:
+						extractor := FunctionLiteral{
+							Parameters: []ParamResult{{Name: "obj", Type: ptrType}},
+							Results:    []ParamResult{{Type: types.Any}},
+							Body:       fmt.Sprintf("return obj.%s", m.Name),
+						}
+						extractorArgs = append(extractorArgs, extractor)
+					case FunctionLiteral:
+						// Virtual member, use the function literal directly.
+						extractorArgs = append(extractorArgs, m)
+					default:
+						return result, fmt.Errorf("unexpected field member type: %T", member)
 					}
-					extractorArgs = append(extractorArgs, extractor)
 				}
 
 				fn := Function(unionMemberTagName, DefaultFlags, unionValidator, extractorArgs...)
@@ -219,30 +237,44 @@ func (unionMemberTagValidator) ValidScopes() sets.Set[Scope] {
 }
 
 func (umtv unionMemberTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
-	var fieldName string
-	jsonTag, ok := tags.LookupJSON(*context.Member)
-	if !ok {
-		return Validations{}, fmt.Errorf("field %q is a union member but has no JSON struct field tag", context.Member)
-	}
-	fieldName = jsonTag.Name
-	if len(fieldName) == 0 {
-		return Validations{}, fmt.Errorf("field %q is a union member but has no JSON name", context.Member)
+	var fieldName, memberName string
+	var fieldMember any
+
+	if context.VirtualField != nil {
+		if extractorField, ok := context.VirtualField.(ExtractorVirtualField); ok {
+			fieldName = extractorField.ID()
+			memberName = fieldName
+			fieldMember = extractorField.GenerateExtractor(context.Parent)
+		}
+	} else {
+		if context.Member == nil {
+			return Validations{}, fmt.Errorf("unionMember requires either a struct field or a virtual field reference")
+		}
+		jsonTag, ok := tags.LookupJSON(*context.Member)
+		if !ok {
+			return Validations{}, fmt.Errorf("field %q is a union member but has no JSON struct field tag", context.Member)
+		}
+		fieldName = jsonTag.Name
+		if len(fieldName) == 0 {
+			return Validations{}, fmt.Errorf("field %q is a union member but has no JSON name", context.Member)
+		}
+		memberName = context.Member.Name // default
+		fieldMember = context.Member
 	}
 
 	if umtv.shared[context.Parent] == nil {
 		umtv.shared[context.Parent] = unions{}
 	}
+
 	unionArg, _ := tag.NamedArg("union") // optional
-	var memberName string
+	u := umtv.shared[context.Parent].getOrCreate(unionArg.Value)
+
 	if memberNameArg, ok := tag.NamedArg("memberName"); ok { // optional
 		memberName = memberNameArg.Value
-	} else {
-		memberName = context.Member.Name // default
 	}
 
-	u := umtv.shared[context.Parent].getOrCreate(unionArg.Value)
 	u.fields = append(u.fields, [2]string{fieldName, memberName})
-	u.fieldMembers = append(u.fieldMembers, context.Member)
+	u.fieldMembers = append(u.fieldMembers, fieldMember)
 
 	// This tag does not actually emit any validations, it just accumulates
 	// information. The validation is done by the unionTypeValidator.
@@ -279,7 +311,9 @@ type union struct {
 	// If member name is not set, it defaults to the go struct field name.
 	fields [][2]string
 	// fieldMembers describes all the members of the union.
-	fieldMembers []*types.Member
+	// Can be either *types.Member for regular fields or
+	// FunctionLiteral for virtual members.
+	fieldMembers []any
 
 	// discriminator is the name of the discriminator field
 	discriminator *string
