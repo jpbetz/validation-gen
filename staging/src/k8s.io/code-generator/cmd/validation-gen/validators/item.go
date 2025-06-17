@@ -139,7 +139,7 @@ func (stv *itemTagValidator) validateAndParseTag(context Context, tag codetags.T
 	// (which should never be pointers). We need to check the concrete type.
 	t := util.NonPointer(util.NativeType(context.Type))
 
-	if !(t.Kind == types.Slice) {
+	if t.Kind != types.Slice {
 		return nil, nil, fmt.Errorf("can only be used on list types")
 	}
 

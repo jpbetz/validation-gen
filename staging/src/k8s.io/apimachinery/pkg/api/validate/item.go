@@ -23,8 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-// MatchFn takes a pointer to an item and returns true if it matches the criteria.
-type MatchFn[T any] func(*T) bool
+// MatchItemFn takes a pointer to an item and returns true if it matches the criteria.
+type MatchItemFn[T any] func(*T) bool
 
 // ItemByKeyValues finds the first item in oldList (if any) and the first
 // item in newList (if any) that satisfy the 'matches' predicate. It then invokes
@@ -39,7 +39,7 @@ type MatchFn[T any] func(*T) bool
 func ItemByKeyValues[TList ~[]TItem, TItem any](
 	ctx context.Context, op operation.Operation, fldPath *field.Path,
 	newList, oldList TList,
-	matches MatchFn[TItem],
+	matches MatchItemFn[TItem],
 	itemValidator func(ctx context.Context, op operation.Operation, fldPath *field.Path, newObj, oldObj *TItem) field.ErrorList,
 ) field.ErrorList {
 	var matchedNew, matchedOld *TItem
@@ -60,6 +60,7 @@ func ItemByKeyValues[TList ~[]TItem, TItem any](
 			break
 		}
 	}
+	// No matching item in either list, validation doesn't apply.
 	if matchedNew == nil && matchedOld == nil {
 		return nil
 	}

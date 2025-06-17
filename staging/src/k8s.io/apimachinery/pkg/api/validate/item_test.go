@@ -36,7 +36,7 @@ func TestItemByKeyValues(t *testing.T) {
 		name      string
 		new       []multiKeyItem
 		old       []multiKeyItem
-		match     MatchFn[multiKeyItem]
+		match     MatchItemFn[multiKeyItem]
 		validator func(context.Context, operation.Operation, *field.Path, *multiKeyItem, *multiKeyItem) field.ErrorList
 		expected  field.ErrorList
 	}{
