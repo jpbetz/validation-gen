@@ -18,7 +18,7 @@ limitations under the License.
 // +k8s:validation-gen-scheme-registry=k8s.io/code-generator/cmd/validation-gen/testscheme.Scheme
 
 // This is a test package.
-package immutable
+package frozen
 
 import "k8s.io/code-generator/cmd/validation-gen/testscheme"
 
@@ -27,33 +27,33 @@ var localSchemeBuilder = testscheme.New()
 type Struct struct {
 	TypeMeta int
 
-	// +k8s:immutable
+	// +k8s:frozen
 	StringField string `json:"stringField"`
 
-	// +k8s:immutable
+	// +k8s:frozen
 	StringPtrField *string `json:"stringPtrField"`
 
-	// +k8s:immutable
+	// +k8s:frozen
 	StructField ComparableStruct `json:"structField"`
 
-	// +k8s:immutable
+	// +k8s:frozen
 	StructPtrField *ComparableStruct `json:"structPtrField"`
 
-	// +k8s:immutable
+	// +k8s:frozen
 	NonComparableStructField NonComparableStruct `json:"noncomparableStructField"`
 
-	// +k8s:immutable
+	// +k8s:frozen
 	NonComparableStructPtrField *NonComparableStruct `json:"noncomparableStructPtrField"`
 
-	// +k8s:immutable
+	// +k8s:frozen
 	SliceField []string `json:"sliceField"`
 
-	// +k8s:immutable
+	// +k8s:frozen
 	MapField map[string]string `json:"mapField"`
 
-	ImmutableField ImmutableType `json:"immutableField"`
+	FrozenField FrozenType `json:"frozenField"`
 
-	ImmutablePtrField *ImmutableType `json:"immutablePtrField"`
+	FrozenPtrField *FrozenType `json:"frozenPtrField"`
 }
 
 type ComparableStruct struct {
@@ -65,5 +65,5 @@ type NonComparableStruct struct {
 	SliceField []string `json:"sliceField"`
 }
 
-// +k8s:immutable
-type ImmutableType string
+// +k8s:frozen
+type FrozenType string

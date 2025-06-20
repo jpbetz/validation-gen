@@ -31,7 +31,7 @@ type StructComparable struct {
 	B bool
 }
 
-func TestImmutableByCompare(t *testing.T) {
+func TestFrozenByCompare(t *testing.T) {
 	structA := StructComparable{"abc", 123, true}
 	structA2 := structA
 	structB := StructComparable{"xyz", 456, false}
@@ -43,67 +43,67 @@ func TestImmutableByCompare(t *testing.T) {
 	}{{
 		name: "nil both values",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare[int](context.Background(), op, fld, nil, nil)
+			return FrozenByCompare[int](context.Background(), op, fld, nil, nil)
 		},
 	}, {
 		name: "nil value",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, nil, ptr.To(123))
+			return FrozenByCompare(context.Background(), op, fld, nil, ptr.To(123))
 		},
 		fail: true,
 	}, {
 		name: "nil oldValue",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To(123), nil)
+			return FrozenByCompare(context.Background(), op, fld, ptr.To(123), nil)
 		},
 		fail: true,
 	}, {
 		name: "int",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To(123), ptr.To(123))
+			return FrozenByCompare(context.Background(), op, fld, ptr.To(123), ptr.To(123))
 		},
 	}, {
 		name: "int fail",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To(123), ptr.To(456))
+			return FrozenByCompare(context.Background(), op, fld, ptr.To(123), ptr.To(456))
 		},
 		fail: true,
 	}, {
 		name: "string",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To("abc"), ptr.To("abc"))
+			return FrozenByCompare(context.Background(), op, fld, ptr.To("abc"), ptr.To("abc"))
 		},
 	}, {
 		name: "string fail",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To("abc"), ptr.To("xyz"))
+			return FrozenByCompare(context.Background(), op, fld, ptr.To("abc"), ptr.To("xyz"))
 		},
 		fail: true,
 	}, {
 		name: "bool",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To(true), ptr.To(true))
+			return FrozenByCompare(context.Background(), op, fld, ptr.To(true), ptr.To(true))
 		},
 	}, {
 		name: "bool fail",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To(true), ptr.To(false))
+			return FrozenByCompare(context.Background(), op, fld, ptr.To(true), ptr.To(false))
 		},
 		fail: true,
 	}, {
 		name: "same struct",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To(structA), ptr.To(structA))
+			return FrozenByCompare(context.Background(), op, fld, ptr.To(structA), ptr.To(structA))
 		},
 	}, {
 		name: "equal struct",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To(structA), ptr.To(structA2))
+			return FrozenByCompare(context.Background(), op, fld, ptr.To(structA), ptr.To(structA2))
 		},
 	}, {
 		name: "struct fail",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByCompare(context.Background(), op, fld, ptr.To(structA), ptr.To(structB))
+			return FrozenByCompare(context.Background(), op, fld, ptr.To(structA), ptr.To(structB))
 		},
 		fail: true,
 	}} {
@@ -133,7 +133,7 @@ type StructNonComparable struct {
 	MSS map[string]string
 }
 
-func TestImmutableByReflect(t *testing.T) {
+func TestFrozenByReflect(t *testing.T) {
 	structA := StructNonComparable{
 		S:   "abc",
 		SP:  ptr.To("abc"),
@@ -170,67 +170,67 @@ func TestImmutableByReflect(t *testing.T) {
 	}{{
 		name: "nil both values",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect[*int](context.Background(), op, fld, nil, nil)
+			return FrozenByReflect[*int](context.Background(), op, fld, nil, nil)
 		},
 	}, {
 		name: "nil value",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, nil, ptr.To(123))
+			return FrozenByReflect(context.Background(), op, fld, nil, ptr.To(123))
 		},
 		fail: true,
 	}, {
 		name: "nil oldValue",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To(123), nil)
+			return FrozenByReflect(context.Background(), op, fld, ptr.To(123), nil)
 		},
 		fail: true,
 	}, {
 		name: "int",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To(123), ptr.To(123))
+			return FrozenByReflect(context.Background(), op, fld, ptr.To(123), ptr.To(123))
 		},
 	}, {
 		name: "int fail",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To(123), ptr.To(456))
+			return FrozenByReflect(context.Background(), op, fld, ptr.To(123), ptr.To(456))
 		},
 		fail: true,
 	}, {
 		name: "string",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To("abc"), ptr.To("abc"))
+			return FrozenByReflect(context.Background(), op, fld, ptr.To("abc"), ptr.To("abc"))
 		},
 	}, {
 		name: "string fail",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To("abc"), ptr.To("xyz"))
+			return FrozenByReflect(context.Background(), op, fld, ptr.To("abc"), ptr.To("xyz"))
 		},
 		fail: true,
 	}, {
 		name: "bool",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To(true), ptr.To(true))
+			return FrozenByReflect(context.Background(), op, fld, ptr.To(true), ptr.To(true))
 		},
 	}, {
 		name: "bool fail",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To(true), ptr.To(false))
+			return FrozenByReflect(context.Background(), op, fld, ptr.To(true), ptr.To(false))
 		},
 		fail: true,
 	}, {
 		name: "same struct",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To(structA), ptr.To(structA))
+			return FrozenByReflect(context.Background(), op, fld, ptr.To(structA), ptr.To(structA))
 		},
 	}, {
 		name: "equal struct",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To(structA), ptr.To(structA2))
+			return FrozenByReflect(context.Background(), op, fld, ptr.To(structA), ptr.To(structA2))
 		},
 	}, {
 		name: "struct fail",
 		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
-			return ImmutableByReflect(context.Background(), op, fld, ptr.To(structA), ptr.To(structB))
+			return FrozenByReflect(context.Background(), op, fld, ptr.To(structA), ptr.To(structB))
 		},
 		fail: true,
 	}} {

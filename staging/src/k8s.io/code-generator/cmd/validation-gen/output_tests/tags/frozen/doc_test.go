@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package immutable
+package frozen
 
 import (
 	"testing"
@@ -35,8 +35,8 @@ func Test(t *testing.T) {
 		NonComparableStructPtrField: ptr.To(NonComparableStruct{[]string{"ccc"}}),
 		SliceField:                  []string{"ddd"},
 		MapField:                    map[string]string{"eee": "eee"},
-		ImmutableField:              "fff",
-		ImmutablePtrField:           ptr.To(ImmutableType("fff")),
+		FrozenField:                 "fff",
+		FrozenPtrField:              ptr.To(FrozenType("fff")),
 	}
 
 	structA2 := structA // dup of A but with different pointer values
@@ -45,7 +45,7 @@ func Test(t *testing.T) {
 	structA2.StructPtrField = ptr.To(*structA2.StructPtrField)
 	structA2.StructPtrField.StringPtrField = ptr.To("BBB")
 	structA2.NonComparableStructPtrField = ptr.To(*structA2.NonComparableStructPtrField)
-	structA2.ImmutablePtrField = ptr.To(*structA2.ImmutablePtrField)
+	structA2.FrozenPtrField = ptr.To(*structA2.FrozenPtrField)
 
 	structB := Struct{
 		StringField:                 "uuu",
@@ -56,8 +56,8 @@ func Test(t *testing.T) {
 		NonComparableStructPtrField: ptr.To(NonComparableStruct{[]string{"www"}}),
 		SliceField:                  []string{"xxx"},
 		MapField:                    map[string]string{"yyy": "yyy"},
-		ImmutableField:              "zzz",
-		ImmutablePtrField:           ptr.To(ImmutableType("zzz")),
+		FrozenField:                 "zzz",
+		FrozenPtrField:              ptr.To(FrozenType("zzz")),
 	}
 
 	st.Value(&structA).OldValue(&structA).ExpectValid()
@@ -65,15 +65,15 @@ func Test(t *testing.T) {
 	st.Value(&structA2).OldValue(&structA).ExpectValid()
 
 	st.Value(&structA).OldValue(&structB).ExpectInvalid(
-		field.Forbidden(field.NewPath("stringField"), "field is immutable"),
-		field.Forbidden(field.NewPath("stringPtrField"), "field is immutable"),
-		field.Forbidden(field.NewPath("structField"), "field is immutable"),
-		field.Forbidden(field.NewPath("structPtrField"), "field is immutable"),
-		field.Forbidden(field.NewPath("noncomparableStructField"), "field is immutable"),
-		field.Forbidden(field.NewPath("noncomparableStructPtrField"), "field is immutable"),
-		field.Forbidden(field.NewPath("sliceField"), "field is immutable"),
-		field.Forbidden(field.NewPath("mapField"), "field is immutable"),
-		field.Forbidden(field.NewPath("immutableField"), "field is immutable"),
-		field.Forbidden(field.NewPath("immutablePtrField"), "field is immutable"),
+		field.Forbidden(field.NewPath("stringField"), "field is frozen"),
+		field.Forbidden(field.NewPath("stringPtrField"), "field is frozen"),
+		field.Forbidden(field.NewPath("structField"), "field is frozen"),
+		field.Forbidden(field.NewPath("structPtrField"), "field is frozen"),
+		field.Forbidden(field.NewPath("noncomparableStructField"), "field is frozen"),
+		field.Forbidden(field.NewPath("noncomparableStructPtrField"), "field is frozen"),
+		field.Forbidden(field.NewPath("sliceField"), "field is frozen"),
+		field.Forbidden(field.NewPath("mapField"), "field is frozen"),
+		field.Forbidden(field.NewPath("frozenField"), "field is frozen"),
+		field.Forbidden(field.NewPath("frozenPtrField"), "field is frozen"),
 	)
 }

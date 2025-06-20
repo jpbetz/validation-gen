@@ -24,15 +24,15 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-// ImmutableByCompare verifies that the specified value has not changed in the
+// FrozenByCompare verifies that the specified value has not changed in the
 // course of an update operation.  It does nothing if the old value is not
 // provided. If the caller needs to compare types that are not trivially
-// comparable, they should use ImmutableByReflect instead.
+// comparable, they should use FrozenByReflect instead.
 //
 // Caution: structs with pointer fields satisfy comparable, but this function
 // will only compare pointer values.  It does not compare the pointed-to
 // values.
-func ImmutableByCompare[T comparable](_ context.Context, op operation.Operation, fldPath *field.Path, value, oldValue *T) field.ErrorList {
+func FrozenByCompare[T comparable](_ context.Context, op operation.Operation, fldPath *field.Path, value, oldValue *T) field.ErrorList {
 	if op.Type != operation.Update {
 		return nil
 	}
@@ -41,23 +41,23 @@ func ImmutableByCompare[T comparable](_ context.Context, op operation.Operation,
 	}
 	if value == nil || oldValue == nil || *value != *oldValue {
 		return field.ErrorList{
-			field.Forbidden(fldPath, "field is immutable"),
+			field.Forbidden(fldPath, "field is frozen"),
 		}
 	}
 	return nil
 }
 
-// ImmutableByReflect verifies that the specified value has not changed in
+// FrozenByReflect verifies that the specified value has not changed in
 // the course of an update operation.  It does nothing if the old value is not
 // provided. Unlike ImmutableByCompare, this function can be used with types that are
 // not directly comparable, at the cost of performance.
-func ImmutableByReflect[T any](_ context.Context, op operation.Operation, fldPath *field.Path, value, oldValue T) field.ErrorList {
+func FrozenByReflect[T any](_ context.Context, op operation.Operation, fldPath *field.Path, value, oldValue T) field.ErrorList {
 	if op.Type != operation.Update {
 		return nil
 	}
 	if !equality.Semantic.DeepEqual(value, oldValue) {
 		return field.ErrorList{
-			field.Forbidden(fldPath, "field is immutable"),
+			field.Forbidden(fldPath, "field is frozen"),
 		}
 	}
 	return nil

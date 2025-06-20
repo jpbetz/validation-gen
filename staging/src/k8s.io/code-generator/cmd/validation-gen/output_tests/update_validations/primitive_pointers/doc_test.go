@@ -53,9 +53,9 @@ func Test(t *testing.T) {
 	st.Value(&structA1).OldValue(&structA2).ExpectValid()
 
 	st.Value(&structA1).OldValue(&structB).ExpectInvalid(
-		field.Forbidden(field.NewPath("sp"), "field is immutable"),
-		field.Forbidden(field.NewPath("ip"), "field is immutable"),
-		field.Forbidden(field.NewPath("bp"), "field is immutable"),
-		field.Forbidden(field.NewPath("fp"), "field is immutable"),
+		field.Forbidden(field.NewPath("sp"), "field is frozen"),
+		field.Forbidden(field.NewPath("ip"), "field is frozen"),
+		field.Forbidden(field.NewPath("bp"), "field is frozen"),
+		field.Forbidden(field.NewPath("fp"), "field is frozen"),
 	)
 }

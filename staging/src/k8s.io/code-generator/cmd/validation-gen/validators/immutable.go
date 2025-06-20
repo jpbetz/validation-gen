@@ -24,33 +24,33 @@ import (
 )
 
 const (
-	immutableTagName = "k8s:immutable"
+	frozenTagName = "k8s:frozen"
 )
 
 func init() {
-	RegisterTagValidator(immutableTagValidator{})
+	RegisterTagValidator(frozenTagValidator{})
 }
 
-type immutableTagValidator struct{}
+type frozenTagValidator struct{}
 
-func (immutableTagValidator) Init(_ Config) {}
+func (frozenTagValidator) Init(_ Config) {}
 
-func (immutableTagValidator) TagName() string {
-	return immutableTagName
+func (frozenTagValidator) TagName() string {
+	return frozenTagName
 }
 
-var immutableTagValidScopes = sets.New(ScopeField, ScopeType, ScopeMapVal, ScopeListVal)
+var frozenTagValidScopes = sets.New(ScopeField, ScopeType, ScopeMapVal, ScopeListVal)
 
-func (immutableTagValidator) ValidScopes() sets.Set[Scope] {
-	return immutableTagValidScopes
+func (frozenTagValidator) ValidScopes() sets.Set[Scope] {
+	return frozenTagValidScopes
 }
 
 var (
-	immutableCompareValidator = types.Name{Package: libValidationPkg, Name: "ImmutableByCompare"}
-	immutableReflectValidator = types.Name{Package: libValidationPkg, Name: "ImmutableByReflect"}
+	frozenCompareValidator = types.Name{Package: libValidationPkg, Name: "FrozenByCompare"}
+	frozenReflectValidator = types.Name{Package: libValidationPkg, Name: "FrozenByReflect"}
 )
 
-func (immutableTagValidator) GetValidations(context Context, _ codetags.Tag) (Validations, error) {
+func (frozenTagValidator) GetValidations(context Context, _ codetags.Tag) (Validations, error) {
 	var result Validations
 
 	if util.IsDirectComparable(util.NonPointer(util.NativeType(context.Type))) {
@@ -59,18 +59,18 @@ func (immutableTagValidator) GetValidations(context Context, _ codetags.Tag) (Va
 		// pointer fields, which are directly comparable but not what we need.
 		//
 		// Note: This compares the pointee, not the pointer itself.
-		result.AddFunction(Function(immutableTagName, DefaultFlags, immutableCompareValidator))
+		result.AddFunction(Function(frozenTagName, DefaultFlags, frozenCompareValidator))
 	} else {
-		result.AddFunction(Function(immutableTagName, DefaultFlags, immutableReflectValidator))
+		result.AddFunction(Function(frozenTagName, DefaultFlags, frozenReflectValidator))
 	}
 
 	return result, nil
 }
 
-func (itv immutableTagValidator) Docs() TagDoc {
+func (ftv frozenTagValidator) Docs() TagDoc {
 	return TagDoc{
-		Tag:         itv.TagName(),
-		Scopes:      itv.ValidScopes().UnsortedList(),
+		Tag:         ftv.TagName(),
+		Scopes:      ftv.ValidScopes().UnsortedList(),
 		Description: "Indicates that a field may not be updated.",
 	}
 }

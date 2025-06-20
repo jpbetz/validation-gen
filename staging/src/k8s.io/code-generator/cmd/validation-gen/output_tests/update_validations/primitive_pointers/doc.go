@@ -27,12 +27,12 @@ import "k8s.io/code-generator/cmd/validation-gen/testscheme"
 var localSchemeBuilder = testscheme.New()
 
 type Struct struct {
-	// +k8s:immutable
+	// +k8s:frozen
 	SP *string `json:"sp"`
-	// +k8s:immutable
+	// +k8s:frozen
 	IP *int `json:"ip"`
-	// +k8s:immutable
+	// +k8s:frozen
 	BP *bool `json:"bp"`
-	// +k8s:immutable
+	// +k8s:frozen
 	FP *float64 `json:"fp"`
 }

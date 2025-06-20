@@ -46,29 +46,29 @@ type Struct struct {
 type ImmutableStruct struct {
 	TypeMeta int
 
-	// +k8s:eachVal=+k8s:immutable
+	// +k8s:eachVal=+k8s:frozen
 	SliceComparableField []ComparableStruct `json:"sliceComparableField"`
 
 	// +k8s:listType=set
-	// +k8s:eachVal=+k8s:immutable
+	// +k8s:eachVal=+k8s:frozen
 	SliceSetComparableField []ComparableStruct `json:"sliceSetComparableField"`
 
-	// +k8s:eachVal=+k8s:immutable
+	// +k8s:eachVal=+k8s:frozen
 	SliceNonComparableField []NonComparableStruct `json:"sliceNonComparableField"`
 
 	// +k8s:listType=set
-	// +k8s:eachVal=+k8s:immutable
+	// +k8s:eachVal=+k8s:frozen
 	SliceSetNonComparableField []NonComparableStruct `json:"sliceSetNonComparableField"`
 
-	// +k8s:eachVal=+k8s:immutable
+	// +k8s:eachVal=+k8s:frozen
 	SlicePrimitiveField []int `json:"slicePrimitiveField"`
 
 	// +k8s:listType=set
-	// +k8s:eachVal=+k8s:immutable
+	// +k8s:eachVal=+k8s:frozen
 	SliceSetPrimitiveField []int `json:"sliceSetPrimitiveField"`
 
 	// +k8s:listType=set
-	// +k8s:eachVal=+k8s:immutable
+	// +k8s:eachVal=+k8s:frozen
 	SliceSetFalselyComparableField []FalselyComparableStruct `json:"sliceSetFalselyComparableField"`
 }
 
