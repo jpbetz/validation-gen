@@ -109,7 +109,7 @@ func TestFrozenByCompare(t *testing.T) {
 	}} {
 		t.Run(tc.name, func(t *testing.T) {
 			errs := tc.fn(operation.Operation{Type: operation.Create}, field.NewPath(""))
-			if len(errs) != 0 { // Create should always succeed
+			if len(errs) != 0 {
 				t.Errorf("case %q (create): expected success: %v", tc.name, errs)
 			}
 			errs = tc.fn(operation.Operation{Type: operation.Update}, field.NewPath(""))
@@ -236,7 +236,317 @@ func TestFrozenByReflect(t *testing.T) {
 	}} {
 		t.Run(tc.name, func(t *testing.T) {
 			errs := tc.fn(operation.Operation{Type: operation.Create}, field.NewPath(""))
-			if len(errs) != 0 { // Create should always succeed
+			if len(errs) != 0 {
+				t.Errorf("case %q (create): expected success: %v", tc.name, errs)
+			}
+			errs = tc.fn(operation.Operation{Type: operation.Update}, field.NewPath(""))
+			if tc.fail && len(errs) == 0 {
+				t.Errorf("case %q (update): expected failure", tc.name)
+			} else if !tc.fail && len(errs) != 0 {
+				t.Errorf("case %q (update): expected success: %v", tc.name, errs)
+			}
+		})
+	}
+}
+
+func TestImmutableValueByCompare(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		fn   func(operation.Operation, *field.Path) field.ErrorList
+		fail bool
+	}{{
+		name: "nil both values",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare[int](context.Background(), op, fld, nil, nil)
+		},
+	}, {
+		name: "nil value pointer",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, nil, ptr.To(123))
+		},
+		fail: true,
+	}, {
+		name: "nil oldValue pointer",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To(123), nil)
+		},
+	}, {
+		name: "int zero to non-zero (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To(123), ptr.To(0))
+		},
+	}, {
+		name: "int non-zero to zero (clear)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To(0), ptr.To(123))
+		},
+		fail: true,
+	}, {
+		name: "int modify",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To(456), ptr.To(123))
+		},
+		fail: true,
+	}, {
+		name: "int same value",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To(123), ptr.To(123))
+		},
+	}, {
+		name: "string empty to non-empty (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To("abc"), ptr.To(""))
+		},
+	}, {
+		name: "string non-empty to empty (clear)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To(""), ptr.To("abc"))
+		},
+		fail: true,
+	}, {
+		name: "string modify",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To("xyz"), ptr.To("abc"))
+		},
+		fail: true,
+	}, {
+		name: "bool false to true (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To(true), ptr.To(false))
+		},
+	}, {
+		name: "bool true to false (clear)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableValueByCompare(context.Background(), op, fld, ptr.To(false), ptr.To(true))
+		},
+		fail: true,
+	}} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := tc.fn(operation.Operation{Type: operation.Create}, field.NewPath(""))
+			if len(errs) != 0 {
+				t.Errorf("case %q (create): expected success: %v", tc.name, errs)
+			}
+			errs = tc.fn(operation.Operation{Type: operation.Update}, field.NewPath(""))
+			if tc.fail && len(errs) == 0 {
+				t.Errorf("case %q (update): expected failure", tc.name)
+			} else if !tc.fail && len(errs) != 0 {
+				t.Errorf("case %q (update): expected success: %v", tc.name, errs)
+			}
+		})
+	}
+}
+
+func TestImmutablePointerByCompare(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		fn   func(operation.Operation, *field.Path) field.ErrorList
+		fail bool
+	}{{
+		name: "nil both values",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutablePointerByCompare[int](context.Background(), op, fld, nil, nil)
+		},
+	}, {
+		name: "nil to non-nil (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutablePointerByCompare(context.Background(), op, fld, ptr.To(123), nil)
+		},
+	}, {
+		name: "non-nil to nil (clear)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutablePointerByCompare(context.Background(), op, fld, nil, ptr.To(123))
+		},
+		fail: true,
+	}, {
+		name: "int pointer same value",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutablePointerByCompare(context.Background(), op, fld, ptr.To(123), ptr.To(123))
+		},
+	}, {
+		name: "int pointer modify",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutablePointerByCompare(context.Background(), op, fld, ptr.To(456), ptr.To(123))
+		},
+		fail: true,
+	}, {
+		name: "string pointer nil to empty string (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			var oldVal *string = nil
+			return ImmutablePointerByCompare(context.Background(), op, fld, ptr.To(""), oldVal)
+		},
+	}, {
+		name: "string pointer empty to non-empty (modify)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutablePointerByCompare(context.Background(), op, fld, ptr.To("abc"), ptr.To(""))
+		},
+		fail: true,
+	}, {
+		name: "bool pointer nil to false (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			var oldVal *bool = nil
+			return ImmutablePointerByCompare(context.Background(), op, fld, ptr.To(false), oldVal)
+		},
+	}, {
+		name: "bool pointer false to true (modify)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutablePointerByCompare(context.Background(), op, fld, ptr.To(true), ptr.To(false))
+		},
+		fail: true,
+	}} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := tc.fn(operation.Operation{Type: operation.Create}, field.NewPath(""))
+			if len(errs) != 0 {
+				t.Errorf("case %q (create): expected success: %v", tc.name, errs)
+			}
+			errs = tc.fn(operation.Operation{Type: operation.Update}, field.NewPath(""))
+			if tc.fail && len(errs) == 0 {
+				t.Errorf("case %q (update): expected failure", tc.name)
+			} else if !tc.fail && len(errs) != 0 {
+				t.Errorf("case %q (update): expected success: %v", tc.name, errs)
+			}
+		})
+	}
+}
+
+func TestImmutableByReflect(t *testing.T) {
+	emptySlice := []string{}
+	nonEmptySlice := []string{"a", "b", "c"}
+	emptyMap := map[string]string{}
+	nonEmptyMap := map[string]string{"key": "value"}
+
+	structA := StructNonComparable{
+		S:   "abc",
+		SP:  ptr.To("abc"),
+		I:   123,
+		IP:  ptr.To(123),
+		B:   true,
+		BP:  ptr.To(true),
+		SS:  []string{"a", "b", "c"},
+		MSS: map[string]string{"a": "b", "c": "d"},
+	}
+
+	structB := StructNonComparable{
+		S:   "xyz",
+		SP:  ptr.To("xyz"),
+		I:   456,
+		IP:  ptr.To(456),
+		B:   false,
+		BP:  ptr.To(false),
+		SS:  []string{"x", "y", "z"},
+		MSS: map[string]string{"x": "X", "y": "Y"},
+	}
+
+	structZero := StructNonComparable{}
+
+	for _, tc := range []struct {
+		name string
+		fn   func(operation.Operation, *field.Path) field.ErrorList
+		fail bool
+	}{{
+		name: "slice nil to empty (both unset)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			var nilSlice []string
+			return ImmutableByReflect(context.Background(), op, fld, emptySlice, nilSlice)
+		},
+	}, {
+		name: "slice empty to nil (both unset)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			var nilSlice []string
+			return ImmutableByReflect(context.Background(), op, fld, nilSlice, emptySlice)
+		},
+	}, {
+		name: "slice nil to non-empty (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			var nilSlice []string
+			return ImmutableByReflect(context.Background(), op, fld, nonEmptySlice, nilSlice)
+		},
+	}, {
+		name: "slice non-empty to nil (clear)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			var nilSlice []string
+			return ImmutableByReflect(context.Background(), op, fld, nilSlice, nonEmptySlice)
+		},
+		fail: true,
+	}, {
+		name: "slice modify",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			slice1 := []string{"a", "b"}
+			slice2 := []string{"x", "y"}
+			return ImmutableByReflect(context.Background(), op, fld, slice2, slice1)
+		},
+		fail: true,
+	}, {
+		name: "map nil to empty (both unset)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			var nilMap map[string]string
+			return ImmutableByReflect(context.Background(), op, fld, emptyMap, nilMap)
+		},
+	}, {
+		name: "map nil to non-empty (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			var nilMap map[string]string
+			return ImmutableByReflect(context.Background(), op, fld, nonEmptyMap, nilMap)
+		},
+	}, {
+		name: "map non-empty to nil (clear)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			var nilMap map[string]string
+			return ImmutableByReflect(context.Background(), op, fld, nilMap, nonEmptyMap)
+		},
+		fail: true,
+	}, {
+		name: "struct zero to non-zero (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableByReflect(context.Background(), op, fld, structA, structZero)
+		},
+	}, {
+		name: "struct non-zero to zero (clear)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableByReflect(context.Background(), op, fld, structZero, structA)
+		},
+		fail: true,
+	}, {
+		name: "struct modify",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableByReflect(context.Background(), op, fld, structB, structA)
+		},
+		fail: true,
+	}, {
+		name: "struct same value",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			structA2 := structA
+			return ImmutableByReflect(context.Background(), op, fld, structA2, structA)
+		},
+	}, {
+		name: "pointer to struct - nil to non-nil (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableByReflect(context.Background(), op, fld, &structA, (*StructNonComparable)(nil))
+		},
+	}, {
+		name: "pointer to struct - non-nil to nil (clear)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableByReflect(context.Background(), op, fld, (*StructNonComparable)(nil), &structA)
+		},
+		fail: true,
+	}, {
+		name: "int value zero to non-zero (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableByReflect(context.Background(), op, fld, 123, 0)
+		},
+	}, {
+		name: "string empty to non-empty (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableByReflect(context.Background(), op, fld, "hello", "")
+		},
+	}, {
+		name: "bool false to true (unset to set)",
+		fn: func(op operation.Operation, fld *field.Path) field.ErrorList {
+			return ImmutableByReflect(context.Background(), op, fld, true, false)
+		},
+	}} {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := tc.fn(operation.Operation{Type: operation.Create}, field.NewPath(""))
+			if len(errs) != 0 {
 				t.Errorf("case %q (create): expected success: %v", tc.name, errs)
 			}
 			errs = tc.fn(operation.Operation{Type: operation.Update}, field.NewPath(""))
