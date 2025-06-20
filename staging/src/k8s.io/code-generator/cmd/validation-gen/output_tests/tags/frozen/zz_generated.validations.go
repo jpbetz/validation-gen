@@ -48,8 +48,8 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 	return nil
 }
 
-func Validate_ImmutableType(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *FrozenType) (errs field.ErrorList) {
-	// type ImmutableType
+func Validate_FrozenType(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *FrozenType) (errs field.ErrorList) {
+	// type FrozenType
 	if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 		return nil // no changes
 	}
@@ -141,17 +141,17 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			return
 		}(fldPath.Child("mapField"), obj.MapField, safe.Field(oldObj, func(oldObj *Struct) map[string]string { return oldObj.MapField }))...)
 
-	// field Struct.ImmutableField
+	// field Struct.FrozenField
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *FrozenType) (errs field.ErrorList) {
-			errs = append(errs, Validate_ImmutableType(ctx, op, fldPath, obj, oldObj)...)
+			errs = append(errs, Validate_FrozenType(ctx, op, fldPath, obj, oldObj)...)
 			return
 		}(fldPath.Child("frozenField"), &obj.FrozenField, safe.Field(oldObj, func(oldObj *Struct) *FrozenType { return &oldObj.FrozenField }))...)
 
-	// field Struct.ImmutablePtrField
+	// field Struct.FrozenPtrField
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *FrozenType) (errs field.ErrorList) {
-			errs = append(errs, Validate_ImmutableType(ctx, op, fldPath, obj, oldObj)...)
+			errs = append(errs, Validate_FrozenType(ctx, op, fldPath, obj, oldObj)...)
 			return
 		}(fldPath.Child("frozenPtrField"), obj.FrozenPtrField, safe.Field(oldObj, func(oldObj *Struct) *FrozenType { return oldObj.FrozenPtrField }))...)
 

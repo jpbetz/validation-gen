@@ -18,6 +18,7 @@ package validate
 
 import (
 	"context"
+	"reflect"
 
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/operation"
@@ -61,4 +62,163 @@ func FrozenByReflect[T any](_ context.Context, op operation.Operation, fldPath *
 		}
 	}
 	return nil
+}
+
+// ImmutableValueByCompare allows a field to be set
+// once then prevents any further changes.
+// Semantics:
+// - Zero value is considered "unset"
+// - Allows ONE transition: unset->set
+// - Forbids: modify and clear
+// This function is optimized for comparable types.
+// For non-comparable types use ImmutableByReflect instead.
+func ImmutableValueByCompare[T comparable](ctx context.Context, op operation.Operation, fldPath *field.Path, value, oldValue *T) field.ErrorList {
+	return immutableCheck(op, fldPath, value, oldValue, func(v *T) bool {
+		if v == nil {
+			return true
+		}
+		var zero T
+		return *v == zero
+	})
+}
+
+// ImmutablePointerByCompare allows a field to be set
+// once then prevents any further changes.
+// Semantics:
+// - nil is considered "unset"
+// - Any non-nil pointer is considered "set" (incl. ptrs to zero values)
+// - Allows ONE transition: unset->set (nil -> non-nil)
+// - Forbids: modify and clear (non-nil -> nil)
+// This function is optimized for comparable types.
+// For non-comparable types, use ImmutableByReflect instead.
+func ImmutablePointerByCompare[T comparable](ctx context.Context, op operation.Operation, fldPath *field.Path, value, oldValue *T) field.ErrorList {
+	return immutableCheck(op, fldPath, value, oldValue, func(v *T) bool {
+		return v == nil
+	})
+}
+
+// ImmutableByReflect  allows a field to be set
+// once then prevents any further changes.
+// Semantics:
+// - Can be unset at creation
+// - Allows ONE transition: set (unset->set)
+// - Forbids: modify and clear (set->unset)
+// Unlike ImmutableByCompare, this function can be
+// used with types that are not directly comparable
+// at the cost of performance.
+func ImmutableByReflect[T any](_ context.Context, op operation.Operation, fldPath *field.Path, value, oldValue T) field.ErrorList {
+	if op.Type != operation.Update {
+		return nil
+	}
+
+	valueIsUnset := isUnsetForImmutable(value)
+	oldValueIsUnset := isUnsetForImmutable(oldValue)
+
+	if oldValueIsUnset && valueIsUnset {
+		return nil
+	}
+	if !oldValueIsUnset && !valueIsUnset && equality.Semantic.DeepEqual(value, oldValue) {
+		return nil
+	}
+
+	switch {
+	case oldValueIsUnset && !valueIsUnset:
+		return nil
+	case !oldValueIsUnset && valueIsUnset:
+		return field.ErrorList{
+			field.Forbidden(fldPath, "field is immutable"),
+		}
+	case !oldValueIsUnset && !valueIsUnset:
+		return field.ErrorList{
+			field.Forbidden(fldPath, "field is immutable"),
+		}
+	default:
+		// Both unset, shouldn't happen since we checked equality
+		return nil
+	}
+}
+
+func immutableCheck[T comparable](op operation.Operation, fldPath *field.Path,
+	value, oldValue *T,
+	isUnset func(*T) bool,
+) field.ErrorList {
+	if op.Type != operation.Update {
+		return nil
+	}
+
+	if value == nil && oldValue == nil {
+		return nil
+	}
+	if oldValue == nil {
+		return nil
+	}
+	if value == nil {
+		return field.ErrorList{
+			field.Forbidden(fldPath, "field is immutable"),
+		}
+	}
+
+	if *value == *oldValue {
+		return nil
+	}
+
+	oldIsUnset := isUnset(oldValue)
+	newIsUnset := isUnset(value)
+
+	switch {
+	case oldIsUnset && !newIsUnset:
+		return nil
+	case !oldIsUnset && newIsUnset:
+		return field.ErrorList{
+			field.Forbidden(fldPath, "field is immutable"),
+		}
+	case !oldIsUnset && !newIsUnset:
+		return field.ErrorList{
+			field.Forbidden(fldPath, "field is immutable"),
+		}
+	default:
+		// Both unset, shouldn't happen since we checked equality
+		return nil
+	}
+}
+
+// isUnsetForImmutable determines if a value should
+// be considered "unset" for immutability.
+func isUnsetForImmutable(value interface{}) bool {
+	if value == nil {
+		return true
+	}
+
+	v := reflect.ValueOf(value)
+
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return true
+		}
+		elem := v.Elem()
+
+		// If this is a pointer to a struct, check if the struct is zero
+		if elem.Kind() == reflect.Struct {
+			zero := reflect.Zero(elem.Type())
+			return reflect.DeepEqual(elem.Interface(), zero.Interface())
+		}
+
+		// For pointers to other types, being non-nil means it's set.
+		// Aligns with +k8s:required behavior for pointer fields.
+		return false
+	}
+
+	switch v.Kind() {
+	case reflect.Slice, reflect.Map:
+		return v.IsNil() || v.Len() == 0
+	case reflect.String:
+		return v.String() == ""
+	case reflect.Struct:
+		return reflect.DeepEqual(v.Interface(), reflect.Zero(v.Type()).Interface())
+	case reflect.Interface:
+		return v.IsNil()
+	default:
+		// For other types check if it's the zero value.
+		return v.Interface() == reflect.Zero(v.Type()).Interface()
+	}
 }

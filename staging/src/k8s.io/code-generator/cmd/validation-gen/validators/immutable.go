@@ -24,11 +24,13 @@ import (
 )
 
 const (
-	frozenTagName = "k8s:frozen"
+	frozenTagName    = "k8s:frozen"
+	immutableTagName = "k8s:immutable"
 )
 
 func init() {
 	RegisterTagValidator(frozenTagValidator{})
+	RegisterTagValidator(immutableTagValidator{})
 }
 
 type frozenTagValidator struct{}
@@ -54,11 +56,6 @@ func (frozenTagValidator) GetValidations(context Context, _ codetags.Tag) (Valid
 	var result Validations
 
 	if util.IsDirectComparable(util.NonPointer(util.NativeType(context.Type))) {
-		// This is a minor optimization to just compare primitive values when
-		// possible. Slices and maps are not comparable, and structs might hold
-		// pointer fields, which are directly comparable but not what we need.
-		//
-		// Note: This compares the pointee, not the pointer itself.
 		result.AddFunction(Function(frozenTagName, DefaultFlags, frozenCompareValidator))
 	} else {
 		result.AddFunction(Function(frozenTagName, DefaultFlags, frozenReflectValidator))
@@ -72,5 +69,71 @@ func (ftv frozenTagValidator) Docs() TagDoc {
 		Tag:         ftv.TagName(),
 		Scopes:      ftv.ValidScopes().UnsortedList(),
 		Description: "Indicates that a field may not be updated.",
+	}
+}
+
+type immutableTagValidator struct{}
+
+func (immutableTagValidator) Init(_ Config) {}
+
+func (immutableTagValidator) TagName() string {
+	return immutableTagName
+}
+
+var immutableTagValidScopes = sets.New(ScopeField, ScopeType, ScopeMapVal, ScopeListVal)
+
+func (immutableTagValidator) ValidScopes() sets.Set[Scope] {
+	return immutableTagValidScopes
+}
+
+var (
+	immutableValueByCompareValidator   = types.Name{Package: libValidationPkg, Name: "ImmutableValueByCompare"}
+	immutablePointerByCompareValidator = types.Name{Package: libValidationPkg, Name: "ImmutablePointerByCompare"}
+	immutableReflectValidator          = types.Name{Package: libValidationPkg, Name: "ImmutableByReflect"}
+)
+
+func (itv immutableTagValidator) GetValidations(context Context, _ codetags.Tag) (Validations, error) {
+	var result Validations
+
+	// If validating a field, check for default value.
+	if context.Member != nil {
+		if hasDefault, zeroDefault, err := hasZeroDefault(context); err != nil {
+			return Validations{}, err
+		} else if hasDefault && zeroDefault {
+			result.AddComment("Zero-value defaults are treated as 'unset' by immutable validation.")
+		} else if hasDefault && !zeroDefault {
+			result.AddComment("Non-zero defaults are 'always set' and cannot transition from unset to set.")
+		}
+	}
+
+	if !util.IsDirectComparable(util.NonPointer(util.NativeType(context.Type))) {
+		result.AddFunction(Function(immutableTagName, DefaultFlags, immutableReflectValidator))
+		return result, nil
+	}
+
+	isPointerField := false
+	if context.Member != nil {
+		memberType := context.Member.Type
+		if memberType != nil && memberType.Kind == types.Pointer {
+			isPointerField = true
+		}
+	} else if util.NativeType(context.Type).Kind == types.Pointer {
+		isPointerField = true
+	}
+
+	if isPointerField {
+		result.AddFunction(Function(immutableTagName, DefaultFlags, immutablePointerByCompareValidator))
+	} else {
+		result.AddFunction(Function(immutableTagName, DefaultFlags, immutableValueByCompareValidator))
+	}
+
+	return result, nil
+}
+
+func (itv immutableTagValidator) Docs() TagDoc {
+	return TagDoc{
+		Tag:         itv.TagName(),
+		Scopes:      itv.ValidScopes().UnsortedList(),
+		Description: "Indicates that a field can be set once (now or at creation), then becomes immutable. Allows transition from unset to set, but forbids modify or clear operations. Fields with default values are considered already set.",
 	}
 }
