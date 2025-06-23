@@ -250,3 +250,26 @@ func InitGlobalValidator(c *generator.Context) Validator {
 	globalRegistry.init(c)
 	return globalRegistry
 }
+
+// validatorMetadata stores additional information about registered validators
+var validatorMetadata = struct {
+	sync.Mutex
+	usesExtractorPattern map[string]bool
+}{
+	usesExtractorPattern: make(map[string]bool),
+}
+
+// SetValidatorUsesExtractorPattern marks a validator as using the extractor patterns
+// This should be called during validator registration
+func SetValidatorUsesExtractorPattern(tagName string) {
+	validatorMetadata.Lock()
+	defer validatorMetadata.Unlock()
+	validatorMetadata.usesExtractorPattern[tagName] = true
+}
+
+// ValidatorUsesExtractorPattern checks if a validator uses the extractor patterns
+func ValidatorUsesExtractorPattern(tagName string) bool {
+	validatorMetadata.Lock()
+	defer validatorMetadata.Unlock()
+	return validatorMetadata.usesExtractorPattern[tagName]
+}
