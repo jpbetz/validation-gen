@@ -31,7 +31,7 @@ import (
 	"k8s.io/gengo/v2/types"
 )
 
-const enumTagName = "k8s:enum"
+const enumTagName = "enum"
 
 func init() {
 	RegisterTagValidator(&enumTagValidator{})
@@ -217,5 +217,5 @@ func isEnumType(t *types.Type) bool {
 }
 
 func hasEnumTag(t *types.Type) bool {
-	return gengo.ExtractCommentTags("+", t.CommentLines)[enumTagName] != nil
+	return gengo.ExtractCommentTags("+k8s:", t.CommentLines)[enumTagName] != nil
 }

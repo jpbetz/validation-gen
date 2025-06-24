@@ -145,8 +145,8 @@ func toSliceAny[T any](t []T) []any {
 }
 
 const (
-	unionDiscriminatorTagName = "k8s:unionDiscriminator"
-	unionMemberTagName        = "k8s:unionMember"
+	unionDiscriminatorTagName = "unionDiscriminator"
+	unionMemberTagName        = "unionMember"
 )
 
 type unionDiscriminatorTagValidator struct {
@@ -270,7 +270,7 @@ func (umtv unionMemberTagValidator) Docs() TagDoc {
 }
 
 // union defines how a union validation will be generated, based
-// on +k8s:unionMember and +k8s:unionDiscriminator tags found in a go struct.
+// on `unionMember` and `unionDiscriminator` tags found in a go struct.
 type union struct {
 	// fields provides field information about all the members of the union.
 	// Each item provides a fieldName and memberName pair, where [0] identifies

@@ -27,26 +27,26 @@ var localSchemeBuilder = testscheme.New()
 type StructSlice struct {
 	TypeMeta int
 
-	// +k8s:eachVal=+k8s:validateFalse="field SliceField[*]"
+	// +k8s:eachVal=+validateFalse="field SliceField[*]"
 	SliceField []S `json:"sliceField"`
 
-	// +k8s:eachVal=+k8s:validateFalse="field TypeDefSliceField[*]"
+	// +k8s:eachVal=+validateFalse="field TypeDefSliceField[*]"
 	TypeDefSliceField MySlice `json:"typedefSliceField"`
 
-	// +k8s:eachVal=+k8s:validateFalse="field SliceStructField[*]"
+	// +k8s:eachVal=+validateFalse="field SliceStructField[*]"
 	SliceStructField []DirectComparableStruct `json:"sliceStructField"`
 
-	// +k8s:eachVal=+k8s:validateFalse="field SliceNonComparableStructField[*]"
+	// +k8s:eachVal=+validateFalse="field SliceNonComparableStructField[*]"
 	SliceNonComparableStructField []NonDirectComparableStruct `json:"sliceNonComparableStructField"`
 
 	// +k8s:listType=map
 	// +k8s:listMapKey=key
-	// +k8s:eachVal=+k8s:validateFalse="field SliceStructWithKey[*]"
+	// +k8s:eachVal=+validateFalse="field SliceStructWithKey[*]"
 	SliceStructWithKey []DirectComparableStructWithKey `json:"sliceStructWithKey"`
 
 	// +k8s:listType=map
 	// +k8s:listMapKey=key
-	// +k8s:eachVal=+k8s:validateFalse="field SliceNonComparableStructWithKey[*]"
+	// +k8s:eachVal=+validateFalse="field SliceNonComparableStructWithKey[*]"
 	SliceNonComparableStructWithKey []NonComparableStructWithKey `json:"sliceNonComparableStructWithKey"`
 }
 
