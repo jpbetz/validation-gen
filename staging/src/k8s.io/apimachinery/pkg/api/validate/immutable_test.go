@@ -249,6 +249,36 @@ func TestFrozenByReflect(t *testing.T) {
 	}
 }
 
+func TestFrozenVariantsConsistency(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		oldValue *string
+		newValue *string
+	}{
+		{"string both nil", nil, nil},
+		{"string nil to empty", nil, ptr.To("")},
+		{"string nil to value", nil, ptr.To("hello")},
+		{"string empty to value", ptr.To(""), ptr.To("hello")},
+		{"string value to empty", ptr.To("hello"), ptr.To("")},
+		{"string same value", ptr.To("hello"), ptr.To("hello")},
+		{"string different values", ptr.To("hello"), ptr.To("world")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			op := operation.Operation{Type: operation.Update}
+			path := field.NewPath("test")
+
+			errs1 := FrozenByCompare(ctx, op, path, tc.newValue, tc.oldValue)
+			errs2 := FrozenByReflect(ctx, op, path, tc.newValue, tc.oldValue)
+
+			if len(errs1) != len(errs2) {
+				t.Errorf("FrozenByCompare and FrozenByReflect differ: %v, %v",
+					errs1, errs2)
+			}
+		})
+	}
+}
+
 func TestImmutableValueByCompare(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -554,6 +584,46 @@ func TestImmutableByReflect(t *testing.T) {
 				t.Errorf("case %q (update): expected failure", tc.name)
 			} else if !tc.fail && len(errs) != 0 {
 				t.Errorf("case %q (update): expected success: %v", tc.name, errs)
+			}
+		})
+	}
+}
+
+func TestImmutableVariantsConsistency(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		oldValue *string
+		newValue *string
+	}{
+		{"string both nil", nil, nil},
+		{"string nil to empty", nil, ptr.To("")},
+		{"string nil to value", nil, ptr.To("hello")},
+		{"string empty to value", ptr.To(""), ptr.To("hello")},
+		{"string value to empty", ptr.To("hello"), ptr.To("")},
+		{"string same value", ptr.To("hello"), ptr.To("hello")},
+		{"string different values", ptr.To("hello"), ptr.To("world")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			op := operation.Operation{Type: operation.Update}
+			path := field.NewPath("test")
+
+			errs1 := ImmutablePointerByCompare(ctx, op, path, tc.newValue, tc.oldValue)
+			errs2 := ImmutableByReflect(ctx, op, path, tc.newValue, tc.oldValue)
+
+			if len(errs1) != len(errs2) {
+				t.Errorf("ImmutablePointerByCompare and ImmutableByReflect differ: %v, %v",
+					errs1, errs2)
+			}
+
+			if tc.oldValue != nil && tc.newValue != nil {
+				errs3 := ImmutableValueByCompare(ctx, op, path, tc.newValue, tc.oldValue)
+				errs4 := ImmutableByReflect(ctx, op, path, *tc.newValue, *tc.oldValue)
+
+				if len(errs3) != len(errs4) {
+					t.Errorf("ImmutableValueByCompare and ImmutableByReflect differ: %v, %v",
+						errs3, errs4)
+				}
 			}
 		})
 	}

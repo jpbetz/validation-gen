@@ -29,7 +29,9 @@ import (
 // course of an update operation.  It does nothing if the old value is not
 // provided. If the caller needs to compare types that are not trivially
 // comparable, they should use FrozenByReflect instead.
-//
+// Semantics:
+// - Forbids ALL transitions after creation
+// - This includes: set->unset, unset->set, and modify operations
 // Caution: structs with pointer fields satisfy comparable, but this function
 // will only compare pointer values.  It does not compare the pointed-to
 // values.
@@ -52,6 +54,9 @@ func FrozenByCompare[T comparable](_ context.Context, op operation.Operation, fl
 // the course of an update operation.  It does nothing if the old value is not
 // provided. Unlike ImmutableByCompare, this function can be used with types that are
 // not directly comparable, at the cost of performance.
+// Semantics:
+// - Forbids ALL transitions after creation
+// - This includes: set->unset (set), unset->set (clear), and modify
 func FrozenByReflect[T any](_ context.Context, op operation.Operation, fldPath *field.Path, value, oldValue T) field.ErrorList {
 	if op.Type != operation.Update {
 		return nil
@@ -73,13 +78,7 @@ func FrozenByReflect[T any](_ context.Context, op operation.Operation, fldPath *
 // This function is optimized for comparable types.
 // For non-comparable types use ImmutableByReflect instead.
 func ImmutableValueByCompare[T comparable](ctx context.Context, op operation.Operation, fldPath *field.Path, value, oldValue *T) field.ErrorList {
-	return immutableCheck(op, fldPath, value, oldValue, func(v *T) bool {
-		if v == nil {
-			return true
-		}
-		var zero T
-		return *v == zero
-	})
+	return immutableByCompareCheck(op, fldPath, value, oldValue, isUnsetComparable[T])
 }
 
 // ImmutablePointerByCompare allows a field to be set
@@ -92,7 +91,7 @@ func ImmutableValueByCompare[T comparable](ctx context.Context, op operation.Ope
 // This function is optimized for comparable types.
 // For non-comparable types, use ImmutableByReflect instead.
 func ImmutablePointerByCompare[T comparable](ctx context.Context, op operation.Operation, fldPath *field.Path, value, oldValue *T) field.ErrorList {
-	return immutableCheck(op, fldPath, value, oldValue, func(v *T) bool {
+	return immutableByCompareCheck(op, fldPath, value, oldValue, func(v *T) bool {
 		return v == nil
 	})
 }
@@ -110,38 +109,22 @@ func ImmutableByReflect[T any](_ context.Context, op operation.Operation, fldPat
 	if op.Type != operation.Update {
 		return nil
 	}
-
-	valueIsUnset := isUnsetForImmutable(value)
-	oldValueIsUnset := isUnsetForImmutable(oldValue)
-
-	if oldValueIsUnset && valueIsUnset {
+	if equality.Semantic.DeepEqual(value, oldValue) {
 		return nil
 	}
-	if !oldValueIsUnset && !valueIsUnset && equality.Semantic.DeepEqual(value, oldValue) {
+	oldValueIsUnset := isUnsetForReflect(oldValue)
+	valueIsUnset := isUnsetForReflect(value)
+	if oldValueIsUnset && !valueIsUnset {
 		return nil
 	}
-
-	switch {
-	case oldValueIsUnset && !valueIsUnset:
-		return nil
-	case !oldValueIsUnset && valueIsUnset:
-		return field.ErrorList{
-			field.Forbidden(fldPath, "field is immutable"),
-		}
-	case !oldValueIsUnset && !valueIsUnset:
-		return field.ErrorList{
-			field.Forbidden(fldPath, "field is immutable"),
-		}
-	default:
-		// Both unset, shouldn't happen since we checked equality
-		return nil
+	return field.ErrorList{
+		field.Forbidden(fldPath, "field is immutable"),
 	}
 }
 
-func immutableCheck[T comparable](op operation.Operation, fldPath *field.Path,
-	value, oldValue *T,
-	isUnset func(*T) bool,
-) field.ErrorList {
+func immutableByCompareCheck[T comparable](op operation.Operation,
+	fldPath *field.Path, value, oldValue *T,
+	isUnset func(*T) bool) field.ErrorList {
 	if op.Type != operation.Update {
 		return nil
 	}
@@ -158,39 +141,37 @@ func immutableCheck[T comparable](op operation.Operation, fldPath *field.Path,
 		}
 	}
 
-	if *value == *oldValue {
-		return nil
-	}
-
 	oldIsUnset := isUnset(oldValue)
 	newIsUnset := isUnset(value)
-
-	switch {
-	case oldIsUnset && !newIsUnset:
+	if oldIsUnset == newIsUnset && *value == *oldValue {
 		return nil
-	case !oldIsUnset && newIsUnset:
-		return field.ErrorList{
-			field.Forbidden(fldPath, "field is immutable"),
-		}
-	case !oldIsUnset && !newIsUnset:
-		return field.ErrorList{
-			field.Forbidden(fldPath, "field is immutable"),
-		}
-	default:
-		// Both unset, shouldn't happen since we checked equality
+	}
+	if oldIsUnset && !newIsUnset {
 		return nil
+	}
+	return field.ErrorList{
+		field.Forbidden(fldPath, "field is immutable"),
 	}
 }
 
-// isUnsetForImmutable determines if a value should
-// be considered "unset" for immutability.
-func isUnsetForImmutable(value interface{}) bool {
+// isUnsetComparable determines if a comparable value should be considered
+// "unset" for immutability validation by comparing to its zero value.
+func isUnsetComparable[T comparable](v *T) bool {
+	if v == nil {
+		return true
+	}
+	var zero T
+	return *v == zero
+}
+
+// isUnsetReflect determines if value should be considered "unset"
+// for immutability validation by comparing to its zero value.
+func isUnsetForReflect(value interface{}) bool {
 	if value == nil {
 		return true
 	}
 
 	v := reflect.ValueOf(value)
-
 	if v.Kind() == reflect.Ptr {
 		if v.IsNil() {
 			return true
@@ -202,7 +183,6 @@ func isUnsetForImmutable(value interface{}) bool {
 			zero := reflect.Zero(elem.Type())
 			return reflect.DeepEqual(elem.Interface(), zero.Interface())
 		}
-
 		// For pointers to other types, being non-nil means it's set.
 		// Aligns with +k8s:required behavior for pointer fields.
 		return false
