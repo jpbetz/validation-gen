@@ -54,6 +54,40 @@ type Struct struct {
 	ImmutableField ImmutableType `json:"immutableField"`
 
 	ImmutablePtrField *ImmutableType `json:"immutablePtrField"`
+
+	// +k8s:immutable
+	IntPtrField *int `json:"intPtrField"`
+
+	// +k8s:immutable
+	BoolPtrField *bool `json:"boolPtrField"`
+
+	// +k8s:optional
+	// +default="defaultValue"
+	// +k8s:immutable
+	StringWithDefault string `json:"stringWithDefault"`
+
+	// +k8s:optional
+	// +default=42
+	// +k8s:immutable
+	IntPtrWithDefault *int32 `json:"intPtrWithDefault"`
+
+	// +k8s:optional
+	// +default=0
+	// +k8s:immutable
+	IntWithZeroDefault int32 `json:"intWithZeroDefault"`
+
+	// +k8s:optional
+	// +default=""
+	// +k8s:immutable
+	StringWithZeroDefault string `json:"stringWithZeroDefault"`
+
+	// +k8s:required
+	// +k8s:immutable
+	RequiredImmutableField string `json:"requiredImmutableField"`
+
+	// +k8s:optional
+	// +k8s:immutable
+	OptionalImmutableField *string `json:"optionalImmutableField"`
 }
 
 type ComparableStruct struct {

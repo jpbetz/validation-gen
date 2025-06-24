@@ -68,19 +68,19 @@ func Test(t *testing.T) {
 	st.Value(&structA2).OldValue(&structA1).ExpectValid()
 
 	st.Value(&structA1).OldValue(&structB).ExpectInvalid(
-		field.Forbidden(field.NewPath("listField").Index(0), "field is immutable"),
-		field.Forbidden(field.NewPath("listField").Index(1), "field is immutable"),
-		field.Forbidden(field.NewPath("listTypedefField").Index(0), "field is immutable"),
-		field.Forbidden(field.NewPath("listTypedefField").Index(1), "field is immutable"),
+		field.Forbidden(field.NewPath("listField").Index(0), "field is frozen"),
+		field.Forbidden(field.NewPath("listField").Index(1), "field is frozen"),
+		field.Forbidden(field.NewPath("listTypedefField").Index(0), "field is frozen"),
+		field.Forbidden(field.NewPath("listTypedefField").Index(1), "field is frozen"),
 	)
 
 	st.Value(&structB).OldValue(&structA1).ExpectInvalid(
-		field.Forbidden(field.NewPath("listField").Index(0), "field is immutable"),
-		field.Forbidden(field.NewPath("listField").Index(1), "field is immutable"),
-		field.Forbidden(field.NewPath("listField").Index(2), "field is immutable"),
-		field.Forbidden(field.NewPath("listTypedefField").Index(0), "field is immutable"),
-		field.Forbidden(field.NewPath("listTypedefField").Index(1), "field is immutable"),
-		field.Forbidden(field.NewPath("listTypedefField").Index(2), "field is immutable"),
+		field.Forbidden(field.NewPath("listField").Index(0), "field is frozen"),
+		field.Forbidden(field.NewPath("listField").Index(1), "field is frozen"),
+		field.Forbidden(field.NewPath("listField").Index(2), "field is frozen"),
+		field.Forbidden(field.NewPath("listTypedefField").Index(0), "field is frozen"),
+		field.Forbidden(field.NewPath("listTypedefField").Index(1), "field is frozen"),
+		field.Forbidden(field.NewPath("listTypedefField").Index(2), "field is frozen"),
 	)
 
 	// Test validation ratcheting.

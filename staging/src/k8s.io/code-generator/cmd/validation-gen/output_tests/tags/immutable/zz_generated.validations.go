@@ -53,7 +53,7 @@ func Validate_ImmutableType(ctx context.Context, op operation.Operation, fldPath
 	if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 		return nil // no changes
 	}
-	errs = append(errs, validate.ImmutableByCompare(ctx, op, fldPath, obj, oldObj)...)
+	errs = append(errs, validate.ImmutableValueByCompare(ctx, op, fldPath, obj, oldObj)...)
 
 	return errs
 }
@@ -67,7 +67,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil // no changes
 			}
-			errs = append(errs, validate.ImmutableByCompare(ctx, op, fldPath, obj, oldObj)...)
+			errs = append(errs, validate.ImmutableValueByCompare(ctx, op, fldPath, obj, oldObj)...)
 			return
 		}(fldPath.Child("stringField"), &obj.StringField, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.StringField }))...)
 
@@ -77,7 +77,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil // no changes
 			}
-			errs = append(errs, validate.ImmutableByCompare(ctx, op, fldPath, obj, oldObj)...)
+			errs = append(errs, validate.ImmutablePointerByCompare(ctx, op, fldPath, obj, oldObj)...)
 			return
 		}(fldPath.Child("stringPtrField"), obj.StringPtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.StringPtrField }))...)
 
@@ -154,6 +154,109 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			errs = append(errs, Validate_ImmutableType(ctx, op, fldPath, obj, oldObj)...)
 			return
 		}(fldPath.Child("immutablePtrField"), obj.ImmutablePtrField, safe.Field(oldObj, func(oldObj *Struct) *ImmutableType { return oldObj.ImmutablePtrField }))...)
+
+	// field Struct.IntPtrField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *int) (errs field.ErrorList) {
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.ImmutablePointerByCompare(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("intPtrField"), obj.IntPtrField, safe.Field(oldObj, func(oldObj *Struct) *int { return oldObj.IntPtrField }))...)
+
+	// field Struct.BoolPtrField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *bool) (errs field.ErrorList) {
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.ImmutablePointerByCompare(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("boolPtrField"), obj.BoolPtrField, safe.Field(oldObj, func(oldObj *Struct) *bool { return oldObj.BoolPtrField }))...)
+
+	// field Struct.StringWithDefault
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			// Non-zero defaults are 'always set' and cannot transition from unset to set.
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			// optional fields with default values are effectively required
+			if e := validate.RequiredValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				return // do not proceed
+			}
+			errs = append(errs, validate.ImmutableValueByCompare(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("stringWithDefault"), &obj.StringWithDefault, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.StringWithDefault }))...)
+
+	// field Struct.IntPtrWithDefault
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *int32) (errs field.ErrorList) {
+			// Non-zero defaults are 'always set' and cannot transition from unset to set.
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			// optional fields with default values are effectively required
+			if e := validate.RequiredPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				return // do not proceed
+			}
+			errs = append(errs, validate.ImmutablePointerByCompare(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("intPtrWithDefault"), obj.IntPtrWithDefault, safe.Field(oldObj, func(oldObj *Struct) *int32 { return oldObj.IntPtrWithDefault }))...)
+
+	// field Struct.IntWithZeroDefault
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *int32) (errs field.ErrorList) {
+			// Zero-value defaults are treated as 'unset' by immutable validation.
+			// optional value-type fields with zero-value defaults are purely documentation
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.ImmutableValueByCompare(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("intWithZeroDefault"), &obj.IntWithZeroDefault, safe.Field(oldObj, func(oldObj *Struct) *int32 { return &oldObj.IntWithZeroDefault }))...)
+
+	// field Struct.StringWithZeroDefault
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			// Zero-value defaults are treated as 'unset' by immutable validation.
+			// optional value-type fields with zero-value defaults are purely documentation
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.ImmutableValueByCompare(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("stringWithZeroDefault"), &obj.StringWithZeroDefault, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.StringWithZeroDefault }))...)
+
+	// field Struct.RequiredImmutableField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			if e := validate.RequiredValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				return // do not proceed
+			}
+			errs = append(errs, validate.ImmutableValueByCompare(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("requiredImmutableField"), &obj.RequiredImmutableField, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.RequiredImmutableField }))...)
+
+	// field Struct.OptionalImmutableField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil // no changes
+			}
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				return // do not proceed
+			}
+			errs = append(errs, validate.ImmutablePointerByCompare(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("optionalImmutableField"), obj.OptionalImmutableField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.OptionalImmutableField }))...)
 
 	return errs
 }

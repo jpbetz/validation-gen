@@ -18,7 +18,7 @@ limitations under the License.
 // +k8s:validation-gen-scheme-registry=k8s.io/code-generator/cmd/validation-gen/testscheme.Scheme
 
 // This is a test package.
-package singlekey
+package frozen
 
 import "k8s.io/code-generator/cmd/validation-gen/testscheme"
 
@@ -27,35 +27,43 @@ var localSchemeBuilder = testscheme.New()
 type Struct struct {
 	TypeMeta int
 
-	// +k8s:listType=map
-	// +k8s:listMapKey=keyField
-	// +k8s:eachVal=+k8s:frozen
-	ListField []OtherStruct `json:"listField"`
+	// +k8s:frozen
+	StringField string `json:"stringField"`
 
-	// +k8s:listType=map
-	// +k8s:listMapKey=keyField
-	// +k8s:eachVal=+k8s:frozen
-	ListTypedefField []OtherTypedefStruct `json:"listTypedefField"`
+	// +k8s:frozen
+	StringPtrField *string `json:"stringPtrField"`
 
-	// +k8s:listType=map
-	// +k8s:listMapKey=keyField
-	// +k8s:eachVal=+k8s:validateFalse="field Struct.ListComparableField[*]"
-	ListComparableField []OtherStruct `json:"listComparableField"`
+	// +k8s:frozen
+	StructField ComparableStruct `json:"structField"`
 
-	// +k8s:listType=map
-	// +k8s:listMapKey=keyField
-	// +k8s:eachVal=+k8s:validateFalse="field Struct.ListNonComparableField[*]"
-	ListNonComparableField []NonComparableStruct `json:"listNonComparableField"`
+	// +k8s:frozen
+	StructPtrField *ComparableStruct `json:"structPtrField"`
+
+	// +k8s:frozen
+	NonComparableStructField NonComparableStruct `json:"noncomparableStructField"`
+
+	// +k8s:frozen
+	NonComparableStructPtrField *NonComparableStruct `json:"noncomparableStructPtrField"`
+
+	// +k8s:frozen
+	SliceField []string `json:"sliceField"`
+
+	// +k8s:frozen
+	MapField map[string]string `json:"mapField"`
+
+	FrozenField FrozenType `json:"frozenField"`
+
+	FrozenPtrField *FrozenType `json:"frozenPtrField"`
 }
 
-type OtherStruct struct {
-	KeyField  string `json:"keyField"`
-	DataField string `json:"dataField"`
-}
-
-type OtherTypedefStruct OtherStruct
-
-type NonComparableStruct struct {
-	KeyField       string  `json:"keyField"`
+type ComparableStruct struct {
+	StringField    string  `json:"stringField"`
 	StringPtrField *string `json:"stringPtrField"`
 }
+
+type NonComparableStruct struct {
+	SliceField []string `json:"sliceField"`
+}
+
+// +k8s:frozen
+type FrozenType string
