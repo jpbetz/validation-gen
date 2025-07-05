@@ -64,12 +64,16 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil // no changes
 			}
-			errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intField", func(o *SubStruct) *int { return &o.IntField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
-				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntField")
-			})...)
-			errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intPtrField", func(o *SubStruct) *int { return o.IntPtrField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
-				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntPtrField")
-			})...)
+			func() { // cohort intField
+				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intField", func(o *SubStruct) *int { return &o.IntField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntField")
+				})...)
+			}()
+			func() { // cohort intPtrField
+				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intPtrField", func(o *SubStruct) *int { return o.IntPtrField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntPtrField")
+				})...)
+			}()
 			return
 		}(fldPath.Child("subStructField"), &obj.SubStructField, safe.Field(oldObj, func(oldObj *Struct) *SubStruct { return &oldObj.SubStructField }))...)
 
@@ -81,12 +85,16 @@ func Validate_StructWithSubfield(ctx context.Context, op operation.Operation, fl
 	if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 		return nil // no changes
 	}
-	errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intField", func(o *StructWithSubfield) *int { return &o.IntField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
-		return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntField")
-	})...)
-	errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intPtrField", func(o *StructWithSubfield) *int { return o.IntPtrField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
-		return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntPtrField")
-	})...)
+	func() { // cohort intField
+		errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intField", func(o *StructWithSubfield) *int { return &o.IntField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
+			return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntField")
+		})...)
+	}()
+	func() { // cohort intPtrField
+		errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intPtrField", func(o *StructWithSubfield) *int { return o.IntPtrField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
+			return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntPtrField")
+		})...)
+	}()
 
 	// field StructWithSubfield.TypeMeta has no validation
 	// field StructWithSubfield.IntField has no validation
