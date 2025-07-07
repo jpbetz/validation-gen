@@ -50,7 +50,20 @@ func init() {
 	RegisterFieldValidator(listValidator{byPath: shared})
 	RegisterTypeValidator(listValidator{byPath: shared})
 
+<<<<<<< HEAD
 	globalEachVal = &eachValTagValidator{byPath: shared, validator: nil}
+=======
+	// List-map item validator uses shared listType and listMapKey information
+	itemMeta := make(map[string]*itemMetadata) // keyed by the fieldpath
+	itemTag := &itemTagValidator{byFieldPath: itemMeta}
+	RegisterTagValidator(itemTag)
+	RegisterFieldValidator(&itemFieldValidator{
+		listByFieldPath: shared,
+		itemByFieldPath: itemMeta,
+	})
+
+	globalEachVal = &eachValTagValidator{byFieldPath: shared, validator: nil}
+>>>>>>> f5fcd88695b (feat: add +k8s:item tag)
 	RegisterTagValidator(globalEachVal)
 
 	globalEachKey = &eachKeyTagValidator{validator: nil}

@@ -237,6 +237,8 @@ type TagDoc struct {
 	PayloadsType codetags.ValueType
 	// PayloadsRequired is true if a payload is required.
 	PayloadsRequired bool
+	// AcceptsUnknownArgs is true if unknown args are accepted
+	AcceptsUnknownArgs bool
 }
 
 func (td TagDoc) Arg(name string) (TagArgDoc, bool) {
@@ -531,7 +533,9 @@ func typeCheck(tag codetags.Tag, doc TagDoc) error {
 
 	for _, tagArg := range tag.Args {
 		if _, ok := doc.Arg(tagArg.Name); !ok {
-			return fmt.Errorf("unrecognized named argument %q", tagArg)
+			if !doc.AcceptsUnknownArgs {
+				return fmt.Errorf("unrecognized named argument %q", tagArg)
+			}
 		}
 	}
 	if tag.ValueType == codetags.ValueTypeNone {
