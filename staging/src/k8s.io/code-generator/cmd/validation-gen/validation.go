@@ -1241,16 +1241,6 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 
 			emitCall := func() {
 				sw.Do("$.funcName|raw$", targs)
-				if typeArgs := v.TypeArgs; len(typeArgs) > 0 {
-					sw.Do("[", nil)
-					for i, typeArg := range typeArgs {
-						sw.Do("$.|raw$", c.Universe.Type(typeArg))
-						if i < len(typeArgs)-1 {
-							sw.Do(",", nil)
-						}
-					}
-					sw.Do("]", nil)
-				}
 				sw.Do("(ctx, op, fldPath, obj, oldObj", targs)
 				for _, arg := range v.Args {
 					sw.Do(", ", nil)
@@ -1397,7 +1387,7 @@ func (g *genValidations) emitValidationVariables(c *generator.Context, t *types.
 				sw.Do("// $.$\n", comment)
 			}
 			sw.Do("var $.varName|private$ = $.initFn|raw$", targs)
-			if typeArgs := fn.TypeArgs; len(typeArgs) > 0 {
+			if typeArgs := fn.TypeArgs; len(typeArgs) > 0 && len(fn.Args) == 0 {
 				sw.Do("[", nil)
 				for i, typeArg := range typeArgs {
 					sw.Do("$.|raw$", c.Universe.Type(typeArg))
@@ -1483,17 +1473,6 @@ func toGolangSourceDataLiteral(sw *generator.SnippetWriter, c *generator.Context
 
 			emitCall := func() {
 				sw.Do("return $.funcName|raw$", targs)
-				typeArgs := v.Function.TypeArgs
-				if len(typeArgs) > 0 {
-					sw.Do("[", nil)
-					for i, typeArg := range typeArgs {
-						sw.Do("$.|raw$", c.Universe.Type(typeArg))
-						if i < len(typeArgs)-1 {
-							sw.Do(",", nil)
-						}
-					}
-					sw.Do("]", nil)
-				}
 				sw.Do("(ctx, op, fldPath, obj, oldObj", targs)
 				for _, arg := range extraArgs {
 					sw.Do(", ", nil)
