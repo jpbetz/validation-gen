@@ -64,8 +64,7 @@ func init() {
 =======
 	// List-map item validator uses shared listType and listMapKey information
 	itemMeta := map[string]*itemMetadata{} // keyed by the fieldpath
-	itemTag := &itemTagValidator{byFieldPath: itemMeta}
-	RegisterTagValidator(itemTag)
+	RegisterTagValidator(&itemTagValidator{byFieldPath: itemMeta})
 	RegisterFieldValidator(&itemValidator{
 		listByFieldPath: listMeta,
 		itemByFieldPath: itemMeta,

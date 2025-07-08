@@ -97,12 +97,8 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 		return Validations{}, fmt.Errorf("requires at least one key-value pair")
 	}
 
-	if tag.ValueType != codetags.ValueTypeTag {
+	if tag.ValueType != codetags.ValueTypeTag || tag.ValueTag == nil {
 		return Validations{}, fmt.Errorf("requires a validation tag as its value payload")
-	}
-
-	if tag.ValueTag == nil {
-		return Validations{}, fmt.Errorf("requires a non-nil validation tag as its value payload")
 	}
 
 	// This tag can apply to value and pointer fields, as well as typedefs
@@ -183,8 +179,8 @@ type itemValidator struct {
 	itemByFieldPath map[string]*itemMetadata
 }
 
-func (ifv *itemValidator) Init(cfg Config) {
-	ifv.validator = cfg.Validator
+func (iv *itemValidator) Init(cfg Config) {
+	iv.validator = cfg.Validator
 }
 
 func (itemValidator) Name() string {
@@ -195,13 +191,13 @@ var (
 	validateSliceItem = types.Name{Package: libValidationPkg, Name: "SliceItem"}
 )
 
-func (ifv itemValidator) GetValidations(context Context) (Validations, error) {
-	itemMeta, ok := ifv.itemByFieldPath[context.Path.String()]
+func (iv itemValidator) GetValidations(context Context) (Validations, error) {
+	itemMeta, ok := iv.itemByFieldPath[context.Path.String()]
 	if !ok || itemMeta == nil || len(itemMeta.items) == 0 {
 		return Validations{}, nil
 	}
 
-	listMeta, ok := ifv.listByFieldPath[context.Path.String()]
+	listMeta, ok := iv.listByFieldPath[context.Path.String()]
 	if !ok || !listMeta.declaredAsMap || len(listMeta.keyFields) == 0 {
 		return Validations{}, fmt.Errorf("must have +k8s:listType=map and at least one '+k8s:listMapKey=...' annotation to use +k8s:item")
 	}
@@ -212,12 +208,15 @@ func (ifv itemValidator) GetValidations(context Context) (Validations, error) {
 	result := Validations{}
 
 	for _, item := range itemMeta.items {
+		if len(item.matcherPairs) != len(listMeta.keyNames) {
+			return Validations{}, fmt.Errorf("number of arguments does not match number of listMapKey fields")
+		}
+
 		// Validate that all listMapKeys are provided and types match
 		foundKeys := make(map[string]bool)
 		for _, keyName := range listMeta.keyNames {
 			for _, pair := range item.matcherPairs {
 				if pair.key == keyName {
-					// Verify the type matches the field type
 					member := util.GetMemberByJSON(elemT, pair.key)
 					if member != nil {
 						if err := validateTypeMatch(member.Type, pair.value); err != nil {
@@ -249,7 +248,7 @@ func (ifv itemValidator) GetValidations(context Context) (Validations, error) {
 			Member: nil,
 		}
 
-		validations, err := ifv.validator.ExtractValidations(subContext, item.valueTag)
+		validations, err := iv.validator.ExtractValidations(subContext, item.valueTag)
 		if err != nil {
 			return Validations{}, err
 		}
@@ -309,11 +308,6 @@ func createMatchFn(elemT *types.Type, matcherPairs []keyValuePair) (FunctionLite
 		}
 
 		memberType := util.NativeType(member.Type)
-
-		if !util.IsDirectComparable(memberType) {
-			return FunctionLiteral{}, fmt.Errorf("key field %q must be a comparable type (string, int, bool), got %s",
-				member.Name, memberType.String())
-		}
 
 		// Generate the comparison based on the field's actual type
 		condition, err := generateComparison(member, pair.value, memberType)
