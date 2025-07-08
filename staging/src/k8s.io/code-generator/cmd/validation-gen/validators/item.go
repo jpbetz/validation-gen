@@ -18,6 +18,7 @@ package validators
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -31,8 +32,9 @@ const (
 )
 
 type keyValuePair struct {
-	key   string
-	value string
+	key       string
+	value     any
+	valueType codetags.ValueType
 }
 
 type itemValidation struct {
@@ -78,7 +80,17 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 			return Validations{}, fmt.Errorf("duplicate key %q", arg.Name)
 		}
 		processedKeys.Insert(arg.Name)
-		matcherPairs = append(matcherPairs, keyValuePair{key: arg.Name, value: arg.Value})
+
+		parsedValue, valueType, err := parseTypedValue(arg.Value, arg.Type)
+		if err != nil {
+			return Validations{}, fmt.Errorf("invalid value for key %q: %w", arg.Name, err)
+		}
+
+		matcherPairs = append(matcherPairs, keyValuePair{
+			key:       arg.Name,
+			value:     parsedValue,
+			valueType: valueType,
+		})
 	}
 
 	if len(matcherPairs) == 0 {
@@ -121,15 +133,39 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 	return Validations{}, nil
 }
 
+// parseTypedValue parses a value based on its detected type
+func parseTypedValue(value string, argType codetags.ArgType) (any, codetags.ValueType, error) {
+	switch argType {
+	case codetags.ArgTypeString:
+		return value, codetags.ValueTypeString, nil
+	case codetags.ArgTypeInt:
+		intVal, err := strconv.Atoi(value)
+		if err != nil {
+			return nil, "", fmt.Errorf("invalid integer: %w", err)
+		}
+		return intVal, codetags.ValueTypeInt, nil
+	case codetags.ArgTypeBool:
+		boolVal, err := strconv.ParseBool(value)
+		if err != nil {
+			return nil, "", fmt.Errorf("invalid boolean: %w", err)
+		}
+		return boolVal, codetags.ValueTypeBool, nil
+	default:
+		// Default to string
+		return value, codetags.ValueTypeString, nil
+	}
+}
+
 func (itv itemTagValidator) Docs() TagDoc {
 	doc := TagDoc{
 		Tag:    itv.TagName(),
 		Scopes: itv.ValidScopes().UnsortedList(),
 		Description: "Declares a validation for an item of a slice declared as a +k8s:listType=map. " +
 			"The item to match is declared by providing field-value pair arguments. All +k8s:listMapKey fields must be included in the field-value pair arguments.",
-		Usage: "+k8s:item(key: value)=<validation-tag>",
+		Usage: "+k8s:item(stringKey: \"value\", intKey: 42, boolKey: true)=<validation-tag>",
 		Docs: "Arguments must be named with the JSON names of the list map key fields. " +
-			"For example, if the list has +k8s:listMapKey=name, use: +k8s:item(name: myname)=<chained-validation-tag>",
+			"Values can be strings (quoted or unquoted), integers, or booleans. " +
+			"For example: +k8s:item(name: \"myname\", priority: 10, enabled: true)=<chained-validation-tag>",
 		AcceptsUnknownArgs: true,
 		Payloads: []TagPayloadDoc{{
 			Description: "<validation-tag>",
@@ -176,11 +212,18 @@ func (ifv itemValidator) GetValidations(context Context) (Validations, error) {
 	result := Validations{}
 
 	for _, item := range itemMeta.items {
-		// Validate that all listMapKeys are provided
+		// Validate that all listMapKeys are provided and types match
 		foundKeys := make(map[string]bool)
 		for _, keyName := range listMeta.keyNames {
 			for _, pair := range item.matcherPairs {
 				if pair.key == keyName {
+					// Verify the type matches the field type
+					member := util.GetMemberByJSON(elemT, pair.key)
+					if member != nil {
+						if err := validateTypeMatch(member.Type, pair.value); err != nil {
+							return Validations{}, fmt.Errorf("key %q: %w", pair.key, err)
+						}
+					}
 					foundKeys[keyName] = true
 					break
 				}
@@ -233,6 +276,29 @@ func (ifv itemValidator) GetValidations(context Context) (Validations, error) {
 	return result, nil
 }
 
+// validateTypeMatch ensures the provided value matches the field's type
+func validateTypeMatch(fieldType *types.Type, value any) error {
+	nativeType := util.NativeType(fieldType)
+
+	switch {
+	case nativeType == types.String:
+		if _, ok := value.(string); !ok {
+			return fmt.Errorf("expected string value")
+		}
+	case nativeType == types.Bool:
+		if _, ok := value.(bool); !ok {
+			return fmt.Errorf("expected bool value")
+		}
+	case types.IsInteger(nativeType):
+		if _, ok := value.(int); !ok {
+			return fmt.Errorf("expected integer value")
+		}
+	default:
+		return fmt.Errorf("unsupported field type: %s", nativeType.String())
+	}
+	return nil
+}
+
 func createMatchFn(elemT *types.Type, matcherPairs []keyValuePair) (FunctionLiteral, error) {
 	var conditions []string
 
@@ -242,12 +308,19 @@ func createMatchFn(elemT *types.Type, matcherPairs []keyValuePair) (FunctionLite
 			return FunctionLiteral{}, fmt.Errorf("no field with JSON name %q", pair.key)
 		}
 
-		// TODO: Support all comparable primitive types (int, bool, etc.)
-		// Currently only string types are supported.
-		if util.NativeType(member.Type).Kind != types.Builtin || util.NativeType(member.Type) != types.String {
-			return FunctionLiteral{}, fmt.Errorf("key field %q for item must be of type string or an alias to string", member.Name)
+		memberType := util.NativeType(member.Type)
+
+		if !util.IsDirectComparable(memberType) {
+			return FunctionLiteral{}, fmt.Errorf("key field %q must be a comparable type (string, int, bool), got %s",
+				member.Name, memberType.String())
 		}
-		conditions = append(conditions, fmt.Sprintf("item.%s == %q", member.Name, pair.value))
+
+		// Generate the comparison based on the field's actual type
+		condition, err := generateComparison(member, pair.value, memberType)
+		if err != nil {
+			return FunctionLiteral{}, err
+		}
+		conditions = append(conditions, condition)
 	}
 
 	return FunctionLiteral{
@@ -257,12 +330,55 @@ func createMatchFn(elemT *types.Type, matcherPairs []keyValuePair) (FunctionLite
 	}, nil
 }
 
+// generateComparison creates the appropriate comparison expression based on type
+func generateComparison(member *types.Member, value any, memberType *types.Type) (string, error) {
+	switch {
+	case memberType == types.String:
+		strVal, ok := value.(string)
+		if !ok {
+			return "", fmt.Errorf("type mismatch, field is string but value is not")
+		}
+		return fmt.Sprintf("item.%s == %q", member.Name, strVal), nil
+
+	case memberType == types.Bool:
+		boolVal, ok := value.(bool)
+		if !ok {
+			return "", fmt.Errorf("type mismatch, field is bool but value is not")
+		}
+		return fmt.Sprintf("item.%s == %t", member.Name, boolVal), nil
+
+	case types.IsInteger(memberType):
+		intVal, ok := value.(int)
+		if !ok {
+			return "", fmt.Errorf("type mismatch, field is integer but value is not")
+		}
+		return fmt.Sprintf("item.%s == %d", member.Name, intVal), nil
+
+	default:
+		return "", fmt.Errorf("unsupported type %s for field %s", memberType.String(), member.Name)
+	}
+}
+
 // generateFieldPathForMap creates a field path for list map items using a JSON-like syntax.
-// The format is {"key": "value", "key2": "value2"} with quoted keys and values.
+// The format is {"key": "value", "key2": 42, "key3": true} with quoted keys and appropriately formatted values.
 func generateFieldPathForMap(matcherPairs []keyValuePair) string {
 	var pairs []string
 	for _, pair := range matcherPairs {
-		pairs = append(pairs, fmt.Sprintf("%q: %q", pair.key, pair.value))
+		valueStr := formatValueForPath(pair.value)
+		pairs = append(pairs, fmt.Sprintf("%q: %s", pair.key, valueStr))
 	}
 	return fmt.Sprintf("{%s}", strings.Join(pairs, ", "))
+}
+
+func formatValueForPath(value any) string {
+	switch v := value.(type) {
+	case string:
+		return fmt.Sprintf("%q", v)
+	case int:
+		return fmt.Sprintf("%d", v)
+	case bool:
+		return fmt.Sprintf("%t", v)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
