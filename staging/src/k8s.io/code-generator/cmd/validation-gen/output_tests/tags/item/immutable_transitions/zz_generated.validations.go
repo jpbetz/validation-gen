@@ -57,18 +57,8 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil // no changes
 			}
-			errs = append(errs, validate.ItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *Item) bool {
-				if item == nil {
-					return false
-				}
-				return item.Key1 == "a"
-			}, validate.ImmutableByCompare)...)
-			errs = append(errs, validate.ItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *Item) bool {
-				if item == nil {
-					return false
-				}
-				return item.Key1 == "b"
-			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key1 == "a" }, validate.ImmutableByCompare)...)
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key1 == "b" }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
 				return validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *Item) *string { return &o.StringField }, validate.ImmutableByCompare)
 			})...)
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key1 == b.Key1 })...)

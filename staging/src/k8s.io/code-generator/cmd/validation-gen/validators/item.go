@@ -30,10 +30,16 @@ const (
 	itemTagName = "k8s:item"
 )
 
+type keyValuePair struct {
+	key   string
+	value string
+}
+
 type itemValidation struct {
-	matcherPairs [][2]string
-	valueTag     codetags.Tag
-	elemType     *types.Type
+	// matcherPairs contains the key value pairs to match list items
+	matcherPairs []keyValuePair
+	// valueTag is the validation tag to apply to matched items
+	valueTag codetags.Tag
 }
 
 type itemMetadata struct {
@@ -41,30 +47,27 @@ type itemMetadata struct {
 }
 
 type itemTagValidator struct {
-	validator   Validator
 	byFieldPath map[string]*itemMetadata
 }
 
-func (itv *itemTagValidator) Init(cfg Config) {
-	itv.validator = cfg.Validator
-	if itv.byFieldPath == nil {
-		itv.byFieldPath = make(map[string]*itemMetadata)
-	}
-}
+func (itv *itemTagValidator) Init(cfg Config) {}
 
 func (itemTagValidator) TagName() string {
 	return itemTagName
 }
 
-var itemTagValidScopes = sets.New(ScopeField)
+var itemTagValidScopes = sets.New(ScopeAny)
 
 func (itemTagValidator) ValidScopes() sets.Set[Scope] {
 	return itemTagValidScopes
 }
 
 func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
+	// TODO: Support regular maps with syntax like:
+	// +k8s:item("map-key")=+k8s:immutable
+
 	// Parse key-value pairs from named args.
-	matcherPairs := [][2]string{}
+	matcherPairs := []keyValuePair{}
 	processedKeys := sets.NewString()
 
 	for _, arg := range tag.Args {
@@ -72,22 +75,22 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 			return Validations{}, fmt.Errorf("all arguments must be named (ex: fieldName:value)")
 		}
 		if processedKeys.Has(arg.Name) {
-			return Validations{}, fmt.Errorf("duplicate key %q in item", arg.Name)
+			return Validations{}, fmt.Errorf("duplicate key %q", arg.Name)
 		}
 		processedKeys.Insert(arg.Name)
-		matcherPairs = append(matcherPairs, [2]string{arg.Name, arg.Value})
+		matcherPairs = append(matcherPairs, keyValuePair{key: arg.Name, value: arg.Value})
 	}
 
 	if len(matcherPairs) == 0 {
-		return Validations{}, fmt.Errorf("item requires at least one key-value pair")
+		return Validations{}, fmt.Errorf("requires at least one key-value pair")
 	}
 
 	if tag.ValueType != codetags.ValueTypeTag {
-		return Validations{}, fmt.Errorf("item requires a validation tag as its value payload")
+		return Validations{}, fmt.Errorf("requires a validation tag as its value payload")
 	}
 
 	if tag.ValueTag == nil {
-		return Validations{}, fmt.Errorf("item requires a non-nil validation tag as its value payload")
+		return Validations{}, fmt.Errorf("requires a non-nil validation tag as its value payload")
 	}
 
 	// This tag can apply to value and pointer fields, as well as typedefs
@@ -100,7 +103,7 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 
 	elemT := util.NonPointer(util.NativeType(t.Elem))
 	if elemT.Kind != types.Struct {
-		return Validations{}, fmt.Errorf("can only be used on list of structs")
+		return Validations{}, fmt.Errorf("can only be used on lists of structs")
 	}
 
 	// Store metadata for the field validator to use.
@@ -112,7 +115,6 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 	itv.byFieldPath[fieldPath].items = append(itv.byFieldPath[fieldPath].items, itemValidation{
 		matcherPairs: matcherPairs,
 		valueTag:     *tag.ValueTag,
-		elemType:     elemT,
 	})
 
 	// This tag doesn't generate validations directly, the itemFieldValidator does.
@@ -139,25 +141,25 @@ func (itv itemTagValidator) Docs() TagDoc {
 	return doc
 }
 
-type itemFieldValidator struct {
+type itemValidator struct {
 	validator       Validator
 	listByFieldPath map[string]*listMetadata
 	itemByFieldPath map[string]*itemMetadata
 }
 
-func (ifv *itemFieldValidator) Init(cfg Config) {
+func (ifv *itemValidator) Init(cfg Config) {
 	ifv.validator = cfg.Validator
 }
 
-func (itemFieldValidator) Name() string {
+func (itemValidator) Name() string {
 	return "itemFieldValidator"
 }
 
 var (
-	validateItemByKeyValues = types.Name{Package: libValidationPkg, Name: "ItemByKeyValues"}
+	validateSliceItem = types.Name{Package: libValidationPkg, Name: "SliceItem"}
 )
 
-func (ifv itemFieldValidator) GetValidations(context Context) (Validations, error) {
+func (ifv itemValidator) GetValidations(context Context) (Validations, error) {
 	itemMeta, ok := ifv.itemByFieldPath[context.Path.String()]
 	if !ok || itemMeta == nil || len(itemMeta.items) == 0 {
 		return Validations{}, nil
@@ -168,36 +170,38 @@ func (ifv itemFieldValidator) GetValidations(context Context) (Validations, erro
 		return Validations{}, fmt.Errorf("must have +k8s:listType=map and at least one '+k8s:listMapKey=...' annotation to use +k8s:item")
 	}
 
+	t := util.NonPointer(util.NativeType(context.Type))
+	elemT := util.NonPointer(util.NativeType(t.Elem))
+
 	result := Validations{}
 
 	for _, item := range itemMeta.items {
 		// Validate that all listMapKeys are provided
-		foundRequiredKeys := 0
-		for _, fieldName := range listMeta.keyFields {
+		foundKeys := make(map[string]bool)
+		for _, keyName := range listMeta.keyNames {
 			for _, pair := range item.matcherPairs {
-				if member := util.GetMemberByJSON(item.elemType, pair[0]); member != nil && member.Name == fieldName {
-					foundRequiredKeys++
+				if pair.key == keyName {
+					foundKeys[keyName] = true
 					break
 				}
 			}
 		}
-		if foundRequiredKeys != len(listMeta.keyFields) {
-			return Validations{}, fmt.Errorf("item field-value pairs must include all +k8s:listMapKey fields (expected: %v)", listMeta.keyFields)
-		}
-
-		// Validate that the keys in the tag correspond to actual fields
-		for _, pair := range item.matcherPairs {
-			if util.GetMemberByJSON(item.elemType, pair[0]) == nil {
-				return Validations{}, fmt.Errorf("list item has no field with JSON name %q", pair[0])
+		if len(foundKeys) != len(listMeta.keyNames) {
+			missing := []string{}
+			for _, k := range listMeta.keyNames {
+				if !foundKeys[k] {
+					missing = append(missing, k)
+				}
 			}
+			return Validations{}, fmt.Errorf("missing required listMapKey fields: %v", missing)
 		}
 
 		// Extract validations from the stored tag
-		subContextPath := generatePathForMap(item.matcherPairs)
+		subContextPath := generateFieldPathForMap(item.matcherPairs)
 		subContext := Context{
-			Scope:  ScopeField,
-			Type:   item.elemType,
-			Parent: nil,
+			Scope:  ScopeListVal,
+			Type:   elemT,
+			Parent: context.Type,
 			Path:   context.Path.Key(subContextPath),
 			Member: nil,
 		}
@@ -209,7 +213,7 @@ func (ifv itemFieldValidator) GetValidations(context Context) (Validations, erro
 
 		result.Variables = append(result.Variables, validations.Variables...)
 
-		matchFn, err := createMatchFn(item.elemType, item.matcherPairs)
+		matchFn, err := createMatchFn(elemT, item.matcherPairs)
 		if err != nil {
 			return Validations{}, err
 		}
@@ -218,9 +222,9 @@ func (ifv itemFieldValidator) GetValidations(context Context) (Validations, erro
 			f := Function(
 				itemTagName,
 				vfn.Flags,
-				validateItemByKeyValues,
+				validateSliceItem,
 				matchFn,
-				WrapperFunction{vfn, item.elemType},
+				WrapperFunction{vfn, elemT},
 			)
 			result.Functions = append(result.Functions, f)
 		}
@@ -229,41 +233,36 @@ func (ifv itemFieldValidator) GetValidations(context Context) (Validations, erro
 	return result, nil
 }
 
-func createMatchFn(elemT *types.Type, matcherPairs [][2]string) (FunctionLiteral, error) {
-	var matchFuncBody strings.Builder
-	matchFuncBody.WriteString("if item == nil { return false }\n")
-
+func createMatchFn(elemT *types.Type, matcherPairs []keyValuePair) (FunctionLiteral, error) {
 	var conditions []string
 
 	for _, pair := range matcherPairs {
-		jsonKey := pair[0]
-		value := pair[1]
-		member := util.GetMemberByJSON(elemT, jsonKey)
+		member := util.GetMemberByJSON(elemT, pair.key)
+		if member == nil {
+			return FunctionLiteral{}, fmt.Errorf("no field with JSON name %q", pair.key)
+		}
 
 		// TODO: Support all comparable primitive types (int, bool, etc.)
 		// Currently only string types are supported.
 		if util.NativeType(member.Type).Kind != types.Builtin || util.NativeType(member.Type) != types.String {
 			return FunctionLiteral{}, fmt.Errorf("key field %q for item must be of type string or an alias to string", member.Name)
 		}
-		condition := fmt.Sprintf("item.%s == %q", member.Name, value)
-		conditions = append(conditions, condition)
+		conditions = append(conditions, fmt.Sprintf("item.%s == %q", member.Name, pair.value))
 	}
 
-	matchFuncBody.WriteString(fmt.Sprintf("return %s", strings.Join(conditions, " && ")))
 	return FunctionLiteral{
 		Parameters: []ParamResult{{"item", types.PointerTo(elemT)}},
 		Results:    []ParamResult{{"", types.Bool}},
-		Body:       matchFuncBody.String(),
+		Body:       fmt.Sprintf("return %s", strings.Join(conditions, " && ")),
 	}, nil
 }
 
-func generatePathForMap(matcherPairs [][2]string) string {
-	var sb strings.Builder
-	for i, pair := range matcherPairs {
-		if i > 0 {
-			sb.WriteString(",")
-		}
-		sb.WriteString(fmt.Sprintf("%s=%q", pair[0], pair[1]))
+// generateFieldPathForMap creates a field path for list map items using a JSON-like syntax.
+// The format is {"key": "value", "key2": "value2"} with quoted keys and values.
+func generateFieldPathForMap(matcherPairs []keyValuePair) string {
+	var pairs []string
+	for _, pair := range matcherPairs {
+		pairs = append(pairs, fmt.Sprintf("%q: %q", pair.key, pair.value))
 	}
-	return sb.String()
+	return fmt.Sprintf("{%s}", strings.Join(pairs, ", "))
 }

@@ -31,7 +31,7 @@ type multiKeyItem struct {
 	V  int    `json:"v"`
 }
 
-func TestItemByKeyValues(t *testing.T) {
+func TestSliceItem(t *testing.T) {
 	testCases := []struct {
 		name      string
 		new       []multiKeyItem
@@ -177,7 +177,7 @@ func TestItemByKeyValues(t *testing.T) {
 			op := operation.Operation{Type: operation.Update}
 			fp := field.NewPath("")
 
-			got := ItemByKeyValues(ctx, op, fp, tc.new, tc.old, tc.match, tc.validator)
+			got := SliceItem(ctx, op, fp, tc.new, tc.old, tc.match, tc.validator)
 
 			if !reflect.DeepEqual(got, tc.expected) {
 				t.Errorf("got %v want %v", got, tc.expected)

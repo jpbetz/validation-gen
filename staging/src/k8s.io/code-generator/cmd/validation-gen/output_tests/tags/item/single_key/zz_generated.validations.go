@@ -64,12 +64,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil // no changes
 			}
-			errs = append(errs, validate.ItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *Item) bool {
-				if item == nil {
-					return false
-				}
-				return item.Key == "target"
-			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key == "target" }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item Items[key=target]")
 			})...)
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
@@ -82,12 +77,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil // no changes
 			}
-			errs = append(errs, validate.ItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *TypedefItem) bool {
-				if item == nil {
-					return false
-				}
-				return item.ID == "typedef-target"
-			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *TypedefItem) field.ErrorList {
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *TypedefItem) bool { return item.ID == "typedef-target" }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *TypedefItem) field.ErrorList {
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item TypedefItems[id=typedef-target]")
 			})...)
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a TypedefItem, b TypedefItem) bool { return a.ID == b.ID })...)
@@ -106,12 +96,7 @@ func Validate_StructWithNestedTypedef(ctx context.Context, op operation.Operatio
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil // no changes
 			}
-			errs = append(errs, validate.ItemByKeyValues(ctx, op, fldPath, obj, oldObj, func(item *NestedTypedefItem) bool {
-				if item == nil {
-					return false
-				}
-				return item.Key == "nested-target"
-			}, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *NestedTypedefItem) field.ErrorList {
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *NestedTypedefItem) bool { return item.Key == "nested-target" }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *NestedTypedefItem) field.ErrorList {
 				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item NestedItems[key=nested-target]")
 			})...)
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a NestedTypedefItem, b NestedTypedefItem) bool { return a.Key == b.Key })...)

@@ -26,24 +26,23 @@ import (
 // MatchItemFn takes a pointer to an item and returns true if it matches the criteria.
 type MatchItemFn[T any] func(*T) bool
 
-// ItemByKeyValues finds the first item in oldList (if any) and the first
+// SliceItem finds the first item in oldList (if any) and the first
 // item in newList (if any) that satisfy the 'matches' predicate. It then invokes
 // 'itemValidator' on these items (if items are found).
 // The fldPath passed to itemValidator is indexed to the matched item's position
 // using the index from newList if a match is found there, otherwise the root list index.
 // This function processes only the *first* matching item found in each list.
-// It assumes that the 'matches' predicate, targets a unique identifier (PK) and
+// It assumes that the 'matches' predicate targets a unique identifier (primary key) and
 // will match at most one element per list.
 // If this assumption is violated, changes in list order can lead this function
 // to have inconsistent behavior.
-func ItemByKeyValues[TList ~[]TItem, TItem any](
+func SliceItem[TList ~[]TItem, TItem any](
 	ctx context.Context, op operation.Operation, fldPath *field.Path,
 	newList, oldList TList,
 	matches MatchItemFn[TItem],
 	itemValidator func(ctx context.Context, op operation.Operation, fldPath *field.Path, newObj, oldObj *TItem) field.ErrorList,
 ) field.ErrorList {
 	var matchedNew, matchedOld *TItem
-	path := fldPath
 
 	for i := range oldList {
 		if matches(&oldList[i]) {
@@ -56,7 +55,7 @@ func ItemByKeyValues[TList ~[]TItem, TItem any](
 			matchedNew = &newList[i]
 			// Use newList index when available.
 			// For deleted items (only in oldList), use root path as there's no meaningful index in current input.
-			path = fldPath.Index(i)
+			fldPath = fldPath.Index(i)
 			break
 		}
 	}
@@ -64,5 +63,5 @@ func ItemByKeyValues[TList ~[]TItem, TItem any](
 	if matchedNew == nil && matchedOld == nil {
 		return nil
 	}
-	return itemValidator(ctx, op, path, matchedNew, matchedOld)
+	return itemValidator(ctx, op, fldPath, matchedNew, matchedOld)
 }
