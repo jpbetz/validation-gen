@@ -71,26 +71,6 @@ func TestSliceItem(t *testing.T) {
 			expected: field.ErrorList{field.Invalid(field.NewPath("").Index(1), "target", "added")},
 		},
 		{
-			name: "deleted item with matching keys",
-			new: []multiKeyItem{
-				{K1: "a", K2: "1", V: 1},
-			},
-			old: []multiKeyItem{
-				{K1: "a", K2: "1", V: 1},
-				{K1: "del", K2: "target2", V: 2},
-			},
-			match: func(i *multiKeyItem) bool {
-				return i.K1 == "del" && i.K2 == "target2"
-			},
-			validator: func(_ context.Context, _ operation.Operation, fp *field.Path, n, o *multiKeyItem) field.ErrorList {
-				if n == nil && o != nil {
-					return field.ErrorList{field.Invalid(fp, o.K1, "deleted")}
-				}
-				return nil
-			},
-			expected: field.ErrorList{field.Invalid(field.NewPath(""), "del", "deleted")},
-		},
-		{
 			name: "updated item - same keys different values",
 			new: []multiKeyItem{
 				{K1: "a", K2: "1", V: 1},
@@ -147,7 +127,7 @@ func TestSliceItem(t *testing.T) {
 				}
 				return nil
 			},
-			expected: field.ErrorList{field.Invalid(field.NewPath(""), nil, "deleted")},
+			expected: nil,
 		},
 		{
 			name:  "empty lists",

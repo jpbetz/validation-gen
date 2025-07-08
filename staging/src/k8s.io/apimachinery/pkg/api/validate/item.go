@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,16 +26,16 @@ import (
 // MatchItemFn takes a pointer to an item and returns true if it matches the criteria.
 type MatchItemFn[T any] func(*T) bool
 
-// SliceItem finds the first item in oldList (if any) and the first
-// item in newList (if any) that satisfy the 'matches' predicate. It then invokes
-// 'itemValidator' on these items (if items are found).
-// The fldPath passed to itemValidator is indexed to the matched item's position
-// using the index from newList if a match is found there, otherwise the root list index.
-// This function processes only the *first* matching item found in each list.
+// SliceItem finds the first item in newList that satisfies the 'matches' predicate,
+// and if found, also looks for a matching item in oldList. It then invokes
+// 'itemValidator' on these items.
+// The fldPath passed to itemValidator is indexed to the matched item's position in newList.
+// This function processes only the *first* matching item found in newList.
 // It assumes that the 'matches' predicate targets a unique identifier (primary key) and
 // will match at most one element per list.
 // If this assumption is violated, changes in list order can lead this function
 // to have inconsistent behavior.
+// This function does not validate items that were removed (present in oldList but not in newList).
 func SliceItem[TList ~[]TItem, TItem any](
 	ctx context.Context, op operation.Operation, fldPath *field.Path,
 	newList, oldList TList,
@@ -43,6 +43,18 @@ func SliceItem[TList ~[]TItem, TItem any](
 	itemValidator func(ctx context.Context, op operation.Operation, fldPath *field.Path, newObj, oldObj *TItem) field.ErrorList,
 ) field.ErrorList {
 	var matchedNew, matchedOld *TItem
+	var newIndex int
+
+	for i := range newList {
+		if matches(&newList[i]) {
+			matchedNew = &newList[i]
+			newIndex = i
+			break
+		}
+	}
+	if matchedNew == nil {
+		return nil
+	}
 
 	for i := range oldList {
 		if matches(&oldList[i]) {
@@ -50,18 +62,5 @@ func SliceItem[TList ~[]TItem, TItem any](
 			break
 		}
 	}
-	for i := range newList {
-		if matches(&newList[i]) {
-			matchedNew = &newList[i]
-			// Use newList index when available.
-			// For deleted items (only in oldList), use root path as there's no meaningful index in current input.
-			fldPath = fldPath.Index(i)
-			break
-		}
-	}
-	// No matching item in either list, validation doesn't apply.
-	if matchedNew == nil && matchedOld == nil {
-		return nil
-	}
-	return itemValidator(ctx, op, fldPath, matchedNew, matchedOld)
+	return itemValidator(ctx, op, fldPath.Index(newIndex), matchedNew, matchedOld)
 }
