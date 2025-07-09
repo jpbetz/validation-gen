@@ -23,7 +23,6 @@ import (
 func Test(t *testing.T) {
 	st := localSchemeBuilder.Test(t)
 
-	// Test basic slice
 	st.Value(&Struct{
 		Items: []Item{
 			{Key: "a", Data: "d1"},
@@ -40,7 +39,38 @@ func Test(t *testing.T) {
 		},
 	}).ExpectValid()
 
-	// Test typedef slice
+	st.Value(&Struct{
+		Items: []Item{},
+	}).ExpectValid()
+
+	st.Value(&Struct{
+		Items: nil,
+	}).ExpectValid()
+
+	oldStruct := &Struct{Items: nil}
+	newStruct := &Struct{Items: []Item{}}
+	st.Value(newStruct).OldValue(oldStruct).ExpectValid()
+	st.Value(oldStruct).OldValue(newStruct).ExpectValid()
+
+	st.Value(&Struct{
+		IntKeyItems: []IntKeyItem{
+			{IntField: 10, Data: "d1"},
+			{IntField: 42, Data: "d2"},
+		},
+	}).ExpectValidateFalseByPath(map[string][]string{
+		`intKeyItems[1]`: {"item IntKeyItems[intField=42]"},
+	})
+
+	st.Value(&Struct{
+		BoolKeyItems: []BoolKeyItem{
+			{BoolField: false, Data: "d1"},
+			{BoolField: true, Data: "d2"},
+		},
+	}).ExpectValidateFalseByPath(map[string][]string{
+		`boolKeyItems[1]`: {"item BoolKeyItems[boolField=true]"},
+	})
+
+	// Test typedef slice.
 	st.Value(&Struct{
 		TypedefItems: TypedefItemList{
 			{ID: "a", Description: "d1"},
@@ -57,7 +87,7 @@ func Test(t *testing.T) {
 		},
 	}).ExpectValid()
 
-	// Test nested typedef
+	// Test nested typedef.
 	st.Value(&StructWithNestedTypedef{
 		NestedItems: []NestedTypedefItem{
 			{Key: "a", Name: "n1"},

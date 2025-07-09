@@ -33,6 +33,16 @@ type Struct struct {
 	Items []Item `json:"items"`
 
 	// +k8s:listType=map
+	// +k8s:listMapKey=intField
+	// +k8s:item(intField: 42)=+k8s:validateFalse="item IntKeyItems[intField=42]"
+	IntKeyItems []IntKeyItem `json:"intKeyItems"`
+
+	// +k8s:listType=map
+	// +k8s:listMapKey=boolField
+	// +k8s:item(boolField: true)=+k8s:validateFalse="item BoolKeyItems[boolField=true]"
+	BoolKeyItems []BoolKeyItem `json:"boolKeyItems"`
+
+	// +k8s:listType=map
 	// +k8s:listMapKey=id
 	// +k8s:item(id: "typedef-target")=+k8s:validateFalse="item TypedefItems[id=typedef-target]"
 	TypedefItems TypedefItemList `json:"typedefItems"`
@@ -50,6 +60,16 @@ type StructWithNestedTypedef struct {
 type Item struct {
 	Key  string `json:"key"`
 	Data string `json:"data"`
+}
+
+type IntKeyItem struct {
+	IntField int    `json:"intField"`
+	Data     string `json:"data"`
+}
+
+type BoolKeyItem struct {
+	BoolField bool   `json:"boolField"`
+	Data      string `json:"data"`
 }
 
 type TypedefItem struct {

@@ -71,6 +71,32 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			return
 		}(fldPath.Child("items"), obj.Items, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.Items }))...)
 
+	// field Struct.IntKeyItems
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj []IntKeyItem) (errs field.ErrorList) {
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *IntKeyItem) bool { return item.IntField == 42 }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *IntKeyItem) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item IntKeyItems[intField=42]")
+			})...)
+			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a IntKeyItem, b IntKeyItem) bool { return a.IntField == b.IntField })...)
+			return
+		}(fldPath.Child("intKeyItems"), obj.IntKeyItems, safe.Field(oldObj, func(oldObj *Struct) []IntKeyItem { return oldObj.IntKeyItems }))...)
+
+	// field Struct.BoolKeyItems
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj []BoolKeyItem) (errs field.ErrorList) {
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *BoolKeyItem) bool { return item.BoolField == true }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *BoolKeyItem) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item BoolKeyItems[boolField=true]")
+			})...)
+			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a BoolKeyItem, b BoolKeyItem) bool { return a.BoolField == b.BoolField })...)
+			return
+		}(fldPath.Child("boolKeyItems"), obj.BoolKeyItems, safe.Field(oldObj, func(oldObj *Struct) []BoolKeyItem { return oldObj.BoolKeyItems }))...)
+
 	// field Struct.TypedefItems
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj TypedefItemList) (errs field.ErrorList) {

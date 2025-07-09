@@ -306,15 +306,12 @@ func createMatchFn(elemT *types.Type, matcherPairs []keyValuePair) (FunctionLite
 		if member == nil {
 			return FunctionLiteral{}, fmt.Errorf("no field with JSON name %q", pair.key)
 		}
-
-		memberType := util.NativeType(member.Type)
-
 		// Generate the comparison based on the field's actual type
-		condition, err := generateComparison(member, pair.value, memberType)
+		rhs, err := generateComparisonRHS(member, pair.value)
 		if err != nil {
 			return FunctionLiteral{}, err
 		}
-		conditions = append(conditions, condition)
+		conditions = append(conditions, fmt.Sprintf("item.%s == %s", member.Name, rhs))
 	}
 
 	return FunctionLiteral{
@@ -324,29 +321,29 @@ func createMatchFn(elemT *types.Type, matcherPairs []keyValuePair) (FunctionLite
 	}, nil
 }
 
-// generateComparison creates the appropriate comparison expression based on type
-func generateComparison(member *types.Member, value any, memberType *types.Type) (string, error) {
+func generateComparisonRHS(member *types.Member, value any) (string, error) {
+	memberType := util.NativeType(member.Type)
 	switch {
 	case memberType == types.String:
 		strVal, ok := value.(string)
 		if !ok {
 			return "", fmt.Errorf("type mismatch, field is string but value is not")
 		}
-		return fmt.Sprintf("item.%s == %q", member.Name, strVal), nil
+		return fmt.Sprintf("%q", strVal), nil
 
 	case memberType == types.Bool:
 		boolVal, ok := value.(bool)
 		if !ok {
 			return "", fmt.Errorf("type mismatch, field is bool but value is not")
 		}
-		return fmt.Sprintf("item.%s == %t", member.Name, boolVal), nil
+		return fmt.Sprintf("%t", boolVal), nil
 
 	case types.IsInteger(memberType):
 		intVal, ok := value.(int)
 		if !ok {
-			return "", fmt.Errorf("type mismatch, field is integer but value is not")
+			return "", fmt.Errorf("type mismatch, field is int but value is not")
 		}
-		return fmt.Sprintf("item.%s == %d", member.Name, intVal), nil
+		return fmt.Sprintf("%d", intVal), nil
 
 	default:
 		return "", fmt.Errorf("unsupported type %s for field %s", memberType.String(), member.Name)

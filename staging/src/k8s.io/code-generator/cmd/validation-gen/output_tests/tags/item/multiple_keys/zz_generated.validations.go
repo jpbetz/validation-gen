@@ -57,10 +57,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil // no changes
 			}
-			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key1 == "a" && item.Key2 == "b" }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
-				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item Items[key1=a,key2=b]")
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.StringKey == "target" && item.IntKey == 42 && item.BoolKey == true }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item Items[stringKey=target,intKey=42,boolKey=true]")
 			})...)
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key1 == b.Key1 && a.Key2 == b.Key2 })...)
+			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool {
+				return a.StringKey == b.StringKey && a.IntKey == b.IntKey && a.BoolKey == b.BoolKey
+			})...)
 			return
 		}(fldPath.Child("items"), obj.Items, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.Items }))...)
 

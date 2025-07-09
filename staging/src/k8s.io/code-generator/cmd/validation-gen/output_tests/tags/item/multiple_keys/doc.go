@@ -28,14 +28,16 @@ type Struct struct {
 	TypeMeta int `json:"typeMeta"`
 
 	// +k8s:listType=map
-	// +k8s:listMapKey=key1
-	// +k8s:listMapKey=key2
-	// +k8s:item(key1: a, key2: b)=+k8s:validateFalse="item Items[key1=a,key2=b]"
+	// +k8s:listMapKey=stringKey
+	// +k8s:listMapKey=intKey
+	// +k8s:listMapKey=boolKey
+	// +k8s:item(stringKey: "target", intKey: 42, boolKey: true)=+k8s:validateFalse="item Items[stringKey=target,intKey=42,boolKey=true]"
 	Items []Item `json:"items"`
 }
 
 type Item struct {
-	Key1 string `json:"key1"`
-	Key2 string `json:"key2"`
-	Data string `json:"data"`
+	StringKey string `json:"stringKey"`
+	IntKey    int    `json:"intKey"`
+	BoolKey   bool   `json:"boolKey"`
+	Data      string `json:"data"`
 }

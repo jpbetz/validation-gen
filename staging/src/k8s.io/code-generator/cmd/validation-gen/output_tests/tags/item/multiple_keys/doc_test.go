@@ -24,21 +24,51 @@ func Test(t *testing.T) {
 	st := localSchemeBuilder.Test(t)
 
 	st.Value(&Struct{
+		Items: []Item{},
+	}).ExpectValid()
+
+	st.Value(&Struct{
+		Items: nil,
+	}).ExpectValid()
+
+	oldStruct := &Struct{Items: nil}
+	newStruct := &Struct{Items: []Item{}}
+	st.Value(newStruct).OldValue(oldStruct).ExpectValid()
+	st.Value(oldStruct).OldValue(newStruct).ExpectValid()
+
+	st.Value(&Struct{
 		Items: []Item{
-			{Key1: "a", Key2: "b", Data: "match"},
-			{Key1: "a", Key2: "c", Data: "no match"},
-			{Key1: "b", Key2: "b", Data: "no match"},
-			{Key1: "c", Key2: "d", Data: "different"},
+			{StringKey: "target", IntKey: 42, BoolKey: true, Data: "match"},
+			{StringKey: "target", IntKey: 42, BoolKey: false, Data: "no match, bool differs"},
+			{StringKey: "target", IntKey: 99, BoolKey: true, Data: "no match, int differs"},
+			{StringKey: "other", IntKey: 42, BoolKey: true, Data: "no match, string differs"},
+			{StringKey: "other", IntKey: 99, BoolKey: false, Data: "no match, all different"},
 		},
 	}).ExpectValidateFalseByPath(map[string][]string{
-		`items[0]`: {"item Items[key1=a,key2=b]"},
+		`items[0]`: {"item Items[stringKey=target,intKey=42,boolKey=true]"},
 	})
 
 	st.Value(&Struct{
 		Items: []Item{
-			{Key1: "x", Key2: "y", Data: "d1"},
-			{Key1: "a", Key2: "y", Data: "d2"},
-			{Key1: "x", Key2: "b", Data: "d3"},
+			{StringKey: "a", IntKey: 1, BoolKey: false, Data: "d1"},
+			{StringKey: "b", IntKey: 2, BoolKey: true, Data: "d2"},
+			{StringKey: "c", IntKey: 3, BoolKey: false, Data: "d3"},
 		},
 	}).ExpectValid()
+
+	st.Value(&Struct{
+		Items: []Item{
+			{StringKey: "target", IntKey: 999, BoolKey: false, Data: "partial match on string only"},
+			{StringKey: "other", IntKey: 42, BoolKey: true, Data: "partial match on int and bool"},
+		},
+	}).ExpectValid()
+
+	st.Value(&Struct{
+		Items: []Item{
+			{StringKey: "", IntKey: 0, BoolKey: false, Data: "all zero values"},
+			{StringKey: "target", IntKey: 42, BoolKey: true, Data: "non-zero values"},
+		},
+	}).ExpectValidateFalseByPath(map[string][]string{
+		`items[1]`: {"item Items[stringKey=target,intKey=42,boolKey=true]"},
+	})
 }

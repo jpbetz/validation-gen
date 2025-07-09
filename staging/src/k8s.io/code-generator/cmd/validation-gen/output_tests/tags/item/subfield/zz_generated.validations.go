@@ -66,5 +66,20 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			return
 		}(fldPath.Child("items"), obj.Items, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.Items }))...)
 
+	// field Struct.RatchetItems
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj []RatchetItem) (errs field.ErrorList) {
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil // no changes
+			}
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *RatchetItem) bool { return item.Key == "ratchet" }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *RatchetItem) field.ErrorList {
+				return validate.Subfield(ctx, op, fldPath, obj, oldObj, "status", func(o *RatchetItem) *string { return &o.Status }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+					return validate.NEQ(ctx, op, fldPath, obj, oldObj, "forbidden")
+				})
+			})...)
+			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a RatchetItem, b RatchetItem) bool { return a.Key == b.Key })...)
+			return
+		}(fldPath.Child("ratchetItems"), obj.RatchetItems, safe.Field(oldObj, func(oldObj *Struct) []RatchetItem { return oldObj.RatchetItems }))...)
+
 	return errs
 }

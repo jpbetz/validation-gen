@@ -18,6 +18,8 @@ package subfield
 
 import (
 	"testing"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func Test(t *testing.T) {
@@ -37,4 +39,42 @@ func Test(t *testing.T) {
 			{Key: "other", StringField: "anything"},
 		},
 	}).ExpectValid()
+
+	st.Value(&Struct{
+		RatchetItems: []RatchetItem{
+			{Key: "ratchet", Status: "forbidden", Version: 1},
+		},
+	}).ExpectInvalid(
+		field.Invalid(field.NewPath("ratchetItems").Index(0).Child("status"), "forbidden", "must not be equal to \"forbidden\""),
+	)
+
+	st.Value(&Struct{
+		RatchetItems: []RatchetItem{
+			{Key: "ratchet", Status: "allowed", Version: 1},
+		},
+	}).ExpectValid()
+
+	oldStruct := &Struct{
+		RatchetItems: []RatchetItem{
+			{Key: "ratchet", Status: "forbidden", Version: 1},
+		},
+	}
+	newStruct := &Struct{
+		RatchetItems: []RatchetItem{
+			{Key: "ratchet", Status: "forbidden", Version: 2},
+		},
+	}
+	st.Value(newStruct).OldValue(oldStruct).ExpectValid()
+
+	st.Value(&Struct{
+		RatchetItems: []RatchetItem{
+			{Key: "ratchet", Status: "forbidden", Version: 2},
+		},
+	}).OldValue(&Struct{
+		RatchetItems: []RatchetItem{
+			{Key: "ratchet", Status: "allowed", Version: 1},
+		},
+	}).ExpectInvalid(
+		field.Invalid(field.NewPath("ratchetItems").Index(0).Child("status"), "forbidden", "must not be equal to \"forbidden\""),
+	)
 }
