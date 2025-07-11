@@ -55,8 +55,8 @@ func init() {
 	itemTag := &itemTagValidator{byPath: itemMeta}
 	RegisterTagValidator(itemTag)
 	RegisterFieldValidator(&itemValidator{
-		listByFieldPath: listMeta,
-		itemByFieldPath: itemMeta,
+		listByPath: listMeta,
+		itemByPath: itemMeta,
 	})
 
 	globalEachVal = &eachValTagValidator{byPath: listMeta, validator: nil}

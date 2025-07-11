@@ -49,7 +49,7 @@ type itemMetadata struct {
 }
 
 type itemTagValidator struct {
-	byFieldPath map[string]*itemMetadata
+	byPath map[string]*itemMetadata
 }
 
 func (itv *itemTagValidator) Init(cfg Config) {}
@@ -115,12 +115,11 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 	}
 
 	// Store metadata for the field validator to use.
-	fieldPath := context.Path.String()
-	if itv.byFieldPath[fieldPath] == nil {
-		itv.byFieldPath[fieldPath] = &itemMetadata{}
+	if itv.byPath[context.Path.String()] == nil {
+		itv.byPath[context.Path.String()] = &itemMetadata{}
 	}
 
-	itv.byFieldPath[fieldPath].items = append(itv.byFieldPath[fieldPath].items, itemValidation{
+	itv.byPath[context.Path.String()].items = append(itv.byPath[context.Path.String()].items, itemValidation{
 		matcherPairs: matcherPairs,
 		valueTag:     *tag.ValueTag,
 	})
@@ -174,9 +173,9 @@ func (itv itemTagValidator) Docs() TagDoc {
 }
 
 type itemValidator struct {
-	validator       Validator
-	listByFieldPath map[string]*listMetadata
-	itemByFieldPath map[string]*itemMetadata
+	validator  Validator
+	listByPath map[string]*listMetadata
+	itemByPath map[string]*itemMetadata
 }
 
 func (iv *itemValidator) Init(cfg Config) {
@@ -192,12 +191,30 @@ var (
 )
 
 func (iv itemValidator) GetValidations(context Context) (Validations, error) {
-	itemMeta, ok := iv.itemByFieldPath[context.Path.String()]
-	if !ok || itemMeta == nil || len(itemMeta.items) == 0 {
-		return Validations{}, nil
+	// Get item metadata, checking both field and type paths
+	itemMeta, ok := iv.itemByPath[context.Path.String()]
+	if !ok || len(itemMeta.items) == 0 {
+		if context.Scope == ScopeField {
+			typePath := context.Type.String()
+			itemMeta, ok = iv.itemByPath[typePath]
+			if !ok || len(itemMeta.items) == 0 {
+				return Validations{}, nil
+			}
+		} else {
+			return Validations{}, nil
+		}
 	}
 
-	listMeta, ok := iv.listByFieldPath[context.Path.String()]
+	// Get list metadata, checking both field and type paths
+	listMeta, ok := iv.listByPath[context.Path.String()]
+	if !ok {
+		if context.Scope == ScopeField {
+			typePath := context.Type.String()
+			listMeta, ok = iv.listByPath[typePath]
+		}
+	}
+
+	// Validate that we have proper list metadata
 	if !ok || !listMeta.declaredAsMap || len(listMeta.keyFields) == 0 {
 		return Validations{}, fmt.Errorf("must have +k8s:listType=map and at least one '+k8s:listMapKey=...' annotation to use +k8s:item")
 	}
