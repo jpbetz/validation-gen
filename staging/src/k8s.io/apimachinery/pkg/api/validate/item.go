@@ -19,6 +19,7 @@ package validate
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/operation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -62,5 +63,10 @@ func SliceItem[TList ~[]TItem, TItem any](
 			break
 		}
 	}
+
+	if op.Type == operation.Update && matchedOld != nil && equality.Semantic.DeepEqual(*matchedNew, *matchedOld) {
+		return nil
+	}
+
 	return itemValidator(ctx, op, fldPath.Index(newIndex), matchedNew, matchedOld)
 }
