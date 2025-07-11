@@ -65,4 +65,16 @@ func Test(t *testing.T) {
 	}).ExpectValidateFalseByPath(map[string][]string{
 		`nestedTypedefItems[1]`: {"item ItemListAlias[key=aliased]"},
 	})
+
+	// Test tag on field and typedef.
+	st.Value(&Struct{
+		DualItems: DualItemList{
+			{ID: "a", Name: "n1"},
+			{ID: "typedef-target", Name: "n2"},
+			{ID: "field-target", Name: "n3"},
+		},
+	}).ExpectValidateFalseByPath(map[string][]string{
+		`dualItems[1]`: {"item DualItems[id=typedef-target] from typedef"},
+		`dualItems[2]`: {"item DualItems[id=field-target] from field"},
+	})
 }

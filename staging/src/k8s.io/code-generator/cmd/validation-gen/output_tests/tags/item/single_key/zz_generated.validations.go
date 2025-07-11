@@ -55,19 +55,6 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 	return nil
 }
 
-func Validate_DualItemList(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj DualItemList) (errs field.ErrorList) {
-	// type DualItemList
-	if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
-		return nil // no changes
-	}
-	errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "typedef-target" }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
-		return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item DualItems[id=typedef-target] from typedef")
-	})...)
-	errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a DualItem, b DualItem) bool { return a.ID == b.ID })...)
-
-	return errs
-}
-
 func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Struct) (errs field.ErrorList) {
 	// field Struct.TypeMeta has no validation
 
@@ -122,20 +109,6 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a TypedefItem, b TypedefItem) bool { return a.ID == b.ID })...)
 			return
 		}(fldPath.Child("typedefItems"), obj.TypedefItems, safe.Field(oldObj, func(oldObj *Struct) TypedefItemList { return oldObj.TypedefItems }))...)
-
-	// field Struct.DualItems
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj DualItemList) (errs field.ErrorList) {
-			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
-				return nil // no changes
-			}
-			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "field-target" }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
-				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item DualItems[id=field-target] from field")
-			})...)
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a DualItem, b DualItem) bool { return a.ID == b.ID })...)
-			errs = append(errs, Validate_DualItemList(ctx, op, fldPath, obj, oldObj)...)
-			return
-		}(fldPath.Child("dualItems"), obj.DualItems, safe.Field(oldObj, func(oldObj *Struct) DualItemList { return oldObj.DualItems }))...)
 
 	return errs
 }
