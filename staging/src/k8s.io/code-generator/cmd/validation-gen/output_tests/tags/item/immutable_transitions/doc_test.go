@@ -24,26 +24,39 @@ import (
 
 func Test(t *testing.T) {
 	st := localSchemeBuilder.Test(t)
-	oldMulti := &Struct{
+
+	old := &Struct{
 		ListField: []Item{
 			{Key1: "a", StringField: "s1"},
 			{Key1: "b", StringField: "s2"},
+			{Key1: "c", StringField: "s3"},
 		},
 	}
-	newMulti := &Struct{
+
+	new := &Struct{
 		ListField: []Item{
 			{Key1: "a", StringField: "changed"},
 			{Key1: "b", StringField: "changed"},
+			{Key1: "c", StringField: "changed"},
 		},
 	}
-	st.Value(newMulti).OldValue(oldMulti).ExpectInvalid(
+
+	st.Value(new).OldValue(old).ExpectInvalid(
 		field.Forbidden(field.NewPath("listField").Index(0), "field is immutable"),
 		field.Forbidden(field.NewPath("listField").Index(1).Child("stringField"), "field is immutable"),
 	)
 
-	emptyList := &Struct{ListField: []Item{}}
-	st.Value(newMulti).OldValue(emptyList).ExpectInvalid(
+	st.Value(new).OldValue(&Struct{ListField: []Item{}}).ExpectInvalid(
 		field.Forbidden(field.NewPath("listField").Index(0), "field is immutable"),
 		field.Forbidden(field.NewPath("listField").Index(1).Child("stringField"), "field is immutable"),
 	)
+
+	// Test that "c" can change independently
+	st.Value(&Struct{
+		ListField: []Item{
+			{Key1: "a", StringField: "s1"},
+			{Key1: "b", StringField: "s2"},
+			{Key1: "c", StringField: "changed"},
+		},
+	}).OldValue(old).ExpectValid()
 }
