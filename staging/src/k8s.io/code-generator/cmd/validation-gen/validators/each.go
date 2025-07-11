@@ -43,43 +43,23 @@ var globalEachKey *eachKeyTagValidator
 func init() {
 	// Lists with list-map semantics are comprised of multiple tags, which need
 	// to share information between them.
-<<<<<<< HEAD
-	shared := map[string]*listMetadata{} // keyed by the field or type path
-	RegisterTagValidator(listTypeTagValidator{byPath: shared})
-	RegisterTagValidator(listMapKeyTagValidator{byPath: shared})
+	listMeta := map[string]*listMetadata{} // keyed by the field or type path
+	RegisterTagValidator(listTypeTagValidator{byPath: listMeta})
+	RegisterTagValidator(listMapKeyTagValidator{byPath: listMeta})
 
-	RegisterFieldValidator(listValidator{byPath: shared})
-	RegisterTypeValidator(listValidator{byPath: shared})
-=======
-	listMeta := map[string]*listMetadata{} // keyed by the fieldpath
-	RegisterTagValidator(listTypeTagValidator{byFieldPath: listMeta})
-	RegisterTagValidator(listMapKeyTagValidator{byFieldPath: listMeta})
+	RegisterFieldValidator(listValidator{byPath: listMeta})
+	RegisterTypeValidator(listValidator{byPath: listMeta})
 
-	RegisterFieldValidator(listValidator{byFieldPath: listMeta})
-	RegisterTypeValidator(listValidator{byFieldPath: listMeta})
->>>>>>> b3a963a0aa1 (address thockin review comments - round 1)
-
-<<<<<<< HEAD
-	globalEachVal = &eachValTagValidator{byPath: shared, validator: nil}
-=======
 	// List-map item validator uses shared listType and listMapKey information
-	itemMeta := map[string]*itemMetadata{} // keyed by the fieldpath
-	RegisterTagValidator(&itemTagValidator{byFieldPath: itemMeta})
+	itemMeta := make(map[string]*itemMetadata) // keyed by the fieldpath
+	itemTag := &itemTagValidator{byPath: itemMeta}
+	RegisterTagValidator(itemTag)
 	RegisterFieldValidator(&itemValidator{
 		listByFieldPath: listMeta,
 		itemByFieldPath: itemMeta,
 	})
-	RegisterTypeValidator(&itemValidator{
-		listByFieldPath: listMeta,
-		itemByFieldPath: itemMeta,
-	})
 
-<<<<<<< HEAD
-	globalEachVal = &eachValTagValidator{byFieldPath: shared, validator: nil}
->>>>>>> f5fcd88695b (feat: add +k8s:item tag)
-=======
-	globalEachVal = &eachValTagValidator{byFieldPath: listMeta, validator: nil}
->>>>>>> b3a963a0aa1 (address thockin review comments - round 1)
+	globalEachVal = &eachValTagValidator{byPath: listMeta, validator: nil}
 	RegisterTagValidator(globalEachVal)
 
 	globalEachKey = &eachKeyTagValidator{validator: nil}
