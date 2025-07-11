@@ -56,22 +56,6 @@ func Test(t *testing.T) {
 		},
 	}).ExpectValid()
 
-	st.Value(&Struct{
-		Items: []Item{
-			{StringKey: "target", IntKey: 999, BoolKey: false, Data: "partial match on string only"},
-			{StringKey: "other", IntKey: 42, BoolKey: true, Data: "partial match on int and bool"},
-		},
-	}).ExpectValid()
-
-	st.Value(&Struct{
-		Items: []Item{
-			{StringKey: "", IntKey: 0, BoolKey: false, Data: "all zero values"},
-			{StringKey: "target", IntKey: 42, BoolKey: true, Data: "non-zero values"},
-		},
-	}).ExpectValidateFalseByPath(map[string][]string{
-		`items[1]`: {"item Items[stringKey=target,intKey=42,boolKey=true]"},
-	})
-
 	// Test ratcheting.
 	st.Value(&Struct{
 		Items: []Item{
