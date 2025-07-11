@@ -64,6 +64,7 @@ func SliceItem[TList ~[]TItem, TItem any](
 		}
 	}
 
+	// TODO: Add equivFunc parameter similar to EachVal to allow custom equality comparison.
 	if op.Type == operation.Update && matchedOld != nil && equality.Semantic.DeepEqual(*matchedNew, *matchedOld) {
 		return nil
 	}
