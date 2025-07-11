@@ -54,6 +54,10 @@ func init() {
 	itemMeta := make(map[string]*itemMetadata) // keyed by the fieldpath
 	itemTag := &itemTagValidator{byPath: itemMeta}
 	RegisterTagValidator(itemTag)
+	RegisterTypeValidator(&itemValidator{
+		listByPath: listMeta,
+		itemByPath: itemMeta,
+	})
 	RegisterFieldValidator(&itemValidator{
 		listByPath: listMeta,
 		itemByPath: itemMeta,

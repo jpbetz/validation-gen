@@ -191,26 +191,12 @@ var (
 )
 
 func (iv itemValidator) GetValidations(context Context) (Validations, error) {
-	// Collect item metadata from both field and type paths
-	var allItems []itemValidation
-
-	// Get items from the field path
-	if itemMeta, ok := iv.itemByPath[context.Path.String()]; ok && itemMeta != nil {
-		allItems = append(allItems, itemMeta.items...)
-	}
-
-	// Also get items from the type path if this is a field
-	if context.Scope == ScopeField {
-		typePath := context.Type.String()
-		if itemMeta, ok := iv.itemByPath[typePath]; ok && itemMeta != nil {
-			allItems = append(allItems, itemMeta.items...)
-		}
-	}
-	if len(allItems) == 0 {
+	itemMeta, ok := iv.itemByPath[context.Path.String()]
+	if !ok || len(itemMeta.items) == 0 {
 		return Validations{}, nil
 	}
 
-	// Get list metadata, checking both field and type paths
+	// Get list metadata, checking both field and type paths (still need fallback here)
 	listMeta, ok := iv.listByPath[context.Path.String()]
 	if !ok {
 		if context.Scope == ScopeField {
@@ -229,8 +215,8 @@ func (iv itemValidator) GetValidations(context Context) (Validations, error) {
 
 	result := Validations{}
 
-	// Process all items from both field and type
-	for _, item := range allItems {
+	// Process only the items at this level (no merging)
+	for _, item := range itemMeta.items {
 		if len(item.matcherPairs) != len(listMeta.keyNames) {
 			return Validations{}, fmt.Errorf("number of arguments does not match number of listMapKey fields")
 		}
