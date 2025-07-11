@@ -94,7 +94,7 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 	}
 
 	if len(matcherPairs) == 0 {
-		return Validations{}, fmt.Errorf("requires at least one key-value pair")
+		return Validations{}, fmt.Errorf("no selection criteria was specified")
 	}
 
 	if tag.ValueType != codetags.ValueTypeTag || tag.ValueTag == nil {
