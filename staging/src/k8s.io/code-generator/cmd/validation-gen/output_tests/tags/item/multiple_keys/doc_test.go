@@ -71,4 +71,17 @@ func Test(t *testing.T) {
 	}).ExpectValidateFalseByPath(map[string][]string{
 		`items[1]`: {"item Items[stringKey=target,intKey=42,boolKey=true]"},
 	})
+
+	// Test ratcheting.
+	st.Value(&Struct{
+		Items: []Item{
+			{StringKey: "target", IntKey: 42, BoolKey: true},
+			{StringKey: "changed", IntKey: 2, BoolKey: false},
+		},
+	}).OldValue(&Struct{
+		Items: []Item{
+			{StringKey: "target", IntKey: 42, BoolKey: true},
+			{StringKey: "other", IntKey: 1, BoolKey: false},
+		},
+	}).ExpectValid()
 }
