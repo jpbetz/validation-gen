@@ -196,7 +196,8 @@ func (iv itemValidator) GetValidations(context Context) (Validations, error) {
 		return Validations{}, nil
 	}
 
-	// Get list metadata, checking both field and type paths (still need fallback here)
+	// For fields, list metadata can fall back to the type.
+	// For types, list metadata must be defined on the type itself.
 	listMeta, ok := iv.listByPath[context.Path.String()]
 	if !ok {
 		if context.Scope == ScopeField {
@@ -205,7 +206,8 @@ func (iv itemValidator) GetValidations(context Context) (Validations, error) {
 		}
 	}
 
-	// Validate that we have proper list metadata
+	// Fields inherit list metadata from typedefs, but not vice-versa.
+	// If we find no listMetadata then something is wrong.
 	if !ok || !listMeta.declaredAsMap || len(listMeta.keyFields) == 0 {
 		return Validations{}, fmt.Errorf("must have +k8s:listType=map and at least one '+k8s:listMapKey=...' annotation to use +k8s:item")
 	}
@@ -215,7 +217,6 @@ func (iv itemValidator) GetValidations(context Context) (Validations, error) {
 
 	result := Validations{}
 
-	// Process only the items at this level (no merging)
 	for _, item := range itemMeta.items {
 		if len(item.matcherPairs) != len(listMeta.keyNames) {
 			return Validations{}, fmt.Errorf("number of arguments does not match number of listMapKey fields")
