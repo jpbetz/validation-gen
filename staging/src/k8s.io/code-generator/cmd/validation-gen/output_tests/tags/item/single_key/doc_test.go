@@ -103,4 +103,15 @@ func Test(t *testing.T) {
 			{Key: "b", Name: "n2"},
 		},
 	}).ExpectValid()
+
+	st.Value(&Struct{
+		DualItems: DualItemList{
+			{ID: "a", Name: "n1"},
+			{ID: "typedef-target", Name: "n2"},
+			{ID: "field-target", Name: "n3"},
+		},
+	}).ExpectValidateFalseByPath(map[string][]string{
+		`dualItems[1]`: {"item DualItems[id=typedef-target] from typedef"},
+		`dualItems[2]`: {"item DualItems[id=field-target] from field"},
+	})
 }

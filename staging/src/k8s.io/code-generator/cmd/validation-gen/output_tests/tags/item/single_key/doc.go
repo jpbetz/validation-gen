@@ -46,6 +46,11 @@ type Struct struct {
 	// +k8s:listMapKey=id
 	// +k8s:item(id: "typedef-target")=+k8s:validateFalse="item TypedefItems[id=typedef-target]"
 	TypedefItems TypedefItemList `json:"typedefItems"`
+
+	// +k8s:listType=map
+	// +k8s:listMapKey=id
+	// +k8s:item(id: "field-target")=+k8s:validateFalse="item DualItems[id=field-target] from field"
+	DualItems DualItemList `json:"dualItems"`
 }
 
 type StructWithNestedTypedef struct {
@@ -78,6 +83,14 @@ type TypedefItem struct {
 }
 
 type TypedefItemList []TypedefItem
+
+type DualItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// +k8s:item(id: "typedef-target")=+k8s:validateFalse="item DualItems[id=typedef-target] from typedef"
+type DualItemList []DualItem
 
 type StringAlias string
 type NestedTypedefItem struct {
