@@ -402,9 +402,10 @@ func (evtv eachValTagValidator) GetValidations(context Context, tag codetags.Tag
 	}
 
 	elemContext := Context{
-		Type:   nt.Elem,
-		Parent: t, // possibly an alias
-		Path:   context.Path.Key("*"),
+		Type:       nt.Elem,
+		Parent:     t, // possibly an alias
+		ParentPath: context.Path,
+		Path:       context.Path.Key("*"),
 	}
 	switch nt.Kind {
 	case types.Slice, types.Array:
@@ -574,10 +575,11 @@ func (ektv eachKeyTagValidator) GetValidations(context Context, tag codetags.Tag
 	}
 
 	elemContext := Context{
-		Scope:  ScopeMapKey,
-		Type:   t.Elem,
-		Parent: t,
-		Path:   context.Path.Child("(keys)"),
+		Scope:      ScopeMapKey,
+		Type:       t.Elem,
+		Parent:     t,
+		ParentPath: context.Path,
+		Path:       context.Path.Child("(keys)"),
 	}
 
 	if validations, err := ektv.validator.ExtractValidations(elemContext, *tag.ValueTag); err != nil {

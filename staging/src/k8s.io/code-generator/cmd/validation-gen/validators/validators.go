@@ -205,6 +205,13 @@ type Context struct {
 	// ScopeType, this is nil.
 	Parent *types.Type
 
+	// TODO: Remove Parent as ParentPath replaces it
+
+	// ParentPath provides the field path to the parent type, enabling unique
+	// identification of validation contexts when the same type is used in
+	// multiple places
+	ParentPath *field.Path
+
 	// Member provides details about a field within a struct when Scope is
 	// ScopeField.  For all other values of Scope, this will be nil.
 	Member *types.Member
