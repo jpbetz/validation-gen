@@ -51,10 +51,9 @@ func TestItemZeroOrOneOf(t *testing.T) {
 		},
 	}
 	st.Value(invalidMultipleMembers).ExpectMatches(
-		field.ErrorMatcher{},
+		field.ErrorMatcher{}.ByType().ByField().ByOrigin(),
 		field.ErrorList{
-			field.Invalid(field.NewPath("tasks"), "{Tasks[{\"name\": \"failed\"}], Tasks[{\"name\": \"succeeded\"}]}",
-				"must specify at most one of: `Tasks[{\"name\": \"succeeded\"}]`, `Tasks[{\"name\": \"failed\"}]`"),
+			field.Invalid(field.NewPath("tasks"), nil, "").WithOrigin("zeroOrOneOfMember"),
 		},
 	)
 
