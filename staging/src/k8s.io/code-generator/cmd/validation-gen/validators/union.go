@@ -254,45 +254,10 @@ func processUnionValidations(context Context, unions unions, varPrefix string,
 
 				for _, fullPath := range matcherPaths {
 					matcher := u.itemMatchers[fullPath]
-
-					// Build matcher conditions
-					var conditions []string
-					for key, value := range matcher {
-						member := util.GetMemberByJSON(elemType, key)
-						if member == nil {
-							return Validations{}, fmt.Errorf("struct %s has no field with JSON name %q", elemType, key)
-						}
-						var condition string
-						switch v := value.(type) {
-						case string:
-							condition = fmt.Sprintf("item.%s == %q", member.Name, v)
-						case int:
-							condition = fmt.Sprintf("item.%s == %d", member.Name, v)
-						case bool:
-							condition = fmt.Sprintf("item.%s == %t", member.Name, v)
-						default:
-							condition = fmt.Sprintf("item.%s == %v", member.Name, v)
-						}
-						conditions = append(conditions, condition)
+					extractor, err := generateItemExtractor(context.Type, elemType, matcher)
+					if err != nil {
+						return Validations{}, err
 					}
-
-					extractor := FunctionLiteral{
-						Parameters: []ParamResult{{Name: "list", Type: context.Type}},
-						Results:    []ParamResult{{Type: types.Bool}},
-					}
-					// Update extractor to check for item existence
-					extractor.Body = fmt.Sprintf(`var matched *%s`, elemType.Name.Name) + "\n"
-					extractor.Body += fmt.Sprintf(`validate.SliceItem(ctx, op, fldPath, list, nil, func(item *%s) bool { return %s }, `, elemType.Name.Name, strings.Join(conditions, " && "))
-
-					if util.IsDirectComparable(elemType) {
-						extractor.Body += "validate.DirectEqual"
-					} else {
-						extractor.Body += "validate.SemanticDeepEqual"
-					}
-
-					extractor.Body += fmt.Sprintf(`, func(ctx context.Context, op operation.Operation, itemPath *field.Path, newItem, oldItem *%s) field.ErrorList { matched = newItem; return nil })`, elemType.Name.Name) + "\n"
-					extractor.Body += "return matched != nil"
-
 					extractorArgs = append(extractorArgs, extractor)
 				}
 			}
@@ -342,6 +307,54 @@ func createMemberExtractor(ptrType *types.Type, member *types.Member) FunctionLi
 		extractor.Body = fmt.Sprintf("if obj == nil {return false}; return false /* unsupported union member kind: %s */", nt.Kind)
 	}
 	return extractor
+}
+
+// generateItemExtractor creates an extractor function for list item union members.
+// It generates code that uses validate.SliceItem to check if an item matching
+// the criteria exists in the list.
+func generateItemExtractor(listType *types.Type, elemType *types.Type, matcher map[string]any) (FunctionLiteral, error) {
+	// Build matcher conditions
+	var conditions []string
+	for key, value := range matcher {
+		member := util.GetMemberByJSON(elemType, key)
+		if member == nil {
+			return FunctionLiteral{}, fmt.Errorf("struct %s has no field with JSON name %q", elemType, key)
+		}
+		var condition string
+		switch v := value.(type) {
+		case string:
+			condition = fmt.Sprintf("item.%s == %q", member.Name, v)
+		case int:
+			condition = fmt.Sprintf("item.%s == %d", member.Name, v)
+		case bool:
+			condition = fmt.Sprintf("item.%s == %t", member.Name, v)
+		default:
+			condition = fmt.Sprintf("item.%s == %v", member.Name, v)
+		}
+		conditions = append(conditions, condition)
+	}
+
+	extractor := FunctionLiteral{
+		Parameters: []ParamResult{{Name: "list", Type: listType}},
+		Results:    []ParamResult{{Type: types.Bool}},
+	}
+
+	// Build the function body
+	body := fmt.Sprintf(`var matched *%s`, elemType.Name.Name) + "\n"
+	body += fmt.Sprintf(`validate.SliceItem(ctx, op, fldPath, list, nil, func(item *%s) bool { return %s }, `,
+		elemType.Name.Name, strings.Join(conditions, " && "))
+
+	if util.IsDirectComparable(elemType) {
+		body += "validate.DirectEqual"
+	} else {
+		body += "validate.SemanticDeepEqual"
+	}
+
+	body += fmt.Sprintf(`, func(ctx context.Context, op operation.Operation, itemPath *field.Path, newItem, oldItem *%s) field.ErrorList { matched = newItem; return nil })`, elemType.Name.Name) + "\n"
+	body += "return matched != nil"
+
+	extractor.Body = body
+	return extractor, nil
 }
 
 func processDiscriminatorValidations(shared map[string]unions, context Context, tag codetags.Tag) error {
