@@ -352,7 +352,6 @@ func (td *typeDiscoverer) discoverType(t *types.Type, fldPath *field.Path) (*typ
 		context := validators.Context{
 			Scope:      validators.ScopeType,
 			Type:       t,
-			Parent:     nil,
 			ParentPath: nil,
 			Path:       fldPath,
 		}
@@ -583,7 +582,6 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 		context := validators.Context{
 			Scope:      validators.ScopeField,
 			Type:       childType,
-			Parent:     thisNode.valueType,
 			ParentPath: fldPath,
 			Member:     &memb,
 			Path:       childPath,

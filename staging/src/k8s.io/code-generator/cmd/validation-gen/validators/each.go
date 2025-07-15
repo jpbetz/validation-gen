@@ -403,7 +403,6 @@ func (evtv eachValTagValidator) GetValidations(context Context, tag codetags.Tag
 
 	elemContext := Context{
 		Type:       nt.Elem,
-		Parent:     t, // possibly an alias
 		ParentPath: context.Path,
 		Path:       context.Path.Key("*"),
 	}
@@ -577,7 +576,6 @@ func (ektv eachKeyTagValidator) GetValidations(context Context, tag codetags.Tag
 	elemContext := Context{
 		Scope:      ScopeMapKey,
 		Type:       t.Elem,
-		Parent:     t,
 		ParentPath: context.Path,
 		Path:       context.Path.Child("(keys)"),
 	}

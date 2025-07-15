@@ -72,7 +72,6 @@ func (stv subfieldTagValidator) GetValidations(context Context, tag codetags.Tag
 	subContext := Context{
 		Scope:      ScopeField,
 		Type:       submemb.Type,
-		Parent:     t,
 		ParentPath: context.Path,
 		Member:     submemb,
 		Path:       context.Path.Child(subname),

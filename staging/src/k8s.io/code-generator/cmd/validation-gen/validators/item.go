@@ -256,7 +256,6 @@ func (iv itemValidator) GetValidations(context Context) (Validations, error) {
 		subContext := Context{
 			Scope:      ScopeListVal,
 			Type:       elemT,
-			Parent:     context.Type,
 			Path:       context.Path.Key(subContextPath),
 			ParentPath: context.Path,
 			Member:     nil,

@@ -198,15 +198,6 @@ type Context struct {
 	// both).
 	Type *types.Type
 
-	// Parent provides details about the logical parent type of the object
-	// being validated, when applicable.  When Scope is ScopeField, this is the
-	// containing struct's type.  When Scope indicates a list-value, map-key,
-	// or map-value, this is the type of the whole list or map. When Scope is
-	// ScopeType, this is nil.
-	Parent *types.Type
-
-	// TODO: Remove Parent as ParentPath replaces it
-
 	// ParentPath provides the field path to the parent type, enabling unique
 	// identification of validation contexts when the same type is used in
 	// multiple places

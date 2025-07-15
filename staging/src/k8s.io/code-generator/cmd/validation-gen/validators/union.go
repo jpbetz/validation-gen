@@ -386,7 +386,7 @@ func processMemberValidations(shared map[string]unions, context Context, tag cod
 	unionArg, _ = tag.NamedArg("union") // optional
 
 	if context.Scope == ScopeListVal {
-		if context.Parent != nil && context.Parent.Kind == types.Alias {
+		if context.Type != nil && context.Type.Kind == types.Alias {
 			return fmt.Errorf("list item union members are not supported on typedef types")
 		}
 
