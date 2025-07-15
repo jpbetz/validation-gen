@@ -48,11 +48,11 @@ func Test(t *testing.T) {
 			{Name: "failed", State: "Failed"},
 		},
 	}
+
 	st.Value(invalidBothSet).ExpectMatches(
-		field.ErrorMatcher{},
+		field.ErrorMatcher{}.ByType().ByField().ByOrigin(),
 		field.ErrorList{
-			field.Invalid(field.NewPath("tasks"), "{TaskList[{\"name\": \"failed\"}], TaskList[{\"name\": \"succeeded\"}]}",
-				"must specify at most one of: `TaskList[{\"name\": \"succeeded\"}]`, `TaskList[{\"name\": \"failed\"}]`"),
+			field.Invalid(field.NewPath("tasks"), nil, "").WithOrigin("zeroOrOneOf"),
 		},
 	)
 
