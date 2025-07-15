@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package zeroroneof
+package unionsimple
 
 import (
 	"testing"
@@ -22,41 +22,43 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func TestItemZeroOrOneOf(t *testing.T) {
+func Test(t *testing.T) {
 	st := localSchemeBuilder.Test(t)
 
-	st.Value(&Pipeline{
-		Tasks: []Task{
-			{Name: "other", State: "Other"},
-			{Name: "another", State: "Running"},
-		},
-	}).ExpectValid()
-
-	st.Value(&Pipeline{
+	st.Value(&Struct{
 		Tasks: []Task{
 			{Name: "succeeded", State: "Succeeded"},
 			{Name: "other", State: "Other"},
 		},
 	}).ExpectValid()
 
-	st.Value(&Pipeline{
-		Tasks: []Task{},
-	}).ExpectValid()
-
-	invalidMultipleMembers := &Pipeline{
+	invalidBothSet := &Struct{
 		Tasks: []Task{
 			{Name: "succeeded", State: "Succeeded"},
 			{Name: "failed", State: "Failed"},
-			{Name: "other", State: "Other"},
 		},
 	}
-	st.Value(invalidMultipleMembers).ExpectMatches(
-		field.ErrorMatcher{}.ByType().ByField().ByOrigin(),
+
+	st.Value(invalidBothSet).ExpectMatches(
+		field.ErrorMatcher{},
 		field.ErrorList{
-			field.Invalid(field.NewPath("tasks"), nil, "").WithOrigin("zeroOrOneOfMember"),
+			field.Invalid(field.NewPath("tasks"), "{Tasks[{\"name\": \"failed\"}], Tasks[{\"name\": \"succeeded\"}]}",
+				"must specify exactly one of: `Tasks[{\"name\": \"succeeded\"}]`, `Tasks[{\"name\": \"failed\"}]`"),
+		},
+	)
+
+	invalidEmpty := &Struct{
+		Tasks: []Task{},
+	}
+	st.Value(invalidEmpty).ExpectMatches(
+		field.ErrorMatcher{},
+		field.ErrorList{
+			field.Invalid(field.NewPath("tasks"), "",
+				"must specify one of: `Tasks[{\"name\": \"succeeded\"}]`, `Tasks[{\"name\": \"failed\"}]`"),
 		},
 	)
 
 	// Test ratcheting.
-	st.Value(invalidMultipleMembers).OldValue(invalidMultipleMembers).ExpectValid()
+	st.Value(invalidEmpty).OldValue(invalidEmpty).ExpectValid()
+	st.Value(invalidBothSet).OldValue(invalidBothSet).ExpectValid()
 }

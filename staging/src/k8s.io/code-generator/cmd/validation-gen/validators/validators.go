@@ -198,9 +198,9 @@ type Context struct {
 	// both).
 	Type *types.Type
 
-	// ParentPath provides the field path to the parent type, enabling unique
-	// identification of validation contexts when the same type is used in
-	// multiple places
+	// ParentPath provides the field path to the parent type or field, enabling
+	// unique identification of validation contexts for the same type in
+	// different locations.
 	ParentPath *field.Path
 
 	// Member provides details about a field within a struct when Scope is

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package union
+package uniontypedef
 
 import (
 	"testing"
@@ -22,41 +22,44 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func TestItemUnion(t *testing.T) {
+func Test(t *testing.T) {
 	st := localSchemeBuilder.Test(t)
 
-	st.Value(&Pipeline{
-		Tasks: []Task{
+	st.Value(&Struct{
+		Tasks: TaskList{
 			{Name: "succeeded", State: "Succeeded"},
 			{Name: "other", State: "Other"},
 		},
 	}).ExpectValid()
 
-	st.Value(&Pipeline{
+	invalidBothSet := &Struct{
 		Tasks: []Task{
 			{Name: "succeeded", State: "Succeeded"},
 			{Name: "failed", State: "Failed"},
-			{Name: "other", State: "Other"},
 		},
-	}).ExpectMatches(
+	}
+
+	st.Value(invalidBothSet).ExpectMatches(
 		field.ErrorMatcher{},
 		field.ErrorList{
-			field.Invalid(field.NewPath("tasks"), "{Tasks[{\"name\": \"failed\"}], Tasks[{\"name\": \"succeeded\"}]}",
-				"must specify exactly one of: `Tasks[{\"name\": \"succeeded\"}]`, `Tasks[{\"name\": \"failed\"}]`"),
+			field.Invalid(field.NewPath("tasks"), "{TaskList[{\"name\": \"failed\"}], TaskList[{\"name\": \"succeeded\"}]}",
+				"must specify exactly one of: `TaskList[{\"name\": \"succeeded\"}]`, `TaskList[{\"name\": \"failed\"}]`"),
 		},
 	)
 
-	invalidEmpty := &Pipeline{
-		Tasks: []Task{},
+	invalidEmpty := &Struct{
+		Tasks: TaskList{},
 	}
 	st.Value(invalidEmpty).ExpectMatches(
 		field.ErrorMatcher{},
 		field.ErrorList{
 			field.Invalid(field.NewPath("tasks"), "",
-				"must specify one of: `Tasks[{\"name\": \"succeeded\"}]`, `Tasks[{\"name\": \"failed\"}]`"),
+				"must specify one of: `TaskList[{\"name\": \"succeeded\"}]`, `TaskList[{\"name\": \"failed\"}]`"),
 		},
 	)
 
 	// Test ratcheting.
 	st.Value(invalidEmpty).OldValue(invalidEmpty).ExpectValid()
+
+	st.Value(invalidBothSet).OldValue(invalidBothSet).ExpectValid()
 }

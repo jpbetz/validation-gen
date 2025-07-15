@@ -18,21 +18,23 @@ limitations under the License.
 // +k8s:validation-gen-scheme-registry=k8s.io/code-generator/cmd/validation-gen/testscheme.Scheme
 
 // This is a test package.
-package union
+package zeroroneooftypedef
 
 import "k8s.io/code-generator/cmd/validation-gen/testscheme"
 
 var localSchemeBuilder = testscheme.New()
 
-type Pipeline struct {
+type Struct struct {
 	TypeMeta int `json:"typeMeta"`
 
-	// +k8s:listType=map
-	// +k8s:listMapKey=name
-	// +k8s:item(name: "succeeded")=+k8s:unionMember(union: taskStates)
-	// +k8s:item(name: "failed")=+k8s:unionMember(union: taskStates)
-	Tasks []Task `json:"tasks"`
+	Tasks TaskList `json:"tasks"`
 }
+
+// +k8s:listType=map
+// +k8s:listMapKey=name
+// +k8s:item(name: "succeeded")=+k8s:zeroOrOneOfMember
+// +k8s:item(name: "failed")=+k8s:zeroOrOneOfMember
+type TaskList []Task
 
 type Task struct {
 	Name  string `json:"name"`

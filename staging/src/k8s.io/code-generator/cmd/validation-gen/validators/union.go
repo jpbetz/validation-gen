@@ -38,9 +38,14 @@ var newUnionMembership = types.Name{Package: libValidationPkg, Name: "NewUnionMe
 var unionVariablePrefix = "unionMembershipFor"
 
 func init() {
-	// Unions are comprised of multiple tags, which need to share information
-	// between them.  The tags are on struct fields, but the validation
-	// actually pertains to the struct itself.
+	// Unions are comprised of multiple tags that need to share information.
+	// For field-based unions: tags are on struct fields, validation is on the struct
+	// For item-based unions: tags are on list items (via +k8s:item), validation is on the list
+
+	// "shared" maps from field path strings (key) to union definitions (value)
+	// key examples:
+	//   - struct union: "MyStruct" (validation on the struct type)
+	//   - list union: "Pipeline.Tasks" (validation on the list field)
 	shared := map[string]unions{}
 	RegisterTypeValidator(unionTypeOrFieldValidator{shared})
 	RegisterFieldValidator(unionTypeOrFieldValidator{shared})
@@ -59,10 +64,9 @@ func (unionTypeOrFieldValidator) Name() string {
 }
 
 func (utfv unionTypeOrFieldValidator) GetValidations(context Context) (Validations, error) {
-	// Gengo does not treat struct definitions as aliases, which is
-	// inconsistent but unlikely to change. That means we don't REALLY need to
-	// handle it here, but let's be extra careful and extract the most concrete
-	// type possible.
+	// TODO: Add support for map items once map item validation is implemented
+
+	// Extract the most concrete type possible.
 	if k := util.NonPointer(util.NativeType(context.Type)).Kind; k != types.Struct && k != types.Slice {
 		return Validations{}, nil
 	}
@@ -192,21 +196,30 @@ type union struct {
 	discriminatorMember *types.Member
 
 	// itemMatchers stores matcher criteria for list item unions.
-	// key is the path, value is the matcher map.
+	// key is the virtual field path (eg: "<path>/Pipeline.Tasks[{"name": "succeeded"}]"),
+	// value is the parsed matcher map (eg: {"name": "succeeded"}).
+	// Represents union members that are list items matching specific criteria
 	itemMatchers map[string]map[string]any
 }
 
 // unions represents all the unions for a go struct.
 type unions map[string]*union
 
+// newUnion initializes a new union instance
+func newUnion() *union {
+	return &union{
+		fields:       make([][2]string, 0),
+		fieldMembers: make([]*types.Member, 0),
+		itemMatchers: make(map[string]map[string]any),
+	}
+}
+
 // getOrCreate gets a union by name, or initializes a new union by the given name.
 func (us unions) getOrCreate(name string) *union {
 	var u *union
 	var ok bool
 	if u, ok = us[name]; !ok {
-		u = &union{
-			itemMatchers: make(map[string]map[string]any),
-		}
+		u = newUnion()
 		us[name] = u
 	}
 	return u
@@ -226,10 +239,21 @@ func processUnionValidations(context Context, unions unions, varPrefix string,
 	for _, unionName := range keys {
 		u := unions[unionName]
 		if len(u.fieldMembers) > 0 || u.discriminator != nil || len(u.itemMatchers) > 0 {
+			if len(u.fieldMembers) > 0 && len(u.itemMatchers) > 0 {
+				return Validations{}, fmt.Errorf("cannot have both field members and item matchers")
+			}
+			nativeType := util.NonPointer(util.NativeType(context.Type))
+			if nativeType.Kind == types.Struct && len(u.itemMatchers) > 0 {
+				return Validations{}, fmt.Errorf("struct type cannot have item matchers")
+			}
+			if nativeType.Kind == types.Slice && len(u.fieldMembers) > 0 {
+				return Validations{}, fmt.Errorf("slice type cannot have field members")
+			}
+
 			// TODO: Avoid the "local" here. This was added to to avoid errors caused when the package is an empty string.
 			//       The correct package would be the output package but is not known here. This does not show up in generated code.
 			// TODO: Append a consistent hash suffix to avoid generated name conflicts?
-			varBaseName := sanitizeName(context.Path.String() + "_" + unionName)
+			varBaseName := sanitizeName(context.Path.String() + "_" + unionName) // unionName can be ""
 			supportVarName := PrivateVar{Name: varPrefix + "_" + varBaseName, Package: "local"}
 
 			var extractorArgs []any
@@ -242,8 +266,8 @@ func processUnionValidations(context Context, unions unions, varPrefix string,
 			}
 
 			// Handle list item unions for lists
-			if context.Type.Kind == types.Slice && len(u.itemMatchers) > 0 {
-				elemType := util.NonPointer(context.Type.Elem)
+			if nativeType.Kind == types.Slice && len(u.itemMatchers) > 0 {
+				elemType := util.NonPointer(nativeType.Elem)
 
 				// Sort matcher paths for stable output
 				matcherPaths := make([]string, 0, len(u.itemMatchers))
@@ -254,7 +278,7 @@ func processUnionValidations(context Context, unions unions, varPrefix string,
 
 				for _, fullPath := range matcherPaths {
 					matcher := u.itemMatchers[fullPath]
-					extractor, err := generateItemExtractor(context.Type, elemType, matcher)
+					extractor, err := createItemExtractor(context.Type, elemType, matcher)
 					if err != nil {
 						return Validations{}, err
 					}
@@ -309,51 +333,38 @@ func createMemberExtractor(ptrType *types.Type, member *types.Member) FunctionLi
 	return extractor
 }
 
-// generateItemExtractor creates an extractor function for list item union members.
-// It generates code that uses validate.SliceItem to check if an item matching
-// the criteria exists in the list.
-func generateItemExtractor(listType *types.Type, elemType *types.Type, matcher map[string]any) (FunctionLiteral, error) {
-	// Build matcher conditions
-	var conditions []string
+// createItemExtractor creates an extractor function for list item union members.
+// It generates code that loops through the list to check if an item matching the criteria exists.
+func createItemExtractor(listType *types.Type, elemType *types.Type, matcher map[string]any) (FunctionLiteral, error) {
+	var criteria []keyValuePair
 	for key, value := range matcher {
-		member := util.GetMemberByJSON(elemType, key)
-		if member == nil {
-			return FunctionLiteral{}, fmt.Errorf("struct %s has no field with JSON name %q", elemType, key)
-		}
-		var condition string
-		switch v := value.(type) {
-		case string:
-			condition = fmt.Sprintf("item.%s == %q", member.Name, v)
-		case int:
-			condition = fmt.Sprintf("item.%s == %d", member.Name, v)
-		case bool:
-			condition = fmt.Sprintf("item.%s == %t", member.Name, v)
-		default:
-			condition = fmt.Sprintf("item.%s == %v", member.Name, v)
-		}
-		conditions = append(conditions, condition)
+		criteria = append(criteria, keyValuePair{
+			key:   key,
+			value: fmt.Sprint(value),
+		})
+	}
+
+	// Sort for stable output.
+	slices.SortFunc(criteria, func(a, b keyValuePair) int {
+		return strings.Compare(a.key, b.key)
+	})
+
+	condition, err := buildMatchConditions(elemType, criteria, "list[i]")
+	if err != nil {
+		return FunctionLiteral{}, err
 	}
 
 	extractor := FunctionLiteral{
 		Parameters: []ParamResult{{Name: "list", Type: listType}},
 		Results:    []ParamResult{{Type: types.Bool}},
+		Body: fmt.Sprintf(`for i := range list {
+	if %s {
+		return true
+	}
+}
+return false`, condition),
 	}
 
-	// Build the function body
-	body := fmt.Sprintf(`var matched *%s`, elemType.Name.Name) + "\n"
-	body += fmt.Sprintf(`validate.SliceItem(ctx, op, fldPath, list, nil, func(item *%s) bool { return %s }, `,
-		elemType.Name.Name, strings.Join(conditions, " && "))
-
-	if util.IsDirectComparable(elemType) {
-		body += "validate.DirectEqual"
-	} else {
-		body += "validate.SemanticDeepEqual"
-	}
-
-	body += fmt.Sprintf(`, func(ctx context.Context, op operation.Operation, itemPath *field.Path, newItem, oldItem *%s) field.ErrorList { matched = newItem; return nil })`, elemType.Name.Name) + "\n"
-	body += "return matched != nil"
-
-	extractor.Body = body
 	return extractor, nil
 }
 
@@ -386,10 +397,6 @@ func processMemberValidations(shared map[string]unions, context Context, tag cod
 	unionArg, _ = tag.NamedArg("union") // optional
 
 	if context.Scope == ScopeListVal {
-		if context.Type != nil && context.Type.Kind == types.Alias {
-			return fmt.Errorf("list item union members are not supported on typedef types")
-		}
-
 		if context.Path == nil {
 			return fmt.Errorf("no path for list val union member")
 		}

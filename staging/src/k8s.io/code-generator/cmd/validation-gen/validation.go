@@ -1329,6 +1329,8 @@ func (g *genValidations) emitValidationVariables(c *generator.Context, t *types.
 			sw.Do(")\n", nil)
 		}
 	}
+	// TODO: Handle potential variable name collisions when multiple validators
+	// generate variables with the same name.
 	emit(tn.typeValidations.Variables)
 	for _, field := range tn.fields {
 		if len(field.fieldValidations.Variables) != 0 {
