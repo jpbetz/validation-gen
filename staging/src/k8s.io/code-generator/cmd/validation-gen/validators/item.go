@@ -64,6 +64,10 @@ func (itemTagValidator) ValidScopes() sets.Set[Scope] {
 	return itemTagValidScopes
 }
 
+// LateTagValidator indicates that this validator has to run AFTER the listType
+// and listMapKey tags.
+func (itemTagValidator) LateTagValidator() {}
+
 func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
 	// TODO: Support regular maps with syntax like:
 	// +k8s:item("map-key")=+k8s:immutable
