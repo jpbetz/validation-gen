@@ -256,13 +256,15 @@ func (iv itemValidator) GetValidations(context Context) (Validations, error) {
 		}
 
 		// Extract validations from the stored tag
-		subContextPath := generateFieldPathForMap(item.criteria)
+		itemKey := generateFieldPathForMap(item.criteria)
+		itemPath := context.Path.Key(itemKey)
+		itemSelector := generateSelector(item.criteria)
 		subContext := Context{
-			Scope:      ScopeListVal,
-			Type:       elemT,
-			Path:       context.Path.Key(subContextPath),
-			Member:     nil, // NA for list items
-			ParentPath: context.Path,
+			Scope:        ScopeListVal,
+			Type:         elemT,
+			Path:         itemPath,
+			ListSelector: itemSelector,
+			ParentPath:   context.Path,
 		}
 
 		validations, err := iv.validator.ExtractValidations(subContext, item.valueTag)
@@ -295,7 +297,7 @@ func (iv itemValidator) GetValidations(context Context) (Validations, error) {
 
 		for _, vfn := range validations.Functions {
 			f := Function(itemTagName, vfn.Flags, validateSliceItem, matchArg, equivArg, WrapperFunction{vfn, elemT})
-			f.Cohort = subContextPath
+			f.Cohort = itemKey
 			result.AddFunction(f)
 		}
 	}
@@ -409,4 +411,15 @@ func formatValueForPath(value any) string {
 	default:
 		return fmt.Sprintf("%v", v)
 	}
+}
+
+func generateSelector(criteria []keyValuePair) []ListSelectorTerm {
+	terms := make([]ListSelectorTerm, len(criteria))
+	for i, pair := range criteria {
+		terms[i] = ListSelectorTerm{
+			Field: pair.key,
+			Value: pair.value,
+		}
+	}
+	return terms
 }
