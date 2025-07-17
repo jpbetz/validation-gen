@@ -247,6 +247,15 @@ type ListSelectorTerm struct {
 	Value any
 }
 
+// ListSelectorTerm represents a field name and value pair.
+type ListSelectorTerm struct {
+	// Field is the JSON name of the field to match.
+	Field string
+	// Value is the value to match.  This must be a primitive type which can
+	// be used as list-map keys: string, int, or bool.
+	Value any
+}
+
 // TagDoc describes a comment-tag and its usage.
 type TagDoc struct {
 	// Tag is the tag name, without the leading '+'.
