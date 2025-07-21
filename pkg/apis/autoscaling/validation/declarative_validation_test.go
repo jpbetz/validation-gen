@@ -30,7 +30,7 @@ import (
 	"k8s.io/kubernetes/pkg/apis/autoscaling"
 )
 
-func TestValidateScaleForDeclarative(t *testing.T) {
+func TestScaleDeclarativeValidation(t *testing.T) {
 	ctx := genericapirequest.WithRequestInfo(genericapirequest.NewDefaultContext(), &genericapirequest.RequestInfo{
 		APIGroup:    "autoscaling",
 		APIVersion:  "v1",
