@@ -82,6 +82,9 @@ func parseIP(fldPath *field.Path, value string, strictValidation bool) (net.IP, 
 // historically validated in this way, and strictValidation should be true unless the
 // StrictIPCIDRValidation feature gate is disabled. Use IsValidIP for parsing new fields.
 func IsValidIPForLegacyField(fldPath *field.Path, value string, strictValidation bool, validOldIPs []string) field.ErrorList {
+	// TODO: once the StrictIPCIDRValidation gate is locked to on, this can
+	// simply check the old value (or make callers do it) and call
+	// validate.IP().
 	if slices.Contains(validOldIPs, value) {
 		return nil
 	}
