@@ -190,7 +190,7 @@ func TestIsValidIP(t *testing.T) {
 			name: "ipv6 with zone",
 			in:   "1234::abcd%eth0",
 
-			err:             "must be a valid IP address",
+			err:             "must not include an IPv6 zone",
 			legacyErr:       "must be a valid IP address",
 			legacyStrictErr: "must be a valid IP address",
 		},
