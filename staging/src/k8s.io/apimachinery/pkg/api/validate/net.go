@@ -18,31 +18,46 @@ package validate
 
 import (
 	"context"
-	"net"
+	"fmt"
+	"net/netip"
 
 	"k8s.io/apimachinery/pkg/api/operation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	netutils "k8s.io/utils/net"
 )
 
-// IPSloppy verifies that the specified value is a valid IP address, but allows
-// leading zeros on each octet value.  This should not be used for new APIs.
-func IPSloppy[T ~string](ctx context.Context, op operation.Operation, fldPath *field.Path, value, _ *T) field.ErrorList {
+// IP verifies that the specified value is a valid IP address.  This does not
+// allow leading zeros on octet values.
+func IP[T ~string](ctx context.Context, op operation.Operation, fldPath *field.Path, value, _ *T) field.ErrorList {
 	vt := *value
 	vs := string(vt)
-	_, errs := ipSloppy(ctx, op, fldPath, &vs, nil)
-	return errs
+	return ipstr(fldPath, vs)
 }
 
-func ipSloppy(ctx context.Context, op operation.Operation, fldPath *field.Path, value, _ *string) (net.IP, field.ErrorList) {
-	if value == nil {
-		return nil, nil
-	}
-	ip := netutils.ParseIPSloppy(*value)
-	if ip == nil {
-		return nil, field.ErrorList{
-			field.Invalid(fldPath, *value, "must be a valid IP address (e.g. 10.9.8.7 or 2001:db8::ffff)").WithOrigin("format=k8s-ip"),
+func ipstr(fldPath *field.Path, value string) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if addr, err := netip.ParseAddr(value); err != nil {
+		if netutils.ParseIPSloppy(value) != nil {
+			// If netutils.ParseIPSloppy parses it, but netip.ParseAddr
+			// doesn't, then it must have illegal leading 0s.
+			allErrs = append(allErrs, field.Invalid(fldPath, value, "must not have leading 0s"))
+		} else {
+			// Neither strict nor sloppy could parse it.
+			allErrs = append(allErrs, field.Invalid(fldPath, value, "must be a valid IP address (e.g. 10.9.8.7 or 2001:db8::ffff)"))
+		}
+	} else {
+		// It parsed as an IP, check for bad forms.
+		if addr.String() != value {
+			allErrs = append(allErrs, field.Invalid(fldPath, value, fmt.Sprintf("must be in canonical form (%q)", addr.String())))
+		}
+		if addr.Is4In6() {
+			allErrs = append(allErrs, field.Invalid(fldPath, value, "must not be an IPv4-mapped IPv6 address"))
+		}
+		if addr.Zone() != "" {
+			allErrs = append(allErrs, field.Invalid(fldPath, value, "must not include an IPv6 zone"))
 		}
 	}
-	return ip, nil
+
+	return allErrs.WithOrigin("format=k8s-ip")
 }
