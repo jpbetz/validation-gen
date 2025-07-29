@@ -17,8 +17,6 @@ limitations under the License.
 package validators
 
 import (
-	"fmt"
-
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/gengo/v2/codetags"
 	"k8s.io/gengo/v2/types"
