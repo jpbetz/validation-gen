@@ -64,17 +64,15 @@ var (
 func (maxLengthTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
 	var result Validations
 
-	t := context.Type
-	if t.Kind == types.Alias {
-		t = t.Underlying
-	}
-	if t != types.String {
-		return result, fmt.Errorf("can only be used on string types (%s)", rootTypeString(context.Type, t))
+	// This tag can apply to value and pointer fields, as well as typedefs
+	// (which should never be pointers). We need to check the concrete type.
+	if t := util.NonPointer(util.NativeType(context.Type)); t != types.String {
+		return Validations{}, fmt.Errorf("can only be used on string types (%s)", rootTypeString(context.Type, t))
 	}
 
 	intVal, err := strconv.Atoi(tag.Value)
 	if err != nil {
-		return result, fmt.Errorf("failed to parse tag payload as int: %v", err)
+		return result, fmt.Errorf("failed to parse tag payload as int: %w", err)
 	}
 	if intVal < 0 {
 		return result, fmt.Errorf("must be greater than or equal to zero")
@@ -92,6 +90,8 @@ func (mltv maxLengthTagValidator) Docs() TagDoc {
 			Description: "<non-negative integer>",
 			Docs:        "This field must be no more than X characters long.",
 		}},
+		PayloadsType:     codetags.ValueTypeInt,
+		PayloadsRequired: true,
 	}
 }
 
@@ -121,17 +121,14 @@ var (
 func (maxItemsTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
 	var result Validations
 
-	t := context.Type
-	if t.Kind == types.Alias {
-		t = t.Underlying
-	}
-	if t.Kind != types.Slice && t.Kind != types.Array {
-		return result, fmt.Errorf("can only be used on list types (%s)", rootTypeString(context.Type, t))
+	// NOTE: pointers to lists are not supported, so we should never see a pointer here.
+	if t := util.NativeType(context.Type); t.Kind != types.Slice && t.Kind != types.Array {
+		return Validations{}, fmt.Errorf("can only be used on list types (%s)", rootTypeString(context.Type, t))
 	}
 
 	intVal, err := strconv.Atoi(tag.Value)
 	if err != nil {
-		return result, fmt.Errorf("failed to parse tag payload as int: %v", err)
+		return result, fmt.Errorf("failed to parse tag payload as int: %w", err)
 	}
 	if intVal < 0 {
 		return result, fmt.Errorf("must be greater than or equal to zero")
@@ -150,6 +147,8 @@ func (mitv maxItemsTagValidator) Docs() TagDoc {
 			Description: "<non-negative integer>",
 			Docs:        "This field must be no more than X items long.",
 		}},
+		PayloadsType:     codetags.ValueTypeInt,
+		PayloadsRequired: true,
 	}
 }
 
