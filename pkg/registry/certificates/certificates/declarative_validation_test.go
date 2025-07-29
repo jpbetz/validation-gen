@@ -45,12 +45,7 @@ type validationStrategy interface {
 	ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList
 }
 
-type validationStrategy interface {
-	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
-	ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList
-}
-
-func TestDeclarativeValidateForDeclarative(t *testing.T) {
+func TestDeclarativeValidation(t *testing.T) {
 	for _, apiVersion := range apiVersions {
 		testDeclarativeValidation(t, apiVersion)
 	}
