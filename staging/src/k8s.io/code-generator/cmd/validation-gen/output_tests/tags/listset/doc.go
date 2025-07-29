@@ -73,7 +73,6 @@ type ImmutableStruct struct {
 }
 
 
-
 type ComparableStruct struct {
 	StringField string `json:"stringField"`
 }
