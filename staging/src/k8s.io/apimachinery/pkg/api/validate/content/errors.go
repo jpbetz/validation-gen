@@ -54,7 +54,7 @@ func RegexError(msg string, re string, examples ...string) string {
 	}
 	msg += "regex used for validation is '" + re + "')"
 	return msg
-
+}
 
 // NEQError returns a string explanation of a "must not be equal to" validation failure.
 func NEQError[T any](disallowed T) string {
