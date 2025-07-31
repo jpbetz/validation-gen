@@ -101,6 +101,7 @@ func (stv subfieldTagValidator) GetValidations(context Context, tag codetags.Tag
 			}
 			getFn.Body = fmt.Sprintf("return %so.%s", fieldExprPrefix, submemb.Name)
 			f := Function(subfieldTagName, vfn.Flags, validateSubfield, subname, getFn, WrapperFunction{vfn, submemb.Type})
+			f.Cohort = subname
 			result.Functions = append(result.Functions, f)
 			result.Variables = append(result.Variables, validations.Variables...)
 		}
