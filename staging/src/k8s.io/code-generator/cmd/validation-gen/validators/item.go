@@ -295,6 +295,7 @@ func (iv itemValidator) GetValidations(context Context) (Validations, error) {
 
 		for _, vfn := range validations.Functions {
 			f := Function(itemTagName, vfn.Flags, validateSliceItem, matchArg, equivArg, WrapperFunction{vfn, elemT})
+			f.Cohort = subContextPath
 			result.AddFunction(f)
 		}
 	}
