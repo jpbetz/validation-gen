@@ -63,7 +63,10 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.StringKey == "target" && item.IntKey == 42 && item.BoolKey == true }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
-				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item Items[stringKey=target,intKey=42,boolKey=true]")
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item Items[stringKey=target,intKey=42,boolKey=true] 1")
+			})...)
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.StringKey == "target" && item.IntKey == 42 && item.BoolKey == true }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item Items[stringKey=target,intKey=42,boolKey=true] 2")
 			})...)
 			return
 		}(fldPath.Child("items"), obj.Items, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.Items }))...)
