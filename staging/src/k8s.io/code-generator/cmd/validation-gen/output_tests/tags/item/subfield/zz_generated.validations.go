@@ -62,11 +62,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key == "target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
-				return validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *Item) *string { return &o.StringField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item Items[key=target].stringField")
-				})
-			})...)
+			func() { // cohort {"key": "target"}
+				errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key == "target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+					return validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *Item) *string { return &o.StringField }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+						return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item Items[key=target].stringField")
+					})
+				})...)
+			}()
 			return
 		}(fldPath.Child("items"), obj.Items, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.Items }))...)
 
@@ -78,11 +80,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *RatchetItem) bool { return item.Key == "ratchet" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *RatchetItem) field.ErrorList {
-				return validate.Subfield(ctx, op, fldPath, obj, oldObj, "status", func(o *RatchetItem) *string { return &o.Status }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-					return validate.NEQ(ctx, op, fldPath, obj, oldObj, "forbidden")
-				})
-			})...)
+			func() { // cohort {"key": "ratchet"}
+				errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *RatchetItem) bool { return item.Key == "ratchet" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *RatchetItem) field.ErrorList {
+					return validate.Subfield(ctx, op, fldPath, obj, oldObj, "status", func(o *RatchetItem) *string { return &o.Status }, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+						return validate.NEQ(ctx, op, fldPath, obj, oldObj, "forbidden")
+					})
+				})...)
+			}()
 			return
 		}(fldPath.Child("ratchetItems"), obj.RatchetItems, safe.Field(oldObj, func(oldObj *Struct) []RatchetItem { return oldObj.RatchetItems }))...)
 

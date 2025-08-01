@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The Kubernetes Authors.
+Copyright 2024 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,27 +18,24 @@ limitations under the License.
 // +k8s:validation-gen-scheme-registry=k8s.io/code-generator/cmd/validation-gen/testscheme.Scheme
 
 // This is a test package.
-package multiplekeys
+package format
 
 import "k8s.io/code-generator/cmd/validation-gen/testscheme"
 
 var localSchemeBuilder = testscheme.New()
 
 type Struct struct {
-	TypeMeta int `json:"typeMeta"`
+	TypeMeta int
 
-	// +k8s:listType=map
-	// +k8s:listMapKey=stringKey
-	// +k8s:listMapKey=intKey
-	// +k8s:listMapKey=boolKey
-	// +k8s:item(stringKey: "target", intKey: 42, boolKey: true)=+k8s:validateFalse="item Items[stringKey=target,intKey=42,boolKey=true] 1"
-	// +k8s:item(stringKey: "target", intKey: 42, boolKey: true)=+k8s:validateFalse="item Items[stringKey=target,intKey=42,boolKey=true] 2"
-	Items []Item `json:"items"`
+	// +k8s:format=k8s-ip
+	IPField string `json:"ipField"`
+
+	// +k8s:format=k8s-ip
+	IPPtrField *string `json:"ipPtrField"`
+
+	// Note: no validation here
+	IPTypedefField IPStringType `json:"ipTypedefField"`
 }
 
-type Item struct {
-	StringKey string `json:"stringKey"`
-	IntKey    int    `json:"intKey"`
-	BoolKey   bool   `json:"boolKey"`
-	Data      string `json:"data"`
-}
+// +k8s:format=k8s-ip
+type IPStringType string
