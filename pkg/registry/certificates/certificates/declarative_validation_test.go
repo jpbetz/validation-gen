@@ -23,6 +23,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,31 +61,31 @@ func testDeclarativeValidation(t *testing.T, apiVersion string) {
 		input        api.CertificateSigningRequest
 		expectedErrs field.ErrorList
 	}{
-		"no conditions - valid": {
+		"status.conditions: none = valid": {
 			input: makeValidCSR(),
 		},
-		"approved condition - valid": {
+		"status.conditions: Approved = valid": {
 			input: makeValidCSR(withApprovedCondition()),
 		},
-		"denied condition - valid": {
+		"status.conditions: Denied = valid": {
 			input: makeValidCSR(withDeniedCondition()),
 		},
-		"failed condition - valid": {
+		"status.conditions: Failed = valid": {
 			input: makeValidCSR(withFailedCondition()),
 		},
-		"approved+failed conditions - valid": {
+		"status.conditions: Approved+Failed = valid": {
 			input: makeValidCSR(withApprovedCondition(), withFailedCondition()),
 		},
-		"denied+failed conditions - valid": {
+		"status.conditions: Denied+Failed = valid": {
 			input: makeValidCSR(withDeniedCondition(), withFailedCondition()),
 		},
-		"approved+denied conditions - invalid": {
+		"status.conditions: Approved+Denied = invalid": {
 			input: makeValidCSR(withApprovedCondition(), withDeniedCondition()),
 			expectedErrs: field.ErrorList{
 				field.Invalid(field.NewPath("status", "conditions"), nil, "").WithOrigin("zeroOrOneOf"),
 			},
 		},
-		"denied+approved conditions - invalid": {
+		"status.conditions: Denied+Approved = invalid": {
 			input: makeValidCSR(withDeniedCondition(), withApprovedCondition()),
 			expectedErrs: field.ErrorList{
 				field.Invalid(field.NewPath("status", "conditions"), nil, "").WithOrigin("zeroOrOneOf"),
@@ -96,25 +97,27 @@ func testDeclarativeValidation(t *testing.T, apiVersion string) {
 			var declarativeTakeoverErrs field.ErrorList
 			var imperativeErrs field.ErrorList
 			for _, gateVal := range []bool{true, false} {
-				// We only need to test both gate enabled and disabled together, because
-				// 1) the DeclarativeValidationTakeover won't take effect if DeclarativeValidation is disabled.
-				// 2) the validation output, when only DeclarativeValidation is enabled, is the same as when both gates are disabled.
-				featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.DeclarativeValidation, gateVal)
-				featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.DeclarativeValidationTakeover, gateVal)
+				t.Run(fmt.Sprintf("gates=%v", gateVal), func(t *testing.T) {
+					// We only need to test both gate enabled and disabled together, because
+					// 1) the DeclarativeValidationTakeover won't take effect if DeclarativeValidation is disabled.
+					// 2) the validation output, when only DeclarativeValidation is enabled, is the same as when both gates are disabled.
+					featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.DeclarativeValidation, gateVal)
+					featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.DeclarativeValidationTakeover, gateVal)
 
-				errs := Strategy.Validate(ctx, &tc.input)
-				if gateVal {
-					declarativeTakeoverErrs = errs
-				} else {
-					imperativeErrs = errs
-				}
-				// The errOutputMatcher is used to verify the output matches the expected errors in test cases.
-				errOutputMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin()
-				if len(tc.expectedErrs) > 0 {
-					errOutputMatcher.Test(t, tc.expectedErrs, errs)
-				} else if len(errs) != 0 {
-					t.Errorf("expected no errors, but got: %v", errs)
-				}
+					errs := Strategy.Validate(ctx, &tc.input)
+					if gateVal {
+						declarativeTakeoverErrs = errs
+					} else {
+						imperativeErrs = errs
+					}
+					// The errOutputMatcher is used to verify the output matches the expected errors in test cases.
+					errOutputMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin()
+					if len(tc.expectedErrs) > 0 {
+						errOutputMatcher.Test(t, tc.expectedErrs, errs)
+					} else if len(errs) != 0 {
+						t.Errorf("expected no errors, but got: %v", errs)
+					}
+				})
 			}
 			// The equivalenceMatcher is used to verify the output errors from hand-written imperative validation
 			// are equivalent to the output errors when DeclarativeValidationTakeover is enabled.
