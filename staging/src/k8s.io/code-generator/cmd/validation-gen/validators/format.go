@@ -101,9 +101,10 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 
 func (ftv formatTagValidator) Docs() TagDoc {
 	return TagDoc{
-		Tag:         ftv.TagName(),
-		Scopes:      ftv.ValidScopes().UnsortedList(),
-		Description: "Indicates that a string field has a particular format.",
+		Tag:            ftv.TagName(),
+		Scopes:         ftv.ValidScopes().UnsortedList(),
+		StabilityLevel: Stable,
+		Description:    "Indicates that a string field has a particular format.",
 		Payloads: []TagPayloadDoc{{ // Keep this list alphabetized.
 			Description: "k8s-ip",
 			Docs:        "This field holds an IPv4 or IPv6 address value. IPv4 octets may have leading zeros.",
