@@ -167,9 +167,10 @@ func (lttv listTypeTagValidator) GetValidations(context Context, tag codetags.Ta
 
 func (lttv listTypeTagValidator) Docs() TagDoc {
 	doc := TagDoc{
-		Tag:         lttv.TagName(),
-		Scopes:      lttv.ValidScopes().UnsortedList(),
-		Description: "Declares a list field's semantic type.",
+		Tag:            lttv.TagName(),
+		StabilityLevel: Stable,
+		Scopes:         lttv.ValidScopes().UnsortedList(),
+		Description:    "Declares a list field's semantic type.",
 		Payloads: []TagPayloadDoc{{
 			Description: "<type>",
 			Docs:        "atomic | map | set",
@@ -228,9 +229,10 @@ func (lmktv listMapKeyTagValidator) GetValidations(context Context, tag codetags
 
 func (lmktv listMapKeyTagValidator) Docs() TagDoc {
 	doc := TagDoc{
-		Tag:         lmktv.TagName(),
-		Scopes:      lmktv.ValidScopes().UnsortedList(),
-		Description: "Declares a named sub-field of a list's value-type to be part of the list-map key.",
+		Tag:            lmktv.TagName(),
+		StabilityLevel: Stable,
+		Scopes:         lmktv.ValidScopes().UnsortedList(),
+		Description:    "Declares a named sub-field of a list's value-type to be part of the list-map key.",
 		Payloads: []TagPayloadDoc{{
 			Description: "<field-json-name>",
 			Docs:        "The name of the field.",
@@ -534,9 +536,10 @@ func (evtv eachValTagValidator) getMapValidations(t *types.Type, validations Val
 
 func (evtv eachValTagValidator) Docs() TagDoc {
 	doc := TagDoc{
-		Tag:         evtv.TagName(),
-		Scopes:      evtv.ValidScopes().UnsortedList(),
-		Description: "Declares a validation for each value in a map or list.",
+		Tag:            evtv.TagName(),
+		StabilityLevel: Alpha,
+		Scopes:         evtv.ValidScopes().UnsortedList(),
+		Description:    "Declares a validation for each value in a map or list.",
 		Payloads: []TagPayloadDoc{{
 			Description: "<validation-tag>",
 			Docs:        "The tag to evaluate for each value.",
@@ -615,9 +618,10 @@ func ForEachKey(_ *field.Path, t *types.Type, fn FunctionGen) (Validations, erro
 
 func (ektv eachKeyTagValidator) Docs() TagDoc {
 	doc := TagDoc{
-		Tag:         ektv.TagName(),
-		Scopes:      ektv.ValidScopes().UnsortedList(),
-		Description: "Declares a validation for each value in a map or list.",
+		Tag:            ektv.TagName(),
+		Scopes:         ektv.ValidScopes().UnsortedList(),
+		StabilityLevel: Alpha,
+		Description:    "Declares a validation for each value in a map or list.",
 		Payloads: []TagPayloadDoc{{
 			Description: "<validation-tag>",
 			Docs:        "The tag to evaluate for each value.",
