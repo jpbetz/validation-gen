@@ -89,9 +89,10 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 
 func (ftv formatTagValidator) Docs() TagDoc {
 	return TagDoc{
-		Tag:         ftv.TagName(),
-		Scopes:      ftv.ValidScopes().UnsortedList(),
-		Description: "Indicates that a string field has a particular format.",
+		Tag:            ftv.TagName(),
+		Scopes:         ftv.ValidScopes().UnsortedList(),
+		StabilityLevel: Stable,
+		Description:    "Indicates that a string field has a particular format.",
 		Payloads: []TagPayloadDoc{{ // Keep this list alphabetized.
 			Description: "k8s-long-name",
 			Docs:        "This field holds a Kubernetes \"long name\", aka a \"DNS subdomain\" value.",
