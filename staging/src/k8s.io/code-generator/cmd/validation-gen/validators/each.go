@@ -624,7 +624,7 @@ func (ektv eachKeyTagValidator) Docs() TagDoc {
 		Description:    "Declares a validation for each value in a map or list.",
 		Payloads: []TagPayloadDoc{{
 			Description: "<validation-tag>",
-			Docs:        "The tag to evaluate for each value.",
+			Docs:        "The tag to evaluate for each key.",
 		}},
 		PayloadsType:     codetags.ValueTypeTag,
 		PayloadsRequired: true,
