@@ -18,6 +18,8 @@ package typedeftoslice
 
 import (
 	"testing"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func Test(t *testing.T) {
@@ -53,17 +55,18 @@ func Test(t *testing.T) {
 		Max10TypedefField: make(Max10TypedefType, 10),
 	}).ExpectValid()
 
-	st.Value(&Struct{
+	testVal := &Struct{
 		UnvalidatedField:  make(UnvalidatedType, 11),
 		Max0Field:         make(Max0Type, 1),
 		Max10Field:        make(Max10Type, 11),
 		Max0TypedefField:  make(Max0TypedefType, 1),
 		Max10TypedefField: make(Max10TypedefType, 11),
-	}).ExpectRegexpsByPath(map[string][]string{
-		"max0Field":         {`Too many:.*must have at most 0 items`},
-		"max10Field":        {`Too many:.*must have at most 10 items`},
-		"max0TypedefField":  {`Too many:.*must have at most 0 items`},
-		"max10TypedefField": {`Too many:.*must have at most 10 items`},
+	}
+	st.Value(testVal).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
+		field.TooMany(field.NewPath("max0Field"), 1, 0),
+		field.TooMany(field.NewPath("max10Field"), 11, 10),
+		field.TooMany(field.NewPath("max0TypedefField"), 1, 0),
+		field.TooMany(field.NewPath("max10TypedefField"), 11, 10),
 	})
 	// Test validation ratcheting
 	st.Value(&Struct{
