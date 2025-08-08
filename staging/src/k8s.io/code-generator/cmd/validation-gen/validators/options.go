@@ -67,6 +67,12 @@ func (itv ifTagValidator) GetValidations(context Context, tag codetags.Tag) (Val
 	if validations, err := itv.validator.ExtractValidations(context, *tag.ValueTag); err != nil {
 		return Validations{}, err
 	} else {
+		var tagName string
+		if iotv.enabled {
+			tagName = ifOptionEnabledTag
+		} else {
+			tagName = ifOptionDisabledTag
+		}
 		for _, fn := range validations.Functions {
 			f := Function(itv.TagName(), fn.Flags, ifOption, optionArg.Value, itv.enabled, WrapperFunction{Function: fn, ObjType: context.Type})
 			result.Variables = append(result.Variables, validations.Variables...)
