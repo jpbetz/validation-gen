@@ -374,20 +374,6 @@ const (
 	NonError
 )
 
-// Conditions defines what conditions must be true for a resource to be validated.
-// If any of the conditions are not true, the resource is not validated.
-type Conditions struct {
-	// OptionEnabled specifies an option name that must be set to true for the condition to be true.
-	OptionEnabled string
-
-	// OptionDisabled specifies an option name that must be set to false for the condition to be true.
-	OptionDisabled string
-}
-
-func (c Conditions) Empty() bool {
-	return len(c.OptionEnabled) == 0 && len(c.OptionDisabled) == 0
-}
-
 // Identifier is a name that the generator will output as an identifier.
 // Identifiers are generated using the RawNamer strategy.
 type Identifier types.Name
@@ -438,10 +424,6 @@ type FunctionGen struct {
 	// generic function calls which require explicit type arguments.
 	TypeArgs []types.Name
 
-	// Conditions holds any conditions that must true for a field to be
-	// validated by this function.
-	Conditions Conditions
-
 	// Comments holds optional comments that should be added to the generated
 	// code (without the leading "//").
 	Comments []string
@@ -450,12 +432,6 @@ type FunctionGen struct {
 // WithTypeArgs returns a derived FunctionGen with type arguments.
 func (fg FunctionGen) WithTypeArgs(typeArgs ...types.Name) FunctionGen {
 	fg.TypeArgs = typeArgs
-	return fg
-}
-
-// WithConditions returns a derived FunctionGen with conditions.
-func (fg FunctionGen) WithConditions(conditions Conditions) FunctionGen {
-	fg.Conditions = conditions
 	return fg
 }
 

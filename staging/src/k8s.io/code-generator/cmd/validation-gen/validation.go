@@ -1259,34 +1259,6 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 				sw.Do(")", targs)
 			}
 
-			// If validation is conditional, wrap the validation function with a conditions check.
-			if !v.Conditions.Empty() {
-				emitBaseFunction := emitCall
-				emitCall = func() {
-					sw.Do("func() $.field.ErrorList|raw$ {\n", targs)
-					sw.Do("  if ", nil)
-					firstCondition := true
-					if len(v.Conditions.OptionEnabled) > 0 {
-						sw.Do("op.HasOption($.$)", strconv.Quote(v.Conditions.OptionEnabled))
-						firstCondition = false
-					}
-					if len(v.Conditions.OptionDisabled) > 0 {
-						if !firstCondition {
-							sw.Do(" && ", nil)
-						}
-						sw.Do("!op.HasOption($.$)", strconv.Quote(v.Conditions.OptionDisabled))
-					}
-					sw.Do(" {\n", nil)
-					sw.Do("    return ", nil)
-					emitBaseFunction()
-					sw.Do("\n", nil)
-					sw.Do("  } else {\n", nil)
-					sw.Do("    return nil // skip validation\n", nil)
-					sw.Do("  }\n", nil)
-					sw.Do("}()", nil)
-				}
-			}
-
 			for _, comment := range v.Comments {
 				sw.Do("// $.$\n", comment)
 			}
