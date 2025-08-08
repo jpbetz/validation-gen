@@ -30,7 +30,7 @@ type Struct struct {
 	TypedefItems       ItemList      `json:"typedefItems"`
 	NestedTypedefItems ItemListAlias `json:"nestedTypedefItems"`
 
-	// +k8s:item(id: "field-target")=+k8s:validateFalse="item DualItems[id=field-target] from field"
+	// +k8s:item(id: "field-target")=+validateFalse="item DualItems[id=field-target] from field"
 	DualItems DualItemList `json:"dualItems"`
 }
 
@@ -41,13 +41,13 @@ type Item struct {
 
 // +k8s:listType=map
 // +k8s:listMapKey=key
-// +k8s:item(key: "immutable")=+k8s:immutable
-// +k8s:item(key: "validated")=+k8s:validateFalse="item ItemList[key=validated]"
+// +k8s:item(key: "immutable")=+immutable
+// +k8s:item(key: "validated")=+validateFalse="item ItemList[key=validated]"
 type ItemList []Item
 
 // +k8s:listType=map
 // +k8s:listMapKey=key
-// +k8s:item(key: "aliased")=+k8s:validateFalse="item ItemListAlias[key=aliased]"
+// +k8s:item(key: "aliased")=+validateFalse="item ItemListAlias[key=aliased]"
 type ItemListAlias ItemList
 
 type DualItem struct {
@@ -57,5 +57,5 @@ type DualItem struct {
 
 // +k8s:listType=map
 // +k8s:listMapKey=id
-// +k8s:item(id: "typedef-target")=+k8s:validateFalse="item DualItems[id=typedef-target] from typedef"
+// +k8s:item(id: "typedef-target")=+validateFalse="item DualItems[id=typedef-target] from typedef"
 type DualItemList []DualItem

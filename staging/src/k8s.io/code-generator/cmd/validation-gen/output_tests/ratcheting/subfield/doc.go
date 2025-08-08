@@ -27,8 +27,8 @@ var localSchemeBuilder = testscheme.New()
 type Struct struct {
 	TypeMeta int
 
-	// +k8s:subfield(intField)=+k8s:validateFalse="field IntField"
-	// +k8s:subfield(intPtrField)=+k8s:validateFalse="field IntPtrField"
+	// +k8s:subfield(intField)=+validateFalse="field IntField"
+	// +k8s:subfield(intPtrField)=+validateFalse="field IntPtrField"
 	SubStructField SubStruct `json:"subStructField"`
 }
 
@@ -37,8 +37,8 @@ type SubStruct struct {
 	IntPtrField *int `json:"intPtrField"`
 }
 
-// +k8s:subfield(intField)=+k8s:validateFalse="field IntField"
-// +k8s:subfield(intPtrField)=+k8s:validateFalse="field IntPtrField"
+// +k8s:subfield(intField)=+validateFalse="field IntField"
+// +k8s:subfield(intPtrField)=+validateFalse="field IntPtrField"
 type StructWithSubfield struct {
 	TypeMeta    int
 	IntField    int  `json:"intField"`

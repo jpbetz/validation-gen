@@ -180,8 +180,8 @@ type CertificateSigningRequestStatus struct {
 	// +k8s:listType=map
 	// +k8s:listMapKey=type
 	// +k8s:optional
-	// +k8s:item(type: "Approved")=+k8s:zeroOrOneOfMember
-	// +k8s:item(type: "Denied")=+k8s:zeroOrOneOfMember
+	// +k8s:item(type: "Approved")=+zeroOrOneOfMember
+	// +k8s:item(type: "Denied")=+zeroOrOneOfMember
 	Conditions []CertificateSigningRequestCondition `json:"conditions,omitempty" protobuf:"bytes,1,rep,name=conditions"`
 
 	// If request was approved, the controller will place the issued certificate here.

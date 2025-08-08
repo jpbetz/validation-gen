@@ -45,17 +45,16 @@ markdown_file="${script_dir}/validation_tags.md"
 
         # Format Args for the main table
         if [[ "$args" != "null" ]]; then
-            args_formatted=$(echo "$args" | jq -r '.[] | .Description' | paste -sd "," -)
+            args_formatted=$(echo "$args" | jq -r '.[] | .Description' | paste -sd ", " -)
+            args_formatted=$(echo "$args_formatted" | sed 's/</\\</g' | sed 's/>/\\>/g')
         else
             args_formatted="N/A"
         fi
 
         # Add row to main table with link to payloads if they exist
-        tag_link=$(echo "$tag" | sed 's/k8s:/k8s/' | tr '[:upper:]' '[:lower:]')
-        # echo "| [\`$tag\`](#$tag_link) | $usage | $args_formatted | $description | $scopes |"
+        tag_link=$(echo "k8s$tag" | tr '[:upper:]' '[:lower:]')
         # Properly format the usage string to include the field name.
-        formatted_usage=$(echo "$usage" | sed 's/</\\</g' | sed 's/>/\\>/g')
-        echo "| [\`$tag\`](#$tag_link) | $formatted_usage | $args_formatted | $description | $scopes |"
+        echo "| [\`k8s:$tag\`](#$tag_link) | \`$usage\` | $args_formatted | $description | $scopes |"
     done
 
     echo ""
@@ -71,7 +70,7 @@ echo "$json_output" | jq -c '.[]' | while read -r line; do
 
     # Create section for this tag
     {
-        echo "### $tag"
+        echo "### k8s:$tag"
         echo ""
 
         if [[ "$payloads" != "null" ]]; then

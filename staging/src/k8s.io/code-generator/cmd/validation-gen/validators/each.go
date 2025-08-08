@@ -28,10 +28,10 @@ import (
 )
 
 const (
-	listTypeTagName   = "k8s:listType"
-	ListMapKeyTagName = "k8s:listMapKey"
-	eachValTagName    = "k8s:eachVal"
-	eachKeyTagName    = "k8s:eachKey"
+	listTypeTagName   = "listType"
+	ListMapKeyTagName = "listMapKey"
+	eachValTagName    = "eachVal"
+	eachKeyTagName    = "eachKey"
 )
 
 // We keep the eachVal and eachKey validators around because the main

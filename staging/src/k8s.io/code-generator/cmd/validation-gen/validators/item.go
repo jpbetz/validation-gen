@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	itemTagName = "k8s:item"
+	itemTagName = "item"
 )
 
 type keyValuePair struct {
@@ -70,7 +70,7 @@ func (itemTagValidator) LateTagValidator() {}
 
 func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
 	// TODO: Support regular maps with syntax like:
-	// +k8s:item("map-key")=+k8s:immutable
+	// +k8s:item("map-key")=+immutable
 
 	// Parse key-value pairs from named args.
 	criteria := []keyValuePair{}
