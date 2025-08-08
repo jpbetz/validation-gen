@@ -36,17 +36,19 @@ func Test(t *testing.T) {
 		// All zero values
 	}).Opts([]string{"FeatureX", "FeatureY"}).ExpectValidateFalseByPath(map[string][]string{
 		// All ifOptionEnabled validations should trigger
-		"xEnabledField": {"field Struct.XEnabledField"},
-		"yEnabledField": {"field Struct.YEnabledField"},
-		"xyMixedField":  {"field Struct.XYMixedField/X"},
+		"metadata.xEnabledField": {"field Struct.ObjectMeta.XEnabledField"},
+		"xEnabledField":          {"field Struct.XEnabledField"},
+		"yEnabledField":          {"field Struct.YEnabledField"},
+		"xyMixedField":           {"field Struct.XYMixedField/X"},
 	})
 
 	st.Value(&Struct{
 		// All zero values
 	}).Opts([]string{"FeatureX"}).ExpectValidateFalseByPath(map[string][]string{
 		// All ifOptionEnabled validations should trigger
-		"xEnabledField":  {"field Struct.XEnabledField"},
-		"yDisabledField": {"field Struct.YDisabledField"},
+		"metadata.xEnabledField": {"field Struct.ObjectMeta.XEnabledField"},
+		"xEnabledField":          {"field Struct.XEnabledField"},
+		"yDisabledField":         {"field Struct.YDisabledField"},
 		"xyMixedField": {
 			"field Struct.XYMixedField/X",
 			"field Struct.XYMixedField/Y"},

@@ -27,6 +27,9 @@ var localSchemeBuilder = testscheme.New()
 type Struct struct {
 	TypeMeta int
 
+	// +k8s:ifOptionEnabled(FeatureX)=+k8s:subfield(xEnabledField)=+k8s:validateFalse="field Struct.ObjectMeta.XEnabledField"
+	ObjectMeta `json:"metadata,omitempty"`
+
 	// +k8s:ifOptionEnabled(FeatureX)=+k8s:validateFalse="field Struct.XEnabledField"
 	XEnabledField string `json:"xEnabledField"`
 
@@ -42,4 +45,8 @@ type Struct struct {
 	// +k8s:ifOptionEnabled(FeatureX)=+k8s:validateFalse="field Struct.XYMixedField/X"
 	// +k8s:ifOptionDisabled(FeatureY)=+k8s:validateFalse="field Struct.XYMixedField/Y"
 	XYMixedField string `json:"xyMixedField"`
+}
+
+type ObjectMeta struct {
+	XEnabledField string `json:"xEnabledField"`
 }
