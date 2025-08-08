@@ -55,7 +55,7 @@ func (ifOptionTagValidator) ValidScopes() sets.Set[Scope] {
 }
 
 var (
-	ifOptionSubfield = types.Name{Package: libValidationPkg, Name: "IfOption"}
+	ifOption = types.Name{Package: libValidationPkg, Name: "IfOption"}
 )
 
 func (iotv ifOptionTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
@@ -64,14 +64,8 @@ func (iotv ifOptionTagValidator) GetValidations(context Context, tag codetags.Ta
 	if validations, err := iotv.validator.ExtractValidations(context, *tag.ValueTag); err != nil {
 		return Validations{}, err
 	} else {
-		var tagName string
-		if iotv.enabled {
-			tagName = ifOptionEnabledTag
-		} else {
-			tagName = ifOptionDisabledTag
-		}
 		for _, fn := range validations.Functions {
-			f := Function(tagName, fn.Flags, ifOptionSubfield, optionName, iotv.enabled, WrapperFunction{Function: fn, ObjType: context.Type})
+			f := Function(iotv.TagName(), fn.Flags, ifOption, optionName, iotv.enabled, WrapperFunction{Function: fn, ObjType: context.Type})
 			result.Variables = append(result.Variables, validations.Variables...)
 			result.AddFunction(f)
 		}
