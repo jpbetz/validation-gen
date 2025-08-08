@@ -17,6 +17,8 @@ limitations under the License.
 package validators
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/gengo/v2/codetags"
 	"k8s.io/gengo/v2/types"
@@ -80,9 +82,9 @@ func (itv ifTagValidator) Docs() TagDoc {
 	doc := TagDoc{
 		Tag: itv.TagName(),
 		Args: []TagArgDoc{{
-			Description: "<option>",
-			Type:        codetags.ArgTypeString,
-			Required:    true,
+			Name:     "option",
+			Type:     codetags.ArgTypeString,
+			Required: true,
 		}},
 		Scopes: itv.ValidScopes().UnsortedList(),
 	}
