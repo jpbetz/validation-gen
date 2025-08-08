@@ -17,55 +17,60 @@ limitations under the License.
 package validators
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/gengo/v2/codetags"
 	"k8s.io/gengo/v2/types"
 )
 
 const (
-	ifOptionEnabledTag  = "k8s:ifOptionEnabled"
-	ifOptionDisabledTag = "k8s:ifOptionDisabled"
+	ifEnabledTag  = "k8s:ifEnabled"
+	ifDisabledTag = "k8s:ifDisabled"
 )
 
 func init() {
-	RegisterTagValidator(&ifOptionTagValidator{true, nil})
-	RegisterTagValidator(&ifOptionTagValidator{false, nil})
+	RegisterTagValidator(&ifTagValidator{true, nil})
+	RegisterTagValidator(&ifTagValidator{false, nil})
 }
 
-type ifOptionTagValidator struct {
+type ifTagValidator struct {
 	enabled   bool
 	validator Validator
 }
 
-func (iotv *ifOptionTagValidator) Init(cfg Config) {
+func (iotv *ifTagValidator) Init(cfg Config) {
 	iotv.validator = cfg.Validator
 }
 
-func (iotv ifOptionTagValidator) TagName() string {
+func (iotv ifTagValidator) TagName() string {
 	if iotv.enabled {
-		return ifOptionEnabledTag
+		return ifEnabledTag
 	}
-	return ifOptionDisabledTag
+	return ifDisabledTag
 }
 
-var ifOptionTagValidScopes = sets.New(ScopeAny)
+var ifEnabledDisabledTagValidScopes = sets.New(ScopeAny)
 
-func (ifOptionTagValidator) ValidScopes() sets.Set[Scope] {
-	return ifOptionTagValidScopes
+func (ifTagValidator) ValidScopes() sets.Set[Scope] {
+	return ifEnabledDisabledTagValidScopes
 }
 
 var (
 	ifOption = types.Name{Package: libValidationPkg, Name: "IfOption"}
 )
 
-func (iotv ifOptionTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
-	optionName := tag.Args[0].Value
+func (iotv ifTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
+	optionArg, ok := tag.NamedArg("option")
+	if !ok {
+		return Validations{}, fmt.Errorf("missing required argument: option")
+	}
 	result := Validations{}
 	if validations, err := iotv.validator.ExtractValidations(context, *tag.ValueTag); err != nil {
 		return Validations{}, err
 	} else {
 		for _, fn := range validations.Functions {
-			f := Function(iotv.TagName(), fn.Flags, ifOption, optionName, iotv.enabled, WrapperFunction{Function: fn, ObjType: context.Type})
+			f := Function(iotv.TagName(), fn.Flags, ifOption, optionArg.Value, iotv.enabled, WrapperFunction{Function: fn, ObjType: context.Type})
 			result.Variables = append(result.Variables, validations.Variables...)
 			result.AddFunction(f)
 		}
@@ -73,13 +78,13 @@ func (iotv ifOptionTagValidator) GetValidations(context Context, tag codetags.Ta
 	}
 }
 
-func (iotv ifOptionTagValidator) Docs() TagDoc {
+func (iotv ifTagValidator) Docs() TagDoc {
 	doc := TagDoc{
 		Tag: iotv.TagName(),
 		Args: []TagArgDoc{{
-			Description: "<option>",
-			Type:        codetags.ArgTypeString,
-			Required:    true,
+			Name:     "option",
+			Type:     codetags.ArgTypeString,
+			Required: true,
 		}},
 		Scopes: iotv.ValidScopes().UnsortedList(),
 	}

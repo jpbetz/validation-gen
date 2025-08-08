@@ -202,10 +202,10 @@ func (reg *registry) sortTagsIntoPhases(tags []codetags.Tag) [][]codetags.Tag {
 	//
 	//    // +k8s:validateFalse="111"
 	//    // +k8s:validateFalse="222"
-	//    // +k8s:ifOptionEnabled(Foo)=+k8s:validateFalse="333"
+	//    // +k8s:ifEnabled(Foo)=+k8s:validateFalse="333"
 	//
 	// Tag extraction will retain the relative order between 111 and 222, but
-	// 333 is extracted as tag "k8s:ifOptionEnabled".  Those are all in a map,
+	// 333 is extracted as tag "k8s:ifEnabled".  Those are all in a map,
 	// which we iterate (in a random order).  When it reaches the emit stage,
 	// the "ifOptionEnabled" part is gone, and we will have 3 FunctionGen
 	// objects, all with tag "k8s:validateFalse", in a non-deterministic order
@@ -213,7 +213,7 @@ func (reg *registry) sortTagsIntoPhases(tags []codetags.Tag) [][]codetags.Tag {
 	// have enough information to do something smart, unless we look at the
 	// args, which are opaque to us.
 	//
-	// Sorting it earlier means we can sort "k8s:ifOptionEnabled" against
+	// Sorting it earlier means we can sort "k8s:ifEnabled" against
 	// "k8s:validateFalse".  All of the records within each of those is
 	// relatively ordered, so the result here would be to put "ifOptionEnabled"
 	// before "validateFalse" (lexicographical is better than random).
