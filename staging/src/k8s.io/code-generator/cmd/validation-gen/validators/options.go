@@ -61,9 +61,9 @@ var (
 )
 
 func (iotv ifTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
-	optionArg, ok := tag.NamedArg("option")
+	optionArg, ok := tag.PositionalArg()
 	if !ok {
-		return Validations{}, fmt.Errorf("missing required argument: option")
+		return Validations{}, fmt.Errorf("missing required option name positional argument")
 	}
 	result := Validations{}
 	if validations, err := iotv.validator.ExtractValidations(context, *tag.ValueTag); err != nil {
@@ -82,9 +82,9 @@ func (iotv ifTagValidator) Docs() TagDoc {
 	doc := TagDoc{
 		Tag: iotv.TagName(),
 		Args: []TagArgDoc{{
-			Name:     "option",
-			Type:     codetags.ArgTypeString,
-			Required: true,
+			Description: "<option>",
+			Type:        codetags.ArgTypeString,
+			Required:    true,
 		}},
 		Scopes: iotv.ValidScopes().UnsortedList(),
 	}
