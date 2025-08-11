@@ -82,9 +82,9 @@ func (itv ifTagValidator) Docs() TagDoc {
 	doc := TagDoc{
 		Tag: itv.TagName(),
 		Args: []TagArgDoc{{
-			Name:     "option",
-			Type:     codetags.ArgTypeString,
-			Required: true,
+			Description: "<option>",
+			Type:        codetags.ArgTypeString,
+			Required:    true,
 		}},
 		Scopes: itv.ValidScopes().UnsortedList(),
 	}
