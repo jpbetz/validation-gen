@@ -19,6 +19,7 @@ package validators
 import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/gengo/v2/codetags"
+	"k8s.io/gengo/v2/types"
 )
 
 const (
@@ -53,6 +54,10 @@ func (ifOptionTagValidator) ValidScopes() sets.Set[Scope] {
 	return ifOptionTagValidScopes
 }
 
+var (
+	ifOption = types.Name{Package: libValidationPkg, Name: "IfOption"}
+)
+
 func (iotv ifOptionTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
 	optionName := tag.Args[0].Value
 	result := Validations{}
@@ -60,12 +65,9 @@ func (iotv ifOptionTagValidator) GetValidations(context Context, tag codetags.Ta
 		return Validations{}, err
 	} else {
 		for _, fn := range validations.Functions {
-			if iotv.enabled {
-				result.Functions = append(result.Functions, fn.WithConditions(Conditions{OptionEnabled: optionName}))
-			} else {
-				result.Functions = append(result.Functions, fn.WithConditions(Conditions{OptionDisabled: optionName}))
-			}
+			f := Function(iotv.TagName(), fn.Flags, ifOption, optionName, iotv.enabled, WrapperFunction{Function: fn, ObjType: context.Type})
 			result.Variables = append(result.Variables, validations.Variables...)
+			result.AddFunction(f)
 		}
 		return result, nil
 	}
