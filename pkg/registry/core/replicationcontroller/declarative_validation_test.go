@@ -47,7 +47,7 @@ func TestDeclarativeValidation(t *testing.T) {
 				rc.Spec.Replicas = nil
 			}),
 			expectedErrs: field.ErrorList{
-				field.Required(field.NewPath("spec.replicas"), ""),
+				field.Required(field.NewPath("spec.replicas"), "").WithOrigin("required"),
 			},
 		},
 		"0 replicas": {
@@ -111,7 +111,7 @@ func TestUpdateDeclarativeValidation(t *testing.T) {
 				rc.Spec.Replicas = nil
 			}),
 			expectedErrs: field.ErrorList{
-				field.Required(field.NewPath("spec.replicas"), ""),
+				field.Required(field.NewPath("spec.replicas"), "").WithOrigin("required"),
 			},
 		},
 		"0 replicas": {
