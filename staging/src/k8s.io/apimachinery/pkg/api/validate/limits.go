@@ -40,7 +40,7 @@ func MaxLength[T ~string](_ context.Context, _ operation.Operation, fldPath *fie
 // MaxItems verifies that the specified slice is not longer than max items.
 func MaxItems[T any](_ context.Context, _ operation.Operation, fldPath *field.Path, value, _ []T, max int) field.ErrorList {
 	if len(value) > max {
-		return field.ErrorList{field.TooMany(fldPath, len(value), max)}
+		return field.ErrorList{field.TooMany(fldPath, len(value), max).WithOrigin("maxItems")}
 	}
 	return nil
 }
