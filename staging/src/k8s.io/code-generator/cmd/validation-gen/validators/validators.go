@@ -198,19 +198,45 @@ type Context struct {
 	// both).
 	Type *types.Type
 
-	// ParentPath provides the field path to the parent type or field, enabling
-	// unique identification of validation contexts for the same type in
-	// different locations.
-	ParentPath *field.Path
+	// Path provides a path to the type or field being validated. This is
+	// useful for identifying an exact context, e.g. to track information
+	// between related tags. When Scope is ScopeType, this is the Go package
+	// path and type name (e.g. "k8s.io/api/core/v1.Pod"). When Scope is
+	// ScopeField, this is the field path (e.g. "spec.containers[*].image").
+	// When Scope indicates a list-value, map-key, or map-value, this is the
+	// type or field path, as described above, with a suffix indicating
+	// that it refers to the keys or values.
+	Path *field.Path
 
 	// Member provides details about a field within a struct when Scope is
 	// ScopeField.  For all other values of Scope, this will be nil.
 	Member *types.Member
 
-	// Path provides the field path to the type or field being validated. This
-	// is useful for identifying an exact context, e.g. to track information
-	// between related tags.
-	Path *field.Path
+	// ListSelector provides a list of key-value pairs that represent criteria
+	// for selecting one or more items from a list.  When Scope is
+	// ScopeListVal, this will be non-nil.  An empty selector means that
+	// all items in the list should be selected.  For all other values of
+	// Scope, this will be nil.
+	ListSelector []ListSelectorTerm
+
+	// ParentPath provides a path to the parent type or field of the object
+	// being validated, when applicable. enabling unique identification of
+	// validation contexts for the same type in different locations.  When
+	// Scope is ScopeField, this is the path to the containing struct type or
+	// field (depending on where the validation tag was sepcified).  When Scope
+	// indicates a list-value, map-key, or map-value, this is the path to the
+	// list or map type or field (depending on where the validation tag was
+	// specified). When Scope is ScopeType, this is nil.
+	ParentPath *field.Path
+}
+
+// ListSelectorTerm represents a field name and value pair.
+type ListSelectorTerm struct {
+	// Field is the JSON name of the field to match.
+	Field string
+	// Value is the value to match.  This must be a primitive type which can
+	// be used as list-map keys: string, int, or bool.
+	Value any
 }
 
 // TagDoc describes a comment-tag and its usage.

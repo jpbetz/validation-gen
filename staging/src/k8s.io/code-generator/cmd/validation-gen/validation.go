@@ -352,8 +352,9 @@ func (td *typeDiscoverer) discoverType(t *types.Type, fldPath *field.Path) (*typ
 		context := validators.Context{
 			Scope:      validators.ScopeType,
 			Type:       t,
-			ParentPath: nil,
 			Path:       fldPath,
+			Member:     nil, // NA when discovering a type
+			ParentPath: nil, // NA when discovering a type
 		}
 		extractedTags, err := td.validator.ExtractTags(context, t.CommentLines)
 		if err != nil {
@@ -562,8 +563,14 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 			jsonName = commentTags.Name
 		}
 
+		var childPath *field.Path
+		if jsonName != "" {
+			childPath = fldPath.Child(jsonName)
+		} else {
+			childPath = fldPath.Child(name)
+		}
+
 		// Discover the field type.
-		childPath := fldPath.Child(name)
 		klog.V(5).InfoS("field", "name", name, "jsonName", jsonName, "type", memb.Type, "path", childPath)
 		childType := memb.Type
 		var child *childNode
@@ -582,9 +589,9 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 		context := validators.Context{
 			Scope:      validators.ScopeField,
 			Type:       childType,
-			ParentPath: fldPath,
-			Member:     &memb,
 			Path:       childPath,
+			Member:     &memb,
+			ParentPath: fldPath,
 		}
 
 		tags, err := td.validator.ExtractTags(context, memb.CommentLines)
@@ -1484,6 +1491,16 @@ func toGolangSourceDataLiteral(sw *generator.SnippetWriter, c *generator.Context
 		}
 	case validators.Literal:
 		sw.Do("$.$", v)
+	case validators.FunctionGen:
+		sw.Do("$.|raw$", c.Universe.Type(v.Function))
+		sw.Do("(", nil)
+		for i, arg := range v.Args {
+			if i > 0 {
+				sw.Do(", ", nil)
+			}
+			toGolangSourceDataLiteral(sw, c, arg)
+		}
+		sw.Do(")", nil)
 	case validators.FunctionLiteral:
 		sw.Do("func(", nil)
 		for i, param := range v.Parameters {
