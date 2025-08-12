@@ -17984,7 +17984,7 @@ func TestValidateReplicationControllerUpdate(t *testing.T) {
 				rc.Spec.Replicas = nil
 			}),
 			expectedErrs: field.ErrorList{
-				field.Required(field.NewPath("spec.replicas"), ""),
+				field.Required(field.NewPath("spec.replicas"), "").WithOrigin("required"),
 			},
 		},
 		"negative minReadySeconds": {
@@ -18096,7 +18096,7 @@ func TestValidateReplicationController(t *testing.T) {
 		"nil replicas": {
 			input: mkValidReplicationController(func(rc *core.ReplicationController) { rc.Spec.Replicas = nil }),
 			expectedErrs: field.ErrorList{
-				field.Required(field.NewPath("spec.replicas"), ""),
+				field.Required(field.NewPath("spec.replicas"), "").WithOrigin("required"),
 			},
 		},
 		"invalid label": {
