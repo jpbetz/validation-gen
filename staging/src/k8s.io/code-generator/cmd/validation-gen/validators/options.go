@@ -39,12 +39,12 @@ type ifTagValidator struct {
 	validator Validator
 }
 
-func (iotv *ifTagValidator) Init(cfg Config) {
-	iotv.validator = cfg.Validator
+func (itv *ifTagValidator) Init(cfg Config) {
+	itv.validator = cfg.Validator
 }
 
-func (iotv ifTagValidator) TagName() string {
-	if iotv.enabled {
+func (itv ifTagValidator) TagName() string {
+	if itv.enabled {
 		return ifEnabledTag
 	}
 	return ifDisabledTag
@@ -60,17 +60,17 @@ var (
 	ifOption = types.Name{Package: libValidationPkg, Name: "IfOption"}
 )
 
-func (iotv ifTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
+func (itv ifTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
 	optionArg, ok := tag.PositionalArg()
 	if !ok {
 		return Validations{}, fmt.Errorf("missing required option name positional argument")
 	}
 	result := Validations{}
-	if validations, err := iotv.validator.ExtractValidations(context, *tag.ValueTag); err != nil {
+	if validations, err := itv.validator.ExtractValidations(context, *tag.ValueTag); err != nil {
 		return Validations{}, err
 	} else {
 		for _, fn := range validations.Functions {
-			f := Function(iotv.TagName(), fn.Flags, ifOption, optionArg.Value, iotv.enabled, WrapperFunction{Function: fn, ObjType: context.Type})
+			f := Function(itv.TagName(), fn.Flags, ifOption, optionArg.Value, itv.enabled, WrapperFunction{Function: fn, ObjType: context.Type})
 			result.Variables = append(result.Variables, validations.Variables...)
 			result.AddFunction(f)
 		}
@@ -78,20 +78,20 @@ func (iotv ifTagValidator) GetValidations(context Context, tag codetags.Tag) (Va
 	}
 }
 
-func (iotv ifTagValidator) Docs() TagDoc {
+func (itv ifTagValidator) Docs() TagDoc {
 	doc := TagDoc{
-		Tag: iotv.TagName(),
+		Tag: itv.TagName(),
 		Args: []TagArgDoc{{
 			Description: "<option>",
 			Type:        codetags.ArgTypeString,
 			Required:    true,
 		}},
-		Scopes: iotv.ValidScopes().UnsortedList(),
+		Scopes: itv.ValidScopes().UnsortedList(),
 	}
 
 	doc.PayloadsType = codetags.ValueTypeTag
 	doc.PayloadsRequired = true
-	if iotv.enabled {
+	if itv.enabled {
 		doc.Description = "Declares a validation that only applies when an option is enabled."
 		doc.Payloads = []TagPayloadDoc{{
 			Description: "<validation-tag>",
