@@ -30,6 +30,7 @@ import (
 const (
 	listTypeTagName   = "k8s:listType"
 	ListMapKeyTagName = "k8s:listMapKey"
+	uniqueTagName     = "k8s:unique"
 	eachValTagName    = "k8s:eachVal"
 	eachKeyTagName    = "k8s:eachKey"
 )
@@ -48,6 +49,7 @@ func init() {
 	// Accumulate list metadata via tags.
 	RegisterTagValidator(listTypeTagValidator{byPath: listMeta})
 	RegisterTagValidator(listMapKeyTagValidator{byPath: listMeta})
+	RegisterTagValidator(uniqueTagValidator{byPath: listMeta})
 
 	// Finish work on the accumulated list metadata.
 	RegisterFieldValidator(listValidator{byPath: listMeta})
@@ -76,6 +78,8 @@ type listMetadata struct {
 	declaredAsAtomic bool
 	declaredAsSet    bool
 	declaredAsMap    bool
+	uniqueAsSet      bool
+	uniqueAsMap      bool
 	keyFields        []string // iff declaredAsMap
 	keyNames         []string // iff declaredAsMap
 }
@@ -83,7 +87,7 @@ type listMetadata struct {
 // makeListMapMatchFunc generates a function that compares two list-map
 // elements by their list-map key fields.
 func (lm *listMetadata) makeListMapMatchFunc(t *types.Type) FunctionLiteral {
-	if !lm.declaredAsMap {
+	if !lm.declaredAsMap && !lm.uniqueAsMap {
 		panic("makeListMapMatchFunc called on a non-map list")
 	}
 	// If no keys are defined, we will throw a good error later.
@@ -127,20 +131,18 @@ func (lttv listTypeTagValidator) GetValidations(context Context, tag codetags.Ta
 		return Validations{}, fmt.Errorf("can only be used on list types (%s)", t.Kind)
 	}
 
+	lm := lttv.byPath[context.Path.String()]
+	if lm == nil {
+		lm = &listMetadata{}
+		lttv.byPath[context.Path.String()] = lm
+	}
+
 	switch tag.Value {
 	case "atomic":
 		// We don't do much with atomic, but this ensures no conflicts between
 		// tags on typedefs and tags on fields which use those typedefs.
-		if lttv.byPath[context.Path.String()] == nil {
-			lttv.byPath[context.Path.String()] = &listMetadata{}
-		}
-		lm := lttv.byPath[context.Path.String()]
 		lm.declaredAsAtomic = true
 	case "set":
-		if lttv.byPath[context.Path.String()] == nil {
-			lttv.byPath[context.Path.String()] = &listMetadata{}
-		}
-		lm := lttv.byPath[context.Path.String()]
 		lm.declaredAsSet = true
 		// NOTE: we validate uniqueness in the listValidator.
 	case "map":
@@ -150,10 +152,6 @@ func (lttv listTypeTagValidator) GetValidations(context Context, tag codetags.Ta
 		}
 
 		// Save the fact that this list is a map.
-		if lttv.byPath[context.Path.String()] == nil {
-			lttv.byPath[context.Path.String()] = &listMetadata{}
-		}
-		lm := lttv.byPath[context.Path.String()]
 		lm.declaredAsMap = true
 		// NOTE: we validate uniqueness of the keys in the listValidator.
 	default:
@@ -215,10 +213,11 @@ func (lmktv listMapKeyTagValidator) GetValidations(context Context, tag codetags
 		fieldName = memb.Name
 	}
 
-	if lmktv.byPath[context.Path.String()] == nil {
-		lmktv.byPath[context.Path.String()] = &listMetadata{}
-	}
 	lm := lmktv.byPath[context.Path.String()]
+	if lm == nil {
+		lm = &listMetadata{}
+		lmktv.byPath[context.Path.String()] = lm
+	}
 	lm.keyFields = append(lm.keyFields, fieldName)
 	lm.keyNames = append(lm.keyNames, tag.Value)
 
@@ -236,6 +235,70 @@ func (lmktv listMapKeyTagValidator) Docs() TagDoc {
 		Payloads: []TagPayloadDoc{{
 			Description: "<field-json-name>",
 			Docs:        "The name of the field.",
+		}},
+		PayloadsType:     codetags.ValueTypeString,
+		PayloadsRequired: true,
+	}
+	return doc
+}
+
+type uniqueTagValidator struct {
+	byPath map[string]*listMetadata
+}
+
+func (uniqueTagValidator) Init(Config) {}
+
+func (uniqueTagValidator) TagName() string {
+	return uniqueTagName
+}
+
+func (uniqueTagValidator) ValidScopes() sets.Set[Scope] {
+	return listTagsValidScopes
+}
+
+func (utv uniqueTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
+	// NOTE: pointers to lists are not supported, so we should never see a pointer here.
+	t := util.NativeType(context.Type)
+	if t.Kind != types.Slice && t.Kind != types.Array {
+		return Validations{}, fmt.Errorf("can only be used on list types (%s)", t.Kind)
+	}
+
+	lm := utv.byPath[context.Path.String()]
+	if lm == nil {
+		lm = &listMetadata{}
+		utv.byPath[context.Path.String()] = lm
+	}
+
+	switch tag.Value {
+	case "set":
+		lm.uniqueAsSet = true
+		// NOTE: we validate uniqueness in the listValidator.
+	case "map":
+		// NOTE: maps of pointers are not supported, so we should never see a pointer here.
+		if util.NativeType(t.Elem).Kind != types.Struct {
+			return Validations{}, fmt.Errorf("only lists of structs can be list-maps")
+		}
+
+		// Save the fact that this list is a map.
+		lm.uniqueAsMap = true
+		// NOTE: we validate uniqueness of the keys in the listValidator.
+	default:
+		return Validations{}, fmt.Errorf("unknown unique type %q", tag.Value)
+	}
+
+	// This tag doesn't generate any validations.  It just accumulates
+	// information for other tags to use.
+	return Validations{}, nil
+}
+
+func (utv uniqueTagValidator) Docs() TagDoc {
+	doc := TagDoc{
+		Tag:         utv.TagName(),
+		Scopes:      utv.ValidScopes().UnsortedList(),
+		Description: "Declares a list field's elements are unique.",
+		Payloads: []TagPayloadDoc{{
+			Description: "<type>",
+			Docs:        "map | set",
 		}},
 		PayloadsType:     codetags.ValueTypeString,
 		PayloadsRequired: true,
@@ -299,7 +362,7 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 	result := Validations{}
 
 	// Generate uniqueness checks for lists with higher-order semantics.
-	if lm.declaredAsSet {
+	if lm.declaredAsSet || lm.uniqueAsSet {
 		// Only compare primitive values when possible. Slices and maps are not
 		// comparable, and structs might hold pointer fields, which are directly
 		// comparable but not what we need.
@@ -309,24 +372,34 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 		if util.IsDirectComparable(util.NonPointer(util.NativeType(nt.Elem))) {
 			matchArg = validateDirectEqual
 		}
+		comment := ""
+		if lm.declaredAsSet {
+			comment = "listType=set requires unique values"
+		} else { // lm.uniqueAsSet
+			comment = "unique=set requires unique values"
+		}
 		f := Function("listValidator", DefaultFlags, validateUnique, Identifier(matchArg)).
-			WithComment("listType=set requires unique values")
+			WithComment(comment)
 		result.AddFunction(f)
 	}
-	// TODO: enable the following once we have a way to either opt-out from this validation
-	// or settle the decision on how to handle the ratcheting cases.
-	/*
+	if lm.declaredAsMap || lm.uniqueAsMap {
+		// TODO: There are some fields which are declared as maps which do not
+		// enforce uniqueness in manual validation. Those either need to not be
+		// maps or we need to allow types to opt-out from this validation.  SSA
+		// is also not able to handle these well.
+		matchArg := lm.makeListMapMatchFunc(nt.Elem)
+		comment := ""
 		if lm.declaredAsMap {
-			// TODO: There are some fields which are declared as maps which do not
-			// enforce uniqueness in manual validation. Those either need to not be
-			// maps or we need to allow types to opt-out from this validation.  SSA
-			// is also not able to handle these well.
-			matchArg := lm.makeListMapMatchFunc(nt.Elem)
+			// comment = "listType=map requires unique keys"
+		} else { // lm.uniqueAsMap
+			comment = "unique=map requires unique keys"
+		}
+		if lm.uniqueAsMap {
 			f := Function("listValidator", DefaultFlags, validateUnique, matchArg).
-				WithComment("listType=map requires unique keys")
+				WithComment(comment)
 			result.AddFunction(f)
 		}
-	*/
+	}
 
 	return result, nil
 }
@@ -347,15 +420,34 @@ func (lv listValidator) check(lm *listMetadata) error {
 	if len(decls) > 1 {
 		return fmt.Errorf("listType cannot have multiple types (%s)", strings.Join(decls, ", "))
 	}
-	if lm.declaredAsMap && len(lm.keyFields) == 0 {
-		return fmt.Errorf("found listType=map without listMapKey")
+
+	uniqueDecls := []string{}
+	if lm.uniqueAsSet {
+		uniqueDecls = append(uniqueDecls, "set")
 	}
-	if len(lm.keyFields) > 0 && !lm.declaredAsMap {
-		return fmt.Errorf("found listMapKey without listType=map")
+	if lm.uniqueAsMap {
+		uniqueDecls = append(uniqueDecls, "map")
+	}
+	if len(uniqueDecls) > 1 {
+		return fmt.Errorf("unique cannot have multiple types (%s)", strings.Join(uniqueDecls, ", "))
+	}
+
+	if lm.declaredAsMap && lm.uniqueAsMap {
+		return fmt.Errorf("cannot have listType=map and unique=map")
+	}
+	if lm.declaredAsSet && lm.uniqueAsSet {
+		return fmt.Errorf("cannot have listType=set and unique=set")
+	}
+
+	if (lm.declaredAsMap || lm.uniqueAsMap) && len(lm.keyFields) == 0 {
+		return fmt.Errorf("found listType=map or unique=map without listMapKey")
+	}
+	if len(lm.keyFields) > 0 && !lm.declaredAsMap && !lm.uniqueAsMap {
+		return fmt.Errorf("found listMapKey without listType=map or unique=map")
 	}
 	// Check for missing listType (after the other checks so the more specific errors take priority)
-	if len(decls) == 0 {
-		return fmt.Errorf("found list metadata without a listType")
+	if len(decls) == 0 && len(uniqueDecls) == 0 && len(lm.keyFields) > 0 {
+		return fmt.Errorf("found list metadata without a listType or unique")
 	}
 	return nil
 }
@@ -482,7 +574,7 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 	directComparable := util.IsDirectComparable(util.NonPointer(util.NativeType(nt.Elem)))
 
 	switch {
-	case listMetadata != nil && listMetadata.declaredAsMap:
+	case listMetadata != nil && (listMetadata.declaredAsMap || listMetadata.uniqueAsMap):
 		// For listType=map, we use key to lookup the correlated element in the old list.
 		// And use equivFunc to compare the correlated elements in the old and new lists.
 		matchArg = listMetadata.makeListMapMatchFunc(nt.Elem)
@@ -491,7 +583,7 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 		} else {
 			equivArg = Identifier(validateSemanticDeepEqual)
 		}
-	case listMetadata != nil && listMetadata.declaredAsSet:
+	case listMetadata != nil && (listMetadata.declaredAsSet || listMetadata.uniqueAsSet):
 		// For listType=set, matchArg is the equivalence check, so equivArg is nil.
 		if directComparable {
 			matchArg = Identifier(validateDirectEqual)
