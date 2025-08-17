@@ -94,7 +94,7 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 
 	// Fields inherit list metadata from typedefs, but not vice-versa.
 	// If we find no listMetadata then something is wrong.
-	if !ok || !listMeta.declaredAsMap || len(listMeta.keyFields) == 0 {
+	if !ok || listMeta.semantic != listMap || len(listMeta.keyFields) == 0 {
 		return Validations{}, fmt.Errorf("found items with no list metadata")
 	}
 
