@@ -41,7 +41,7 @@ func (formatTagValidator) TagName() string {
 	return formatTagName
 }
 
-var formatTagValidScopes = sets.New(ScopeAny)
+var formatTagValidScopes = sets.New(ScopeType, ScopeField, ScopeListVal, ScopeMapKey, ScopeMapVal)
 
 func (formatTagValidator) ValidScopes() sets.Set[Scope] {
 	return formatTagValidScopes

@@ -68,7 +68,7 @@ func init() {
 }
 
 // This applies to all tags in this file.
-var listTagsValidScopes = sets.New(ScopeAny)
+var listTagsValidScopes = sets.New(ScopeType, ScopeField, ScopeListVal, ScopeMapKey, ScopeMapVal)
 
 // listMetadata collects information about a single list with map or set semantics.
 type listMetadata struct {
