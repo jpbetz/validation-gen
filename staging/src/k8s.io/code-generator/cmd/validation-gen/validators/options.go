@@ -50,7 +50,7 @@ func (itv ifTagValidator) TagName() string {
 	return ifDisabledTag
 }
 
-var ifEnabledDisabledTagValidScopes = sets.New(ScopeAny)
+var ifEnabledDisabledTagValidScopes = sets.New(ScopeType, ScopeField, ScopeListVal, ScopeMapKey, ScopeMapVal, ScopeConst)
 
 func (ifTagValidator) ValidScopes() sets.Set[Scope] {
 	return ifEnabledDisabledTagValidScopes
