@@ -46,7 +46,7 @@ func (maxLengthTagValidator) TagName() string {
 	return maxLengthTagName
 }
 
-var maxLengthTagValidScopes = sets.New(ScopeAny)
+var maxLengthTagValidScopes = sets.New(ScopeType, ScopeField, ScopeListVal, ScopeMapKey, ScopeMapVal)
 
 func (maxLengthTagValidator) ValidScopes() sets.Set[Scope] {
 	return maxLengthTagValidScopes
