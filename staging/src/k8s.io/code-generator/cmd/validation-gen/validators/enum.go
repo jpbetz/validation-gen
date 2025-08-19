@@ -113,8 +113,8 @@ func (etv *enumTagValidator) GetValidations(context Context, _ codetags.Tag) (Va
 				if tag.ValueTag != nil && tag.ValueTag.Name == enumExcludeTagName {
 					if option, ok := tag.PositionalArg(); ok {
 						exclusions = append(exclusions, enumExclude{
-							excludeWhenEnabled: tag.Name == ifEnabledTag,
-							option:             option.Value,
+							excludeWhen: tag.Name == ifEnabledTag,
+							option:      option.Value,
 						})
 					}
 				}
@@ -139,10 +139,10 @@ func (etv *enumTagValidator) GetValidations(context Context, _ codetags.Tag) (Va
 	})
 	for _, v := range enum.Values {
 		slices.SortFunc(v.Exclusions, func(a, b enumExclude) int {
-			if a.excludeWhenEnabled == b.excludeWhenEnabled {
+			if a.excludeWhen == b.excludeWhen {
 				return cmp.Compare(a.option, b.option)
 			}
-			if a.excludeWhenEnabled {
+			if a.excludeWhen {
 				return 1
 			}
 			return -1
@@ -166,7 +166,7 @@ func (etv *enumTagValidator) GetValidations(context Context, _ codetags.Tag) (Va
 				Fields: []StructLiteralField{
 					{"Value", Identifier(v.Name)},
 					{"Option", exclusion.option},
-					{"ExcludeWhenEnabled", exclusion.excludeWhenEnabled},
+					{"ExcludeWhen", exclusion.excludeWhen},
 				},
 			})
 		}
@@ -227,10 +227,10 @@ type enumValue struct {
 }
 
 type enumExclude struct {
-	// excludeWhenEnabled determines the condition for exclusion.
+	// excludeWhen determines the condition for exclusion.
 	// If true, the value is excluded if the option is present.
 	// If false, the value is excluded if the option is NOT present.
-	excludeWhenEnabled bool
+	excludeWhen bool
 	// option is the name of the feature option that controls the exclusion.
 	option string
 }

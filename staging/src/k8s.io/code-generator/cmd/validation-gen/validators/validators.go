@@ -203,7 +203,8 @@ type Context struct {
 	// ScopeField, this is the field path (e.g. "spec.containers[*].image").
 	// When Scope indicates a list-value, map-key, or map-value, this is the
 	// type or field path, as described above, with a suffix indicating
-	// that it refers to the keys or values. For ScopeConst, this will be nil.
+	// that it refers to the keys or values. For ScopeConst, this will be the
+	// name of the constant.
 	Path *field.Path
 
 	// Member provides details about a field within a struct when Scope is
@@ -224,7 +225,7 @@ type Context struct {
 	// field (depending on where the validation tag was sepcified).  When Scope
 	// indicates a list-value, map-key, or map-value, this is the path to the
 	// list or map type or field (depending on where the validation tag was
-	// specified). When Scope is ScopeType, this is nil.
+	// specified). When Scope is ScopeType or ScopeConst, this is nil.
 	ParentPath *field.Path
 
 	// Constants provides access to all constants of the type being
