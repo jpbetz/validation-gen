@@ -1305,7 +1305,7 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 				sw.Do("(ctx, op, fldPath, obj, oldObj", targs)
 				for _, arg := range v.Args {
 					sw.Do(", ", nil)
-					toGolangSourceDataLiteral(sw, c, arg)
+					toGolangSourceDataLiteral(sw, emitterContext{Context: c}, arg)
 				}
 				sw.Do(")", targs)
 			}
