@@ -1641,7 +1641,7 @@ func toGolangSourceDataLiteral(sw *generator.SnippetWriter, c emitterContext, va
 			sw.Do(f.Name, nil)
 			sw.Do(": ", nil)
 			toGolangSourceDataLiteral(sw, c, f.Value)
-			sw.Do(", ", nil)
+			sw.Do(",\n", nil)
 		}
 		sw.Do("}", targs)
 	case validators.SliceLiteral:
