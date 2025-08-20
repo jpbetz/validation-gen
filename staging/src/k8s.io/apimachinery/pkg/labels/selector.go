@@ -926,7 +926,7 @@ func parse(selector string, path *field.Path) (internalSelector, error) {
 }
 
 func validateLabelKey(k string, path *field.Path) *field.Error {
-	if errs := content.IsQualifiedName(k); len(errs) != 0 {
+	if errs := content.IsLabelKey(k); len(errs) != 0 {
 		return field.Invalid(path, k, strings.Join(errs, "; "))
 	}
 	return nil

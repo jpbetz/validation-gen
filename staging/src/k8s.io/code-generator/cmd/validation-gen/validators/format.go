@@ -99,6 +99,9 @@ func (ftv formatTagValidator) Docs() TagDoc {
 			Description: "k8s-long-name",
 			Docs:        "This field holds a Kubernetes \"long name\", aka a \"DNS subdomain\" value.",
 		}, {
+			Description: "k8s-label-key",
+			Docs:        "This field holds a Kubernetes label key.",
+		}, {
 			Description: "k8s-label-value",
 			Docs:        "This field holds a Kubernetes label value.",
 		}, {
