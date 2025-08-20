@@ -21,19 +21,26 @@ import (
 	"strings"
 )
 
-const qnameCharFmt string = "[A-Za-z0-9]"
-const qnameExtCharFmt string = "[-A-Za-z0-9_.]"
-const qualifiedNameFmt string = "(" + qnameCharFmt + qnameExtCharFmt + "*)?" + qnameCharFmt
-const qualifiedNameErrMsg string = "must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character"
-const qualifiedNameMaxLength int = 63
+const labelKeyCharFmt string = "[A-Za-z0-9]"
+const labelKeyExtCharFmt string = "[-A-Za-z0-9_.]"
+const labelKeyFmt string = "(" + labelKeyCharFmt + labelKeyExtCharFmt + "*)?" + labelKeyCharFmt
+const labelKeyErrMsg string = "must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character"
+const labelKeyMaxLength int = 63
 
-var qualifiedNameRegexp = regexp.MustCompile("^" + qualifiedNameFmt + "$")
+var labelKeyRegexp = regexp.MustCompile("^" + labelKeyFmt + "$")
 
 // IsQualifiedName tests whether the value passed is what Kubernetes calls a
-// "qualified name".  This is a format used in various places throughout the
-// system.  If the value is not valid, a list of error strings is returned.
-// Otherwise an empty list (or nil) is returned.
-func IsQualifiedName(value string) []string {
+// "qualified name", which is the same as a label key.
+//
+// Deprecated: use IsLabelKey instead.
+var IsQualifiedName = IsLabelKey
+
+// IsLabelKey tests whether the value passed is a valid label key. This format
+// is used to validate many fields in the Kubernetes API.
+// Label keys consist of an optional prefix and a name, separated by a '/'.
+// If the value is not valid, a list of error strings is returned. Otherwise, an
+// empty list (or nil) is returned.
+func IsLabelKey(value string) []string {
 	var errs []string
 	parts := strings.Split(value, "/")
 	var name string
@@ -49,22 +56,22 @@ func IsQualifiedName(value string) []string {
 			errs = append(errs, prefixEach(msgs, "prefix part ")...)
 		}
 	default:
-		return append(errs, "a qualified name "+RegexError(qualifiedNameErrMsg, qualifiedNameFmt, "MyName", "my.name", "123-abc")+
+		return append(errs, "a valid label key "+RegexError(labelKeyErrMsg, labelKeyFmt, "MyName", "my.name", "123-abc")+
 			" with an optional DNS subdomain prefix and '/' (e.g. 'example.com/MyName')")
 	}
 
 	if len(name) == 0 {
 		errs = append(errs, "name part "+EmptyError())
-	} else if len(name) > qualifiedNameMaxLength {
-		errs = append(errs, "name part "+MaxLenError(qualifiedNameMaxLength))
+	} else if len(name) > labelKeyMaxLength {
+		errs = append(errs, "name part "+MaxLenError(labelKeyMaxLength))
 	}
-	if !qualifiedNameRegexp.MatchString(name) {
-		errs = append(errs, "name part "+RegexError(qualifiedNameErrMsg, qualifiedNameFmt, "MyName", "my.name", "123-abc"))
+	if !labelKeyRegexp.MatchString(name) {
+		errs = append(errs, "name part "+RegexError(labelKeyErrMsg, labelKeyFmt, "MyName", "my.name", "123-abc"))
 	}
 	return errs
 }
 
-const labelValueFmt string = "(" + qualifiedNameFmt + ")?"
+const labelValueFmt string = "(" + labelKeyFmt + ")?"
 const labelValueErrMsg string = "a valid label must be an empty string or consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character"
 
 // LabelValueMaxLength is a label's max length

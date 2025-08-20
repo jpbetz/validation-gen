@@ -42,7 +42,7 @@ func TestIsQualifiedName(t *testing.T) {
 		strings.Repeat("a", 253) + "/" + strings.Repeat("b", 63),
 	}
 	for i := range successCases {
-		if errs := IsQualifiedName(successCases[i]); len(errs) != 0 {
+		if errs := IsLabelKey(successCases[i]); len(errs) != 0 {
 			t.Errorf("case[%d]: %q: expected success: %v", i, successCases[i], errs)
 		}
 	}
@@ -60,7 +60,7 @@ func TestIsQualifiedName(t *testing.T) {
 		strings.Repeat("a", 254) + "/abc",
 	}
 	for i := range errorCases {
-		if errs := IsQualifiedName(errorCases[i]); len(errs) == 0 {
+		if errs := IsLabelKey(errorCases[i]); len(errs) == 0 {
 			t.Errorf("case[%d]: %q: expected failure", i, errorCases[i])
 		}
 	}
