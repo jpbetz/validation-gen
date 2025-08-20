@@ -32,7 +32,7 @@ import (
 // system.  If the value is not valid, a list of error strings is returned.
 // Otherwise an empty list (or nil) is returned.
 // Deprecated: Use k8s.io/apimachinery/pkg/api/validate/content.IsQualifiedName instead.
-var IsQualifiedName = content.IsQualifiedName
+var IsQualifiedName = content.IsLabelKey
 
 // IsFullyQualifiedName checks if the name is fully qualified. This is similar
 // to IsFullyQualifiedDomainName but requires a minimum of 3 segments instead of

@@ -702,7 +702,7 @@ func TestValidateFitArgs(t *testing.T) {
 				IgnoredResources: []string{"example.com/aaa/bbb"},
 				ScoringStrategy:  defaultScoringStrategy,
 			},
-			expect: "a qualified name must consist of alphanumeric characters",
+			expect: "a valid label key must consist of",
 		},
 		{
 			name: "IgnoredResources: valid args",
