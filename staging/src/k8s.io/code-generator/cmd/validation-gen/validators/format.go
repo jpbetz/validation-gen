@@ -81,6 +81,8 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 		return Function(formatTagName, DefaultFlags, longNameValidator), nil
 	case "k8s-short-name":
 		return Function(formatTagName, DefaultFlags, shortNameValidator), nil
+	case "k8s-uuid":
+		return Function(formatTagName, DefaultFlags, uuidValidator), nil
 	}
 	// TODO: Flesh out the list of validation functions
 
@@ -105,6 +107,9 @@ func (ftv formatTagValidator) Docs() TagDoc {
 		}, {
 			Description: "k8s-short-name",
 			Docs:        "This field holds a Kubernetes \"short name\", aka a \"DNS label\" value.",
+		}, {
+			Description: "k8s-uuid",
+			Docs:        "This field holds a Kubernetes UUID, which conforms to RFC 4122.",
 		}},
 		PayloadsType:     codetags.ValueTypeString,
 		PayloadsRequired: true,
