@@ -62,7 +62,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=set requires unique values
+			// lists with set semantics require unique values
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
 			return
 		}(fldPath.Child("sliceSetField"), obj.SliceSetField, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.SliceSetField }))...)
@@ -75,7 +75,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=map requires unique keys
+			// lists with map semantics require unique keys
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
 			return
 		}(fldPath.Child("sliceMapField"), obj.SliceMapField, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.SliceMapField }))...)
@@ -88,7 +88,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=set requires unique values
+			// lists with set semantics require unique values
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
 			return
 		}(fldPath.Child("sliceSetFieldWithStruct"), obj.SliceSetFieldWithStruct, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.SliceSetFieldWithStruct }))...)
@@ -101,7 +101,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=map requires unique keys
+			// lists with map semantics require unique keys
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a ItemWithMultipleKeys, b ItemWithMultipleKeys) bool { return a.Key1 == b.Key1 && a.Key2 == b.Key2 })...)
 			return
 		}(fldPath.Child("sliceMapFieldWithMultipleKeys"), obj.SliceMapFieldWithMultipleKeys, safe.Field(oldObj, func(oldObj *Struct) []ItemWithMultipleKeys { return oldObj.SliceMapFieldWithMultipleKeys }))...)
@@ -114,7 +114,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=set requires unique values
+			// lists with set semantics require unique values
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
 			return
 		}(fldPath.Child("atomicListUniqueSet"), obj.AtomicListUniqueSet, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.AtomicListUniqueSet }))...)
@@ -127,7 +127,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=map requires unique keys
+			// lists with map semantics require unique keys
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
 			return
 		}(fldPath.Child("atomicListUniqueMap"), obj.AtomicListUniqueMap, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.AtomicListUniqueMap }))...)
@@ -140,7 +140,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=set requires unique values
+			// lists with set semantics require unique values
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
 			return
 		}(fldPath.Child("intSlice"), obj.IntSlice, safe.Field(oldObj, func(oldObj *Struct) []int { return oldObj.IntSlice }))...)
@@ -153,7 +153,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=set requires unique values
+			// lists with set semantics require unique values
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
 			return
 		}(fldPath.Child("boolSlice"), obj.BoolSlice, safe.Field(oldObj, func(oldObj *Struct) []bool { return oldObj.BoolSlice }))...)
@@ -166,7 +166,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=set requires unique values
+			// lists with set semantics require unique values
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
 			return
 		}(fldPath.Child("sliceWithZeroValues"), obj.SliceWithZeroValues, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.SliceWithZeroValues }))...)
@@ -179,7 +179,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			// unique=map requires unique keys
+			// lists with map semantics require unique keys
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
 			return
 		}(fldPath.Child("sliceWithEmptyKeys"), obj.SliceWithEmptyKeys, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.SliceWithEmptyKeys }))...)
