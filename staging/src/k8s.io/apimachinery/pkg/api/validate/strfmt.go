@@ -97,6 +97,10 @@ func LabelKey[T ~string](_ context.Context, op operation.Operation, fldPath *fie
 //   - must be less than 254 characters long
 //   - each element must start and end with alphanumeric characters
 //   - each element must contain only alphanumeric characters or dashes
+//
+// All errors returned by this function will be "invalid" type errors. If the
+// caller wants better errors, it must take responsibility for checking things
+// like required/optional and max-length.
 func LongNameCaseless[T ~string](_ context.Context, op operation.Operation, fldPath *field.Path, value, _ *T) field.ErrorList {
 	if value == nil {
 		return nil
