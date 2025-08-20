@@ -65,3 +65,24 @@ func LongName[T ~string](_ context.Context, op operation.Operation, fldPath *fie
 	}
 	return allErrs
 }
+
+// LongNameCaseless verifies that the specified value is a valid "long name"
+// (sometimes known as a "DNS subdomain"), but is case-insensitive.
+//   - must not be empty
+//   - must be less than 254 characters long
+//   - each element must start and end with alphanumeric characters
+//   - each element must contain only alphanumeric characters or dashes
+//
+// All errors returned by this function will be "invalid" type errors. If the
+// caller wants better errors, it must take responsibility for checking things
+// like required/optional and max-length.
+func LongNameCaseless[T ~string](_ context.Context, op operation.Operation, fldPath *field.Path, value, _ *T) field.ErrorList {
+	if value == nil {
+		return nil
+	}
+	var allErrs field.ErrorList
+	for _, msg := range content.IsDNS1123SubdomainCaseless((string)(*value)) {
+		allErrs = append(allErrs, field.Invalid(fldPath, *value, msg).WithOrigin("format=k8s-long-name-caseless"))
+	}
+	return allErrs
+}
