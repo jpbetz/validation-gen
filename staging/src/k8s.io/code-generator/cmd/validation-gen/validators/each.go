@@ -381,12 +381,7 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 		if util.IsDirectComparable(util.NonPointer(util.NativeType(nt.Elem))) {
 			matchArg = validateDirectEqual
 		}
-		comment := ""
-		if lm.semantic == listSet {
-			comment = "lists with set semantics require unique values"
-		} else { // lm.unique == listSet
-			comment = "unique=set requires unique values"
-		}
+		comment := "lists with set semantics require unique values"
 		f := Function("listValidator", DefaultFlags, validateUnique, Identifier(matchArg)).
 			WithComment(comment)
 		result.AddFunction(f)
@@ -397,18 +392,16 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 		// maps or we need to allow types to opt-out from this validation.  SSA
 		// is also not able to handle these well.
 		matchArg := lm.makeListMapMatchFunc(nt.Elem)
-		comment := ""
-		if lm.semantic == listMap {
-			// comment = "listType=map requires unique keys"
-		} else { // lm.unique == listMap
-			comment = "unique=map requires unique keys"
-		}
-		// TODO: Remove this check once we can support listType=map uniqueness.
+		comment := "lists with map semantics require unique keys"
+
+		// For unique=map, we always generate uniqueness validation
 		if lm.unique == listMap {
 			f := Function("listValidator", DefaultFlags, validateUnique, matchArg).
 				WithComment(comment)
 			result.AddFunction(f)
 		}
+		// TODO: For listType=map, we need to decide whether to always generate uniqueness validation
+		// or make it optional. For now, we only generate it for unique=map.
 	}
 
 	return result, nil
@@ -428,9 +421,15 @@ func (lv listValidator) check(lm *listMetadata) error {
 		return fmt.Errorf("found listType=map or unique=map without listMapKey")
 	}
 
-	// If we have both listType and unique with the same semantics, that's redundant
-	if lm.semantic != "" && lm.unique != "" && lm.semantic == lm.unique {
-		return fmt.Errorf("redundant declaration: listType=%s and unique=%s", lm.semantic, lm.unique)
+	// Validate unique tag usage and ensure listType is specified
+	if lm.unique != "" {
+		// unique tags require listType=atomic
+		if lm.semantic != listAtomic {
+			return fmt.Errorf("unique=%s can only be used with listType=atomic", lm.unique)
+		}
+	} else if lm.semantic == "" {
+		// If no unique tag, listType must still be specified
+		return fmt.Errorf("listType must be specified - use listType=atomic, listType=set, or listType=map")
 	}
 
 	return nil
