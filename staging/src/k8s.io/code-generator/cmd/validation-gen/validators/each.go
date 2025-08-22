@@ -168,26 +168,25 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 	// looking up and comparing correlated list elements for validation ratcheting.
 	directComparable := util.IsDirectComparable(util.NonPointer(util.NativeType(nt.Elem)))
 
-	switch {
-	case listMetadata != nil && (listMetadata.semantic == listMap || listMetadata.unique == listMap):
-		// For listType=map, we use key to lookup the correlated element in the old list.
-		// And use equivFunc to compare the correlated elements in the old and new lists.
-		matchArg = listMetadata.makeListMapMatchFunc(nt.Elem)
-		if directComparable {
-			equivArg = Identifier(validateDirectEqual)
-		} else {
-			equivArg = Identifier(validateSemanticDeepEqual)
+	if listMetadata != nil {
+		switch listMetadata.semantic {
+		case semanticMap:
+			// For listType=map, we use key to lookup the correlated element in the old list.
+			// And use equivFunc to compare the correlated elements in the old and new lists.
+			matchArg = listMetadata.makeListMapMatchFunc(nt.Elem)
+			if directComparable {
+				equivArg = Identifier(validateDirectEqual)
+			} else {
+				equivArg = Identifier(validateSemanticDeepEqual)
+			}
+		case semanticSet:
+			// For listType=set, matchArg is the equivalence check, so equivArg is nil.
+			if directComparable {
+				matchArg = Identifier(validateDirectEqual)
+			} else {
+				matchArg = Identifier(validateSemanticDeepEqual)
+			}
 		}
-	case listMetadata != nil && (listMetadata.semantic == listSet || listMetadata.unique == listSet):
-		// For listType=set, matchArg is the equivalence check, so equivArg is nil.
-		if directComparable {
-			matchArg = Identifier(validateDirectEqual)
-		} else {
-			matchArg = Identifier(validateSemanticDeepEqual)
-		}
-	default:
-		// For non-map and non-set list, we don't lookup the correlated element in the old list.
-		// The matchArg and equivArg are both nil.
 	}
 
 	for _, vfn := range validations.Functions {

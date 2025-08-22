@@ -52,28 +52,33 @@ func init() {
 // This applies to all tags in this file.
 var listTagsValidScopes = sets.New(ScopeType, ScopeField, ScopeListVal, ScopeMapKey, ScopeMapVal)
 
+type listOwnership string
+
+const (
+	ownershipSingle listOwnership = "single" // from listType=atomic
+	ownershipShared listOwnership = "shared" // from listType=set/map
+)
+
 type listSemantic string
 
-// Known list semantics.
 const (
-	listMap    listSemantic = "map"
-	listSet    listSemantic = "set"
-	listAtomic listSemantic = "atomic"
+	semanticAtomic listSemantic = "atomic" // No uniqueness check
+	semanticSet    listSemantic = "set"    // uniqueness check
+	semanticMap    listSemantic = "map"    // uniqueness check based on key(s)
 )
 
 // listMetadata collects information about a single list with map or set semantics.
 type listMetadata struct {
-	// These will be checked for correctness elsewhere.
+	ownership listOwnership // For now we don't use it for generation.
 	semantic  listSemantic
-	unique    listSemantic // if set, overrides semantic for uniqueness
-	keyFields []string     // iff semantic == listMap or unique == listMap
-	keyNames  []string     // iff semantic == listMap or unique == listMap
+	keyFields []string
+	keyNames  []string
 }
 
 // makeListMapMatchFunc generates a function that compares two list-map
 // elements by their list-map key fields.
 func (lm *listMetadata) makeListMapMatchFunc(t *types.Type) FunctionLiteral {
-	if lm.semantic != listMap && lm.unique != listMap {
+	if lm.semantic != semanticMap {
 		panic("makeListMapMatchFunc called on a non-map list")
 	}
 	// If no keys are defined, we will throw a good error later.
@@ -122,27 +127,34 @@ func (lttv listTypeTagValidator) GetValidations(context Context, tag codetags.Ta
 		lm = &listMetadata{}
 		lttv.byPath[context.Path.String()] = lm
 	}
-	if lm.semantic != "" {
-		return Validations{}, fmt.Errorf("list was already declared as %q", lm.semantic)
+	if lm.ownership != "" {
+		return Validations{}, fmt.Errorf("listType cannot be specified more than once")
 	}
 
 	switch tag.Value {
 	case "atomic":
-		// We don't do much with atomic, but this ensures no conflicts between
-		// tags on typedefs and tags on fields which use those typedefs.
-		lm.semantic = listAtomic
+		lm.ownership = ownershipSingle
+		// Do not overwrite a more specific semantic from uniqueTagValidator
+		if lm.semantic == "" {
+			lm.semantic = semanticAtomic
+		}
 	case "set":
-		lm.semantic = listSet
-		// NOTE: we validate uniqueness in the listValidator.
+		lm.ownership = ownershipShared
+		// If uniqueTagValidator has run, lm.semantic will be non-empty and non-atomic.
+		if lm.semantic != "" && lm.semantic != semanticAtomic {
+			return Validations{}, fmt.Errorf("unique tag can only be used with listType=atomic")
+		}
+		lm.semantic = semanticSet
 	case "map":
-		// NOTE: maps of pointers are not supported, so we should never see a pointer here.
+		lm.ownership = ownershipShared
+		// If uniqueTagValidator has run, lm.semantic will be non-empty and non-atomic.
+		if lm.semantic != "" && lm.semantic != semanticAtomic {
+			return Validations{}, fmt.Errorf("unique tag can only be used with listType=atomic")
+		}
 		if util.NativeType(t.Elem).Kind != types.Struct {
 			return Validations{}, fmt.Errorf("only lists of structs can be list-maps")
 		}
-
-		// Save the fact that this list is a map.
-		lm.semantic = listMap
-		// NOTE: we validate uniqueness of the keys in the listValidator.
+		lm.semantic = semanticMap
 	default:
 		return Validations{}, fmt.Errorf("unknown list type %q", tag.Value)
 	}
@@ -258,19 +270,23 @@ func (utv uniqueTagValidator) GetValidations(context Context, tag codetags.Tag) 
 		utv.byPath[context.Path.String()] = lm
 	}
 
+	// If listType has already run and set a non-atomic ownership, this is an error.
+	if lm.ownership != "" && lm.ownership != ownershipSingle {
+		return Validations{}, fmt.Errorf("unique tag can only be used with listType=atomic")
+	}
+
+	if lm.semantic != "" && lm.semantic != semanticAtomic {
+		return Validations{}, fmt.Errorf("unique tag cannot be specified more than once")
+	}
+
 	switch tag.Value {
 	case "set":
-		lm.unique = listSet
-		// NOTE: we validate uniqueness in the listValidator.
+		lm.semantic = semanticSet
 	case "map":
-		// NOTE: maps of pointers are not supported, so we should never see a pointer here.
 		if util.NativeType(t.Elem).Kind != types.Struct {
 			return Validations{}, fmt.Errorf("only lists of structs can be list-maps")
 		}
-
-		// Save the fact that this list is a map.
-		lm.unique = listMap
-		// NOTE: we validate uniqueness of the keys in the listValidator.
+		lm.semantic = semanticMap
 	default:
 		return Validations{}, fmt.Errorf("unknown unique type %q", tag.Value)
 	}
@@ -353,7 +369,7 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 	result := Validations{}
 
 	// Generate uniqueness checks for lists with higher-order semantics.
-	if lm.semantic == listSet || lm.unique == listSet {
+	if lm.semantic == semanticSet {
 		// Only compare primitive values when possible. Slices and maps are not
 		// comparable, and structs might hold pointer fields, which are directly
 		// comparable but not what we need.
@@ -368,7 +384,10 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 			WithComment(comment)
 		result.AddFunction(f)
 	}
-	if lm.semantic == listMap || lm.unique == listMap {
+	// TODO: replace with the following once we have a way to either opt-out from this validation
+	// or settle the decision on how to handle the ratcheting cases.
+	// if lm.semantic == semanticMap {
+	if lm.semantic == semanticMap && lm.ownership == ownershipSingle {
 		// TODO: There are some fields which are declared as maps which do not
 		// enforce uniqueness in manual validation. Those either need to not be
 		// maps or we need to allow types to opt-out from this validation.  SSA
@@ -376,14 +395,9 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 		matchArg := lm.makeListMapMatchFunc(nt.Elem)
 		comment := "lists with map semantics require unique keys"
 
-		// For unique=map, we always generate uniqueness validation
-		if lm.unique == listMap {
-			f := Function("listValidator", DefaultFlags, validateUnique, matchArg).
-				WithComment(comment)
-			result.AddFunction(f)
-		}
-		// TODO: For listType=map, we need to decide whether to always generate uniqueness validation
-		// or make it optional. For now, we only generate it for unique=map.
+		f := Function("listValidator", DefaultFlags, validateUnique, matchArg).
+			WithComment(comment)
+		result.AddFunction(f)
 	}
 
 	return result, nil
@@ -394,23 +408,17 @@ func (lv listValidator) check(lm *listMetadata) error {
 	// Check some fundamental constraints on list tags.
 
 	// If we have listMapKey but no map semantics, that's an error
-	if len(lm.keyFields) > 0 && lm.semantic != listMap && lm.unique != listMap {
+	if len(lm.keyFields) > 0 && lm.semantic != semanticMap {
 		return fmt.Errorf("found listMapKey without listType=map or unique=map")
 	}
 
 	// If we have map semantics but no keys, that's an error
-	if (lm.semantic == listMap || lm.unique == listMap) && len(lm.keyFields) == 0 {
+	if lm.semantic == semanticMap && len(lm.keyFields) == 0 {
 		return fmt.Errorf("found listType=map or unique=map without listMapKey")
 	}
 
-	// Validate unique tag usage and ensure listType is specified
-	if lm.unique != "" {
-		// unique tags require listType=atomic
-		if lm.semantic != listAtomic {
-			return fmt.Errorf("unique=%s can only be used with listType=atomic", lm.unique)
-		}
-	} else if lm.semantic == "" {
-		// If no unique tag, listType must still be specified
+	// listType is mandatory.
+	if lm.ownership == "" {
 		return fmt.Errorf("listType must be specified - use listType=atomic, listType=set, or listType=map")
 	}
 
