@@ -77,17 +77,15 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 	// https://json-schema.org/draft/2020-12/json-schema-validation#name-defined-formats
 	// for more examples.
 
+	switch format {
 	// Keep this sequence alphabetized.
-	if format == "k8s-ip" {
+	case "k8s-ip":
 		return Function(formatTagName, DefaultFlags, ipSloppyValidator), nil
-	}
-	if format == "k8s-long-name" {
+	case "k8s-long-name":
 		return Function(formatTagName, DefaultFlags, longNameValidator), nil
-	}
-	if format == "k8s-long-name-caseless" {
+	case "k8s-long-name-caseless":
 		return Function(formatTagName, DefaultFlags, longNameCaselessValidator), nil
-	}
-	if format == "k8s-short-name" {
+	case "k8s-short-name":
 		return Function(formatTagName, DefaultFlags, shortNameValidator), nil
 	}
 	// TODO: Flesh out the list of validation functions
