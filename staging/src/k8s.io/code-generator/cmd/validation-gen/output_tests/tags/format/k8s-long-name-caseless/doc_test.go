@@ -1,5 +1,5 @@
 /*
-Copyright 2024 The Kubernetes Authors.
+Copyright 2025 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,10 +62,10 @@ func TestCaseless(t *testing.T) {
 		LongNamePtrField:     ptr.To("Not a LongName"),
 		LongNameTypedefField: "Not a LongName",
 	}
-	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
-		field.Invalid(field.NewPath("longNameField"), invalidStruct.LongNameField, "a case-insensitive RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character").WithOrigin("format=k8s-long-name-caseless"),
-		field.Invalid(field.NewPath("longNamePtrField"), *invalidStruct.LongNamePtrField, "a case-insensitive RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character").WithOrigin("format=k8s-long-name-caseless"),
-		field.Invalid(field.NewPath("longNameTypedefField"), invalidStruct.LongNameTypedefField, "a case-insensitive RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character").WithOrigin("format=k8s-long-name-caseless"),
+	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByDetailExact(), field.ErrorList{
+		field.Invalid(field.NewPath("longNameField"), invalidStruct.LongNameField, "a RFC 1123 subdomain must consist of alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'Example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')").WithOrigin("format=k8s-long-name-caseless"),
+		field.Invalid(field.NewPath("longNamePtrField"), *invalidStruct.LongNamePtrField, "a RFC 1123 subdomain must consist of alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'Example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')").WithOrigin("format=k8s-long-name-caseless"),
+		field.Invalid(field.NewPath("longNameTypedefField"), invalidStruct.LongNameTypedefField, "a RFC 1123 subdomain must consist of alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'Example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')").WithOrigin("format=k8s-long-name-caseless"),
 	})
 	// Test validation ratcheting
 	st.Value(invalidStruct).OldValue(invalidStruct).ExpectValid()
