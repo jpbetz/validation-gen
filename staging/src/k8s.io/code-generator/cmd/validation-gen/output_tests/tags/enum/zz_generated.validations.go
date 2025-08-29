@@ -59,7 +59,7 @@ func Validate_Enum0(ctx context.Context, op operation.Operation, fldPath *field.
 	return errs
 }
 
-var symbolsForEnum1 = sets.New[Enum1](E1V1)
+var symbolsForEnum1 = sets.New(E1V1)
 
 // Validate_Enum1 validates an instance of Enum1 according
 // to declarative validation rules in the API schema.
@@ -69,7 +69,7 @@ func Validate_Enum1(ctx context.Context, op operation.Operation, fldPath *field.
 	return errs
 }
 
-var symbolsForEnum2 = sets.New[Enum2](E2V1, E2V2)
+var symbolsForEnum2 = sets.New(E2V1, E2V2)
 
 // Validate_Enum2 validates an instance of Enum2 according
 // to declarative validation rules in the API schema.
