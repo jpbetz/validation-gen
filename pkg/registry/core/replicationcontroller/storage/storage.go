@@ -321,12 +321,13 @@ func (i *scaleUpdatedObjectInfo) UpdatedObject(ctx context.Context, oldObj runti
 		// Determine if takeover is enabled
 		takeover := utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidationTakeover)
 
+		validation_identifier := "replication_controller_scale"
 		// Run declarative validation with panic recovery
 		declarativeErrs := rest.ValidateUpdateDeclaratively(
-			ctx, legacyscheme.Scheme, scale, oldScale, rest.WithTakeover(takeover), rest.WithSubresourceMapper(i.scaleGVKMapper))
+			ctx, legacyscheme.Scheme, scale, oldScale, rest.WithTakeover(takeover), rest.WithSubresourceMapper(i.scaleGVKMapper), rest.WithValidationIdentifier(validation_identifier))
 
 		// Compare imperative and declarative errors and log + emit metric if there's a mismatch
-		rest.CompareDeclarativeErrorsAndEmitMismatches(ctx, errs, declarativeErrs, takeover)
+		rest.CompareDeclarativeErrorsAndEmitMismatches(ctx, errs, declarativeErrs, takeover, validation_identifier)
 
 		// Only apply declarative errors if takeover is enabled
 		if takeover {

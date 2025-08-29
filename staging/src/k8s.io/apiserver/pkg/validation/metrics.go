@@ -28,13 +28,13 @@ const (
 
 // ValidationMetrics is the interface for validation metrics.
 type ValidationMetrics interface {
-	IncDeclarativeValidationMismatchMetric()
-	IncDeclarativeValidationPanicMetric()
+	IncDeclarativeValidationMismatchMetric(validation_identifier string)
+	IncDeclarativeValidationPanicMetric(validation_identifier string)
 	Reset()
 }
 
 var validationMetricsInstance = &validationMetrics{
-	DeclarativeValidationMismatchCounter: metrics.NewCounter(
+	DeclarativeValidationMismatchCounter: metrics.NewCounterVec(
 		&metrics.CounterOpts{
 			Namespace:      namespace,
 			Subsystem:      subsystem,
@@ -42,8 +42,9 @@ var validationMetricsInstance = &validationMetrics{
 			Help:           "Number of times declarative validation results differed from handwritten validation results for core types.",
 			StabilityLevel: metrics.BETA,
 		},
+		[]string{"validation_identifier"},
 	),
-	DeclarativeValidationPanicCounter: metrics.NewCounter(
+	DeclarativeValidationPanicCounter: metrics.NewCounterVec(
 		&metrics.CounterOpts{
 			Namespace:      namespace,
 			Subsystem:      subsystem,
@@ -51,6 +52,7 @@ var validationMetricsInstance = &validationMetrics{
 			Help:           "Number of times declarative validation has panicked during validation.",
 			StabilityLevel: metrics.BETA,
 		},
+		[]string{"validation_identifier"},
 	),
 }
 
@@ -63,8 +65,8 @@ func init() {
 }
 
 type validationMetrics struct {
-	DeclarativeValidationMismatchCounter *metrics.Counter
-	DeclarativeValidationPanicCounter    *metrics.Counter
+	DeclarativeValidationMismatchCounter *metrics.CounterVec
+	DeclarativeValidationPanicCounter    *metrics.CounterVec
 }
 
 // Reset resets the validation metrics.
@@ -74,13 +76,13 @@ func (m *validationMetrics) Reset() {
 }
 
 // IncDeclarativeValidationMismatchMetric increments the counter for the declarative_validation_mismatch_total metric.
-func (m *validationMetrics) IncDeclarativeValidationMismatchMetric() {
-	m.DeclarativeValidationMismatchCounter.Inc()
+func (m *validationMetrics) IncDeclarativeValidationMismatchMetric(validation_identifier string) {
+	m.DeclarativeValidationMismatchCounter.WithLabelValues(validation_identifier).Inc()
 }
 
 // IncDeclarativeValidationPanicMetric increments the counter for the declarative_validation_panic_total metric.
-func (m *validationMetrics) IncDeclarativeValidationPanicMetric() {
-	m.DeclarativeValidationPanicCounter.Inc()
+func (m *validationMetrics) IncDeclarativeValidationPanicMetric(validation_identifier string) {
+	m.DeclarativeValidationPanicCounter.WithLabelValues(validation_identifier).Inc()
 }
 
 func ResetValidationMetricsInstance() {

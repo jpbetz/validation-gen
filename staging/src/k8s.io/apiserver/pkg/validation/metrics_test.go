@@ -24,21 +24,24 @@ import (
 	"k8s.io/component-base/metrics/testutil"
 )
 
+const testIdentifier = "test_validation_identifier"
+const anotherTestIdentifier = "another_test_validation_identifier"
+
 // TestDeclarativeValidationMismatchMetric tests that the mismatch metric correctly increments once
 func TestDeclarativeValidationMismatchMetric(t *testing.T) {
 	defer legacyregistry.Reset()
 	defer ResetValidationMetricsInstance()
 
 	// Increment the metric once
-	Metrics.IncDeclarativeValidationMismatchMetric()
+	Metrics.IncDeclarativeValidationMismatchMetric(testIdentifier)
 
 	expected := `
 	# HELP apiserver_validation_declarative_validation_mismatch_total [BETA] Number of times declarative validation results differed from handwritten validation results for core types.
 	# TYPE apiserver_validation_declarative_validation_mismatch_total counter
-	apiserver_validation_declarative_validation_mismatch_total 1
+	apiserver_validation_declarative_validation_mismatch_total{validation_identifier="test_validation_identifier"} 1
 	`
 
-	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "declarative_validation_mismatch_total"); err != nil {
+	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "apiserver_validation_declarative_validation_mismatch_total"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -49,15 +52,15 @@ func TestDeclarativeValidationPanicMetric(t *testing.T) {
 	defer ResetValidationMetricsInstance()
 
 	// Increment the metric once
-	Metrics.IncDeclarativeValidationPanicMetric()
+	Metrics.IncDeclarativeValidationPanicMetric(testIdentifier)
 
 	expected := `
 	# HELP apiserver_validation_declarative_validation_panic_total [BETA] Number of times declarative validation has panicked during validation.
 	# TYPE apiserver_validation_declarative_validation_panic_total counter
-	apiserver_validation_declarative_validation_panic_total 1
+	apiserver_validation_declarative_validation_panic_total{validation_identifier="test_validation_identifier"} 1
 	`
 
-	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "declarative_validation_panic_total"); err != nil {
+	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "apiserver_validation_declarative_validation_panic_total"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -68,17 +71,18 @@ func TestDeclarativeValidationMismatchMetricMultiple(t *testing.T) {
 	defer ResetValidationMetricsInstance()
 
 	// Increment the metric three times
-	Metrics.IncDeclarativeValidationMismatchMetric()
-	Metrics.IncDeclarativeValidationMismatchMetric()
-	Metrics.IncDeclarativeValidationMismatchMetric()
+	Metrics.IncDeclarativeValidationMismatchMetric(testIdentifier)
+	Metrics.IncDeclarativeValidationMismatchMetric(testIdentifier)
+	Metrics.IncDeclarativeValidationMismatchMetric(anotherTestIdentifier)
 
 	expected := `
 	# HELP apiserver_validation_declarative_validation_mismatch_total [BETA] Number of times declarative validation results differed from handwritten validation results for core types.
 	# TYPE apiserver_validation_declarative_validation_mismatch_total counter
-	apiserver_validation_declarative_validation_mismatch_total 3
+	apiserver_validation_declarative_validation_mismatch_total{validation_identifier="test_validation_identifier"} 2
+	apiserver_validation_declarative_validation_mismatch_total{validation_identifier="another_test_validation_identifier"} 1
 	`
 
-	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "declarative_validation_mismatch_total"); err != nil {
+	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "apiserver_validation_declarative_validation_mismatch_total"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -89,17 +93,18 @@ func TestDeclarativeValidationPanicMetricMultiple(t *testing.T) {
 	defer ResetValidationMetricsInstance()
 
 	// Increment the metric three times
-	Metrics.IncDeclarativeValidationPanicMetric()
-	Metrics.IncDeclarativeValidationPanicMetric()
-	Metrics.IncDeclarativeValidationPanicMetric()
+	Metrics.IncDeclarativeValidationPanicMetric(testIdentifier)
+	Metrics.IncDeclarativeValidationPanicMetric(testIdentifier)
+	Metrics.IncDeclarativeValidationPanicMetric(anotherTestIdentifier)
 
 	expected := `
 	# HELP apiserver_validation_declarative_validation_panic_total [BETA] Number of times declarative validation has panicked during validation.
 	# TYPE apiserver_validation_declarative_validation_panic_total counter
-	apiserver_validation_declarative_validation_panic_total 3
+	apiserver_validation_declarative_validation_panic_total{validation_identifier="test_validation_identifier"} 2
+	apiserver_validation_declarative_validation_panic_total{validation_identifier="another_test_validation_identifier"} 1
 	`
 
-	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "declarative_validation_panic_total"); err != nil {
+	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "apiserver_validation_declarative_validation_panic_total"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -110,41 +115,34 @@ func TestDeclarativeValidationMetricsReset(t *testing.T) {
 	defer ResetValidationMetricsInstance()
 
 	// Increment both metrics
-	Metrics.IncDeclarativeValidationMismatchMetric()
-	Metrics.IncDeclarativeValidationPanicMetric()
+	Metrics.IncDeclarativeValidationMismatchMetric(testIdentifier)
+	Metrics.IncDeclarativeValidationPanicMetric(testIdentifier)
 
 	// Reset the metrics
 	Metrics.Reset()
 
-	// Verify they've been reset to zero
-	expected := `
-	# HELP apiserver_validation_declarative_validation_mismatch_total [BETA] Number of times declarative validation results differed from handwritten validation results for core types.
-	# TYPE apiserver_validation_declarative_validation_mismatch_total counter
-	apiserver_validation_declarative_validation_mismatch_total 0
-	# HELP apiserver_validation_declarative_validation_panic_total [BETA] Number of times declarative validation has panicked during validation.
-	# TYPE apiserver_validation_declarative_validation_panic_total counter
-	apiserver_validation_declarative_validation_panic_total 0
-	`
+	// Verify that reset metrics are not published.
+	expected := ``
 
-	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "declarative_validation_mismatch_total", "declarative_validation_panic_total"); err != nil {
+	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "apiserver_validation_declarative_validation_mismatch_total", "apiserver_validation_declarative_validation_panic_total"); err != nil {
 		t.Fatal(err)
 	}
 
 	// Increment the metrics again to ensure they're still functional
-	Metrics.IncDeclarativeValidationMismatchMetric()
-	Metrics.IncDeclarativeValidationPanicMetric()
+	Metrics.IncDeclarativeValidationMismatchMetric(testIdentifier)
+	Metrics.IncDeclarativeValidationPanicMetric(testIdentifier)
 
 	// Verify they've been incremented correctly
 	expected = `
 	# HELP apiserver_validation_declarative_validation_mismatch_total [BETA] Number of times declarative validation results differed from handwritten validation results for core types.
 	# TYPE apiserver_validation_declarative_validation_mismatch_total counter
-	apiserver_validation_declarative_validation_mismatch_total 1
+	apiserver_validation_declarative_validation_mismatch_total{validation_identifier="test_validation_identifier"} 1
 	# HELP apiserver_validation_declarative_validation_panic_total [BETA] Number of times declarative validation has panicked during validation.
 	# TYPE apiserver_validation_declarative_validation_panic_total counter
-	apiserver_validation_declarative_validation_panic_total 1
+	apiserver_validation_declarative_validation_panic_total{validation_identifier="test_validation_identifier"} 1
 	`
 
-	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "declarative_validation_mismatch_total", "declarative_validation_panic_total"); err != nil {
+	if err := testutil.GatherAndCompare(legacyregistry.DefaultGatherer, strings.NewReader(expected), "apiserver_validation_declarative_validation_mismatch_total", "apiserver_validation_declarative_validation_panic_total"); err != nil {
 		t.Fatal(err)
 	}
 }
