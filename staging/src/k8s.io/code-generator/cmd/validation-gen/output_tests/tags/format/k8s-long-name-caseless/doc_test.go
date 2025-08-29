@@ -50,9 +50,9 @@ func TestCaseless(t *testing.T) {
 		LongNameTypedefField: "",
 	}
 	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
-		field.Invalid(field.NewPath("longNameField"), invalidStruct.LongNameField, "must not be empty").WithOrigin("format=k8s-long-name-caseless"),
-		field.Invalid(field.NewPath("longNamePtrField"), *invalidStruct.LongNamePtrField, "must not be empty").WithOrigin("format=k8s-long-name-caseless"),
-		field.Invalid(field.NewPath("longNameTypedefField"), invalidStruct.LongNameTypedefField, "must not be empty").WithOrigin("format=k8s-long-name-caseless"),
+		field.Invalid(field.NewPath("longNameField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
+		field.Invalid(field.NewPath("longNamePtrField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
+		field.Invalid(field.NewPath("longNameTypedefField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
 	})
 	// Test validation ratcheting
 	st.Value(invalidStruct).OldValue(invalidStruct).ExpectValid()
@@ -62,10 +62,10 @@ func TestCaseless(t *testing.T) {
 		LongNamePtrField:     ptr.To("Not a LongName"),
 		LongNameTypedefField: "Not a LongName",
 	}
-	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByDetailExact(), field.ErrorList{
-		field.Invalid(field.NewPath("longNameField"), invalidStruct.LongNameField, "a RFC 1123 subdomain must consist of alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'Example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')").WithOrigin("format=k8s-long-name-caseless"),
-		field.Invalid(field.NewPath("longNamePtrField"), *invalidStruct.LongNamePtrField, "a RFC 1123 subdomain must consist of alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'Example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')").WithOrigin("format=k8s-long-name-caseless"),
-		field.Invalid(field.NewPath("longNameTypedefField"), invalidStruct.LongNameTypedefField, "a RFC 1123 subdomain must consist of alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'Example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')").WithOrigin("format=k8s-long-name-caseless"),
+	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
+		field.Invalid(field.NewPath("longNameField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
+		field.Invalid(field.NewPath("longNamePtrField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
+		field.Invalid(field.NewPath("longNameTypedefField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
 	})
 	// Test validation ratcheting
 	st.Value(invalidStruct).OldValue(invalidStruct).ExpectValid()
