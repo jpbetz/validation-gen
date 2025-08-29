@@ -50,6 +50,7 @@ func (formatTagValidator) ValidScopes() sets.Set[Scope] {
 var (
 	// Keep this list alphabetized.
 	ipSloppyValidator         = types.Name{Package: libValidationPkg, Name: "IPSloppy"}
+	labelValueValidator       = types.Name{Package: libValidationPkg, Name: "LabelValue"}
 	longNameCaselessValidator = types.Name{Package: libValidationPkg, Name: "LongNameCaseless"}
 	longNameValidator         = types.Name{Package: libValidationPkg, Name: "LongName"}
 	shortNameValidator        = types.Name{Package: libValidationPkg, Name: "ShortName"}
@@ -82,6 +83,8 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 	// Keep this sequence alphabetized.
 	case "k8s-ip":
 		return Function(formatTagName, DefaultFlags, ipSloppyValidator), nil
+	case "k8s-label-value":
+		return Function(formatTagName, DefaultFlags, labelValueValidator), nil
 	case "k8s-long-name":
 		return Function(formatTagName, DefaultFlags, longNameValidator), nil
 	case "k8s-long-name-caseless":
@@ -105,6 +108,9 @@ func (ftv formatTagValidator) Docs() TagDoc {
 		Payloads: []TagPayloadDoc{{ // Keep this list alphabetized.
 			Description: "k8s-ip",
 			Docs:        "This field holds an IPv4 or IPv6 address value. IPv4 octets may have leading zeros.",
+		}, {
+			Description: "k8s-label-value",
+			Docs:        "This field holds a Kubernetes label value.",
 		}, {
 			Description: "k8s-long-name",
 			Docs:        "This field holds a Kubernetes \"long name\", aka a \"DNS subdomain\" value.",
