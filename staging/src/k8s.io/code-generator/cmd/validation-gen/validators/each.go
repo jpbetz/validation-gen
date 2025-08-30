@@ -40,7 +40,7 @@ var globalEachKey *eachKeyTagValidator
 func init() {
 	// Iterating values of lists and maps is a special tag, which can be called
 	// directly by the code-generator logic.
-	globalEachVal = &eachValTagValidator{byPath: listMeta, validator: nil}
+	globalEachVal = &eachValTagValidator{byPath: globalListMeta, validator: nil}
 	RegisterTagValidator(globalEachVal)
 
 	// Iterating keys of maps is a special tag, which can be called directly by
@@ -186,6 +186,9 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 			} else {
 				matchArg = Identifier(validateSemanticDeepEqual)
 			}
+		default:
+			// For non-map and non-set list, we don't lookup the correlated element in the old list.
+			// The matchArg and equivArg are both nil.
 		}
 	}
 
