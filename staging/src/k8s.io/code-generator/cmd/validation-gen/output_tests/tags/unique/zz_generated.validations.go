@@ -54,7 +54,7 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Struct) (errs field.ErrorList) {
 	// field Struct.TypeMeta has no validation
 
-	// field Struct.SliceSetField
+	// field Struct.PrimitiveListUniqueSet
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []string) (errs field.ErrorList) {
 			// don't revalidate unchanged data
@@ -65,33 +65,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			// lists with set semantics require unique values
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
 			return
-		}(fldPath.Child("sliceSetField"), obj.SliceSetField, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.SliceSetField }))...)
-
-	// field Struct.SliceMapField
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj []Item) (errs field.ErrorList) {
-			// don't revalidate unchanged data
-			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
-				return nil
-			}
-			// call field-attached validations
-			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
-			return
-		}(fldPath.Child("sliceMapField"), obj.SliceMapField, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.SliceMapField }))...)
-
-	// field Struct.SliceSetFieldWithStruct
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj []Item) (errs field.ErrorList) {
-			// don't revalidate unchanged data
-			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
-				return nil
-			}
-			// call field-attached validations
-			// lists with set semantics require unique values
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
-			return
-		}(fldPath.Child("sliceSetFieldWithStruct"), obj.SliceSetFieldWithStruct, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.SliceSetFieldWithStruct }))...)
+		}(fldPath.Child("primitiveListUniqueSet"), obj.PrimitiveListUniqueSet, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.PrimitiveListUniqueSet }))...)
 
 	// field Struct.SliceMapFieldWithMultipleKeys
 	errs = append(errs,
@@ -131,58 +105,6 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
 			return
 		}(fldPath.Child("atomicListUniqueMap"), obj.AtomicListUniqueMap, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.AtomicListUniqueMap }))...)
-
-	// field Struct.IntSlice
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj []int) (errs field.ErrorList) {
-			// don't revalidate unchanged data
-			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
-				return nil
-			}
-			// call field-attached validations
-			// lists with set semantics require unique values
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
-			return
-		}(fldPath.Child("intSlice"), obj.IntSlice, safe.Field(oldObj, func(oldObj *Struct) []int { return oldObj.IntSlice }))...)
-
-	// field Struct.BoolSlice
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj []bool) (errs field.ErrorList) {
-			// don't revalidate unchanged data
-			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
-				return nil
-			}
-			// call field-attached validations
-			// lists with set semantics require unique values
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
-			return
-		}(fldPath.Child("boolSlice"), obj.BoolSlice, safe.Field(oldObj, func(oldObj *Struct) []bool { return oldObj.BoolSlice }))...)
-
-	// field Struct.SliceWithZeroValues
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj []string) (errs field.ErrorList) {
-			// don't revalidate unchanged data
-			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
-				return nil
-			}
-			// call field-attached validations
-			// lists with set semantics require unique values
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)...)
-			return
-		}(fldPath.Child("sliceWithZeroValues"), obj.SliceWithZeroValues, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.SliceWithZeroValues }))...)
-
-	// field Struct.SliceWithEmptyKeys
-	errs = append(errs,
-		func(fldPath *field.Path, obj, oldObj []Item) (errs field.ErrorList) {
-			// don't revalidate unchanged data
-			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
-				return nil
-			}
-			// call field-attached validations
-			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
-			return
-		}(fldPath.Child("sliceWithEmptyKeys"), obj.SliceWithEmptyKeys, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.SliceWithEmptyKeys }))...)
 
 	return errs
 }

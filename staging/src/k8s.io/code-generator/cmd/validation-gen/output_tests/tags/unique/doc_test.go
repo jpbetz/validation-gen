@@ -30,15 +30,7 @@ func TestUnique(t *testing.T) {
 
 	// Test valid cases with no duplicates
 	st.Value(&Struct{
-		SliceSetField: []string{"aaa", "bbb"},
-		SliceMapField: []Item{
-			{Key: "key1", Data: "one"},
-			{Key: "key2", Data: "two"},
-		},
-		SliceSetFieldWithStruct: []Item{
-			{Key: "key1", Data: "one"},
-			{Key: "key2", Data: "two"},
-		},
+		PrimitiveListUniqueSet: []string{"aaa", "bbb"},
 		SliceMapFieldWithMultipleKeys: []ItemWithMultipleKeys{
 			{Key1: "a", Key2: "x", Data: "first"},
 			{Key1: "a", Key2: "y", Data: "second"},
@@ -51,56 +43,27 @@ func TestUnique(t *testing.T) {
 			{Key: "key1", Data: "one"},
 			{Key: "key2", Data: "two"},
 		},
-		IntSlice:            []int{1, 2, 3},
-		BoolSlice:           []bool{true, false},
-		SliceWithZeroValues: []string{"a", "b", "c"},
-		SliceWithEmptyKeys: []Item{
-			{Key: "key1", Data: "one"},
-			{Key: "key2", Data: "two"},
-		},
 	}).ExpectValid()
 
 	// Test empty lists
 	st.Value(&Struct{
-		SliceSetField:                 []string{},
-		SliceMapField:                 []Item{},
-		SliceSetFieldWithStruct:       []Item{},
+		PrimitiveListUniqueSet:        []string{},
 		SliceMapFieldWithMultipleKeys: []ItemWithMultipleKeys{},
 		AtomicListUniqueSet:           []Item{},
 		AtomicListUniqueMap:           []Item{},
-		IntSlice:                      []int{},
-		BoolSlice:                     []bool{},
-		SliceWithZeroValues:           []string{},
-		SliceWithEmptyKeys:            []Item{},
 	}).ExpectValid()
 
 	// Test single element lists
 	st.Value(&Struct{
-		SliceSetField:                 []string{"single"},
-		SliceMapField:                 []Item{{Key: "single", Data: "one"}},
-		SliceSetFieldWithStruct:       []Item{{Key: "single", Data: "one"}},
+		PrimitiveListUniqueSet:        []string{"single"},
 		SliceMapFieldWithMultipleKeys: []ItemWithMultipleKeys{{Key1: "a", Key2: "b", Data: "one"}},
 		AtomicListUniqueSet:           []Item{{Key: "single", Data: "one"}},
 		AtomicListUniqueMap:           []Item{{Key: "single", Data: "one"}},
-		IntSlice:                      []int{42},
-		BoolSlice:                     []bool{true},
-		SliceWithZeroValues:           []string{"single"},
-		SliceWithEmptyKeys:            []Item{{Key: "single", Data: "one"}},
 	}).ExpectValid()
 
 	// Test duplicate values (should fail validation)
 	st.Value(&Struct{
-		SliceSetField: []string{"aaa", "bbb", "ccc", "ccc", "bbb", "aaa"},
-		SliceMapField: []Item{
-			{Key: "key1", Data: "one"},
-			{Key: "key2", Data: "two"},
-			{Key: "key1", Data: "three"},
-		},
-		SliceSetFieldWithStruct: []Item{
-			{Key: "key1", Data: "one"},
-			{Key: "key2", Data: "two"},
-			{Key: "key1", Data: "one"},
-		},
+		PrimitiveListUniqueSet: []string{"aaa", "bbb", "ccc", "ccc", "bbb", "aaa"},
 		SliceMapFieldWithMultipleKeys: []ItemWithMultipleKeys{
 			{Key1: "a", Key2: "x", Data: "first"},
 			{Key1: "a", Key2: "y", Data: "second"},
@@ -116,51 +79,26 @@ func TestUnique(t *testing.T) {
 			{Key: "key2", Data: "two"},
 			{Key: "key1", Data: "three"},
 		},
-		IntSlice:            []int{1, 2, 3, 3, 2, 1},
-		BoolSlice:           []bool{true, false, true},
-		SliceWithZeroValues: []string{"a", "b", "a"},
-		SliceWithEmptyKeys: []Item{
-			{Key: "key1", Data: "one"},
-			{Key: "key2", Data: "two"},
-			{Key: "key1", Data: "three"},
-		},
 	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
-		field.Duplicate(field.NewPath("sliceSetField").Index(3), "ccc"),
-		field.Duplicate(field.NewPath("sliceSetField").Index(4), "bbb"),
-		field.Duplicate(field.NewPath("sliceSetField").Index(5), "aaa"),
-		field.Duplicate(field.NewPath("sliceMapField").Index(2), nil),
-		field.Duplicate(field.NewPath("sliceSetFieldWithStruct").Index(2), Item{Key: "key1", Data: "one"}),
+		field.Duplicate(field.NewPath("primitiveListUniqueSet").Index(3), nil),
+		field.Duplicate(field.NewPath("primitiveListUniqueSet").Index(4), nil),
+		field.Duplicate(field.NewPath("primitiveListUniqueSet").Index(5), nil),
 		field.Duplicate(field.NewPath("sliceMapFieldWithMultipleKeys").Index(2), nil),
-		field.Duplicate(field.NewPath("atomicListUniqueSet").Index(2), Item{Key: "key1", Data: "one"}),
+		field.Duplicate(field.NewPath("atomicListUniqueSet").Index(2), nil),
 		field.Duplicate(field.NewPath("atomicListUniqueMap").Index(2), nil),
-		field.Duplicate(field.NewPath("intSlice").Index(3), 3),
-		field.Duplicate(field.NewPath("intSlice").Index(4), 2),
-		field.Duplicate(field.NewPath("intSlice").Index(5), 1),
-		field.Duplicate(field.NewPath("boolSlice").Index(2), true),
-		field.Duplicate(field.NewPath("sliceWithZeroValues").Index(2), "a"),
-		field.Duplicate(field.NewPath("sliceWithEmptyKeys").Index(2), nil),
 	})
 
 	// Test with zero values and empty strings
 	st.Value(&Struct{
-		SliceWithZeroValues: []string{"", "a", ""},
-		SliceWithEmptyKeys: []Item{
+		PrimitiveListUniqueSet: []string{"", "a", ""},
+		AtomicListUniqueMap: []Item{
 			{Key: "", Data: "one"},
 			{Key: "a", Data: "two"},
 			{Key: "", Data: "three"},
 		},
 	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
-		field.Duplicate(field.NewPath("sliceWithZeroValues").Index(2), ""),
-		field.Duplicate(field.NewPath("sliceWithEmptyKeys").Index(2), nil),
-	})
-
-	// Test with zero values in primitive types
-	st.Value(&Struct{
-		IntSlice:  []int{0, 1, 0},
-		BoolSlice: []bool{false, true, false},
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField(), field.ErrorList{
-		field.Duplicate(field.NewPath("intSlice").Index(2), 0),
-		field.Duplicate(field.NewPath("boolSlice").Index(2), false),
+		field.Duplicate(field.NewPath("primitiveListUniqueSet").Index(2), nil),
+		field.Duplicate(field.NewPath("atomicListUniqueMap").Index(2), nil),
 	})
 }
 
@@ -168,15 +106,7 @@ func TestRatcheting(t *testing.T) {
 	st := localSchemeBuilder.Test(t)
 
 	struct1 := Struct{
-		SliceSetField: []string{"aaa", "bbb"},
-		SliceMapField: []Item{
-			{Key: "key1", Data: "one"},
-			{Key: "key2", Data: "two"},
-		},
-		SliceSetFieldWithStruct: []Item{
-			{Key: "key1", Data: "one"},
-			{Key: "key2", Data: "two"},
-		},
+		PrimitiveListUniqueSet: []string{"aaa", "bbb"},
 		SliceMapFieldWithMultipleKeys: []ItemWithMultipleKeys{
 			{Key1: "a", Key2: "x", Data: "first"},
 			{Key1: "a", Key2: "y", Data: "second"},
@@ -186,13 +116,6 @@ func TestRatcheting(t *testing.T) {
 			{Key: "key2", Data: "two"},
 		},
 		AtomicListUniqueMap: []Item{
-			{Key: "key1", Data: "one"},
-			{Key: "key2", Data: "two"},
-		},
-		IntSlice:            []int{1, 2},
-		BoolSlice:           []bool{true, false},
-		SliceWithZeroValues: []string{"a", "b"},
-		SliceWithEmptyKeys: []Item{
 			{Key: "key1", Data: "one"},
 			{Key: "key2", Data: "two"},
 		},
@@ -200,15 +123,7 @@ func TestRatcheting(t *testing.T) {
 
 	// Same data, different order.
 	struct2 := Struct{
-		SliceSetField: []string{"bbb", "aaa"},
-		SliceMapField: []Item{
-			{Key: "key2", Data: "two"},
-			{Key: "key1", Data: "one"},
-		},
-		SliceSetFieldWithStruct: []Item{
-			{Key: "key2", Data: "two"},
-			{Key: "key1", Data: "one"},
-		},
+		PrimitiveListUniqueSet: []string{"bbb", "aaa"},
 		SliceMapFieldWithMultipleKeys: []ItemWithMultipleKeys{
 			{Key1: "a", Key2: "y", Data: "second"},
 			{Key1: "a", Key2: "x", Data: "first"},
@@ -218,13 +133,6 @@ func TestRatcheting(t *testing.T) {
 			{Key: "key1", Data: "one"},
 		},
 		AtomicListUniqueMap: []Item{
-			{Key: "key2", Data: "two"},
-			{Key: "key1", Data: "one"},
-		},
-		IntSlice:            []int{2, 1},
-		BoolSlice:           []bool{false, true},
-		SliceWithZeroValues: []string{"b", "a"},
-		SliceWithEmptyKeys: []Item{
 			{Key: "key2", Data: "two"},
 			{Key: "key1", Data: "one"},
 		},

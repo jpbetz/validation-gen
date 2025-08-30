@@ -32,21 +32,18 @@ const (
 	uniqueTagName     = "k8s:unique"
 )
 
-// listMeta is shared between list-related validators.
-var listMeta = map[string]*listMetadata{} // keyed by the field or type path
+// globalListMeta is shared between list-related validators.
+var globalListMeta = map[string]*listMetadata{} // keyed by the field or type path
 
 func init() {
 	// Accumulate list metadata via tags.
-	RegisterTagValidator(listTypeTagValidator{byPath: listMeta})
-	RegisterTagValidator(listMapKeyTagValidator{byPath: listMeta})
-	RegisterTagValidator(uniqueTagValidator{byPath: listMeta})
+	RegisterTagValidator(listTypeTagValidator{byPath: globalListMeta})
+	RegisterTagValidator(listMapKeyTagValidator{byPath: globalListMeta})
+	RegisterTagValidator(uniqueTagValidator{byPath: globalListMeta})
 
 	// Finish work on the accumulated list metadata.
-	RegisterFieldValidator(listValidator{byPath: listMeta})
-	RegisterTypeValidator(listValidator{byPath: listMeta})
-
-	// Processing item tags requires the list metadata.
-	RegisterTagValidator(&itemTagValidator{listByPath: listMeta})
+	RegisterFieldValidator(listValidator{byPath: globalListMeta})
+	RegisterTypeValidator(listValidator{byPath: globalListMeta})
 }
 
 // This applies to all tags in this file.
@@ -71,8 +68,8 @@ const (
 type listMetadata struct {
 	ownership listOwnership // For now we don't use it for generation.
 	semantic  listSemantic
-	keyFields []string
-	keyNames  []string
+	keyFields []string // For semantic == map.
+	keyNames  []string // For semantic == map.
 }
 
 // makeListMapMatchFunc generates a function that compares two list-map
@@ -384,8 +381,9 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 			WithComment(comment)
 		result.AddFunction(f)
 	}
-	// TODO: replace with the following once we have a way to either opt-out from this validation
-	// or settle the decision on how to handle the ratcheting cases.
+	// TODO: Replace with the following once we have a way to either opt-out from
+	// uniqueness validation of list-maps or settle the decision on how to handle
+	// the ratcheting cases of it.
 	// if lm.semantic == semanticMap {
 	if lm.semantic == semanticMap && lm.ownership == ownershipSingle {
 		// TODO: There are some fields which are declared as maps which do not

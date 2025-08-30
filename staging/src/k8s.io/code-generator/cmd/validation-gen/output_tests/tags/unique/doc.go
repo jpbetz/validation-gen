@@ -30,18 +30,7 @@ type Struct struct {
 	// Basic unique=set on primitive slice
 	// +k8s:listType=atomic
 	// +k8s:unique=set
-	SliceSetField []string `json:"sliceSetField"`
-
-	// Basic unique=map with single key
-	// +k8s:listType=atomic
-	// +k8s:unique=map
-	// +k8s:listMapKey=key
-	SliceMapField []Item `json:"sliceMapField"`
-
-	// Basic unique=set on struct slice
-	// +k8s:listType=atomic
-	// +k8s:unique=set
-	SliceSetFieldWithStruct []Item `json:"sliceSetFieldWithStruct"`
+	PrimitiveListUniqueSet []string `json:"primitiveListUniqueSet"`
 
 	// unique=map with multiple keys
 	// +k8s:listType=atomic
@@ -60,27 +49,6 @@ type Struct struct {
 	// +k8s:unique=map
 	// +k8s:listMapKey=key
 	AtomicListUniqueMap []Item `json:"atomicListUniqueMap"`
-
-	// Test with primitive types that support direct comparison
-	// +k8s:listType=atomic
-	// +k8s:unique=set
-	IntSlice []int `json:"intSlice"`
-
-	// Test with primitive types that support direct comparison
-	// +k8s:listType=atomic
-	// +k8s:unique=set
-	BoolSlice []bool `json:"boolSlice"`
-
-	// Test with zero values
-	// +k8s:listType=atomic
-	// +k8s:unique=set
-	SliceWithZeroValues []string `json:"sliceWithZeroValues"`
-
-	// Test with empty string keys
-	// +k8s:listType=atomic
-	// +k8s:unique=map
-	// +k8s:listMapKey=key
-	SliceWithEmptyKeys []Item `json:"sliceWithEmptyKeys"`
 }
 
 type Item struct {
