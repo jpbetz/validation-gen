@@ -45,6 +45,12 @@ type Struct struct {
 	// +k8s:ifEnabled(FeatureX)=+k8s:validateFalse="field Struct.XYMixedField/X"
 	// +k8s:ifDisabled(FeatureY)=+k8s:validateFalse="field Struct.XYMixedField/Y"
 	XYMixedField string `json:"xyMixedField"`
+
+	// +k8s:ifEnabled(FeatureX)=+k8s:validateFalse="field Struct.XEnabledListField"
+	XEnabledListField []string `json:"xEnabledListField"`
+
+	// +k8s:ifDisabled(FeatureX)=+k8s:validateFalse="field Struct.XDisabledListField"
+	XDisabledListField []string `json:"xDisabledListField"`
 }
 
 type ObjectMeta struct {
