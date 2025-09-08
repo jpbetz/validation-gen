@@ -70,7 +70,7 @@ func (itv ifTagValidator) GetValidations(context Context, tag codetags.Tag) (Val
 		return Validations{}, err
 	} else {
 		for _, fn := range validations.Functions {
-			f := Function(itv.TagName(), fn.Flags, ifOption, optionArg.Value, itv.enabled, WrapperFunction{Function: fn, ObjType: context.Type})
+			f := Function(itv.TagName(), fn.Flags, ifOption, optionArg.Value, itv.enabled, WrapperFunction{Functions: []FunctionGen{fn}, ObjType: context.Type})
 			result.Variables = append(result.Variables, validations.Variables...)
 			result.AddFunction(f)
 		}

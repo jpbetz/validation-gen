@@ -1459,41 +1459,58 @@ func toGolangSourceDataLiteral(sw *generator.SnippetWriter, c *generator.Context
 	case *validators.PrivateVar:
 		sw.Do("$.|private$", c.Universe.Type(types.Name(*v)))
 	case validators.WrapperFunction:
-		if extraArgs := v.Function.Args; len(extraArgs) == 0 {
-			// If the function to be wrapped has no additional arguments, we can
-			// just use it directly.
-			targs := generator.Args{
-				"funcName": c.Universe.Type(v.Function.Function),
-			}
-			for _, comment := range v.Function.Comments {
-				sw.Do("// $.$\n", comment)
-			}
-			sw.Do("$.funcName|raw$", targs)
-		} else {
-			// If the function to be wrapped has additional arguments, we need
-			// a "standard signature" validation function to wrap it.
-			targs := generator.Args{
-				"funcName":   c.Universe.Type(v.Function.Function),
-				"field":      mkSymbolArgs(c, fieldPkgSymbols),
-				"operation":  mkSymbolArgs(c, operationPkgSymbols),
-				"context":    mkSymbolArgs(c, contextPkgSymbols),
-				"objType":    v.ObjType,
-				"objTypePfx": "*",
-			}
-			if util.IsNilableType(v.ObjType) {
-				targs["objTypePfx"] = ""
-			}
+		targs := generator.Args{
+			"field":      mkSymbolArgs(c, fieldPkgSymbols),
+			"operation":  mkSymbolArgs(c, operationPkgSymbols),
+			"context":    mkSymbolArgs(c, contextPkgSymbols),
+			"objType":    v.ObjType,
+			"objTypePfx": "*",
+		}
+		if util.IsNilableType(v.ObjType) {
+			targs["objTypePfx"] = ""
+		}
 
+		if len(v.Functions) == 1 {
+			if extraArgs := v.Functions[0].Args; len(extraArgs) == 0 {
+				// If the function to be wrapped has no additional arguments, we can
+				// just use it directly.
+				targs := generator.Args{
+					"funcName": c.Universe.Type(v.Functions[0].Function),
+				}
+				for _, comment := range v.Functions[0].Comments {
+					sw.Do("// $.$\n", comment)
+				}
+				sw.Do("$.funcName|raw$", targs)
+			} else {
+				// If the function to be wrapped has additional arguments, we need
+				// a "standard signature" validation function to wrap it.
+				sw.Do("func(", targs)
+				sw.Do("    ctx $.context.Context|raw$, ", targs)
+				sw.Do("    op $.operation.Operation|raw$, ", targs)
+				sw.Do("    fldPath *$.field.Path|raw$, ", targs)
+				sw.Do("    obj, oldObj $.objTypePfx$$.objType|raw$ ", targs)
+				sw.Do(") $.field.ErrorList|raw$ {\n", targs)
+				sw.Do("return ", nil)
+				emitFunctionCall(sw, c, v.Functions[0], "ctx", "op", "fldPath", "obj", "oldObj")
+				sw.Do("\n}", targs)
+			}
+		} else {
 			sw.Do("func(", targs)
 			sw.Do("    ctx $.context.Context|raw$, ", targs)
 			sw.Do("    op $.operation.Operation|raw$, ", targs)
 			sw.Do("    fldPath *$.field.Path|raw$, ", targs)
 			sw.Do("    obj, oldObj $.objTypePfx$$.objType|raw$ ", targs)
-			sw.Do(")    $.field.ErrorList|raw$ {\n", targs)
-			sw.Do("return ", nil)
-			emitFunctionCall(sw, c, v.Function, "ctx", "op", "fldPath", "obj", "oldObj")
-			sw.Do("\n}", targs)
+			sw.Do(") (errs $.field.ErrorList|raw$) {\n", targs)
+			buf := bytes.NewBuffer(nil)
+			bufsw := sw.Dup(buf)
+			emitCallsToValidators(c, v.Functions, bufsw)
+			if err := sw.Merge(buf, bufsw); err != nil {
+				panic(fmt.Sprintf("failed to merge buffer for WrapperFunction: %v", err))
+			}
+
+			sw.Do("return errs\n}", targs)
 		}
+
 	case validators.Literal:
 		sw.Do("$.$", v)
 	case validators.FunctionGen:
