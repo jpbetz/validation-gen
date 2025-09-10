@@ -9263,6 +9263,9 @@ func isRestartableInitContainer(initContainer *core.Container) bool {
 // handles setting strictValidation correctly. This is only for fields that use legacy IP
 // address validation; use validation.IsValidIP for new fields.
 func IsValidIPForLegacyField(fldPath *field.Path, value string, validOldIPs []string) field.ErrorList {
+	// TODO: once the StrictIPCIDRValidation gate is locked to on, this
+	// function can go away and callers can do their own ratchet check, then
+	// call validate.IP().
 	return validation.IsValidIPForLegacyField(fldPath, value, utilfeature.DefaultFeatureGate.Enabled(features.StrictIPCIDRValidation), validOldIPs)
 }
 

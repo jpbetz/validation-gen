@@ -51,7 +51,7 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 // Validate_IPStringType validates an instance of IPStringType according
 // to declarative validation rules in the API schema.
 func Validate_IPStringType(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *IPStringType) (errs field.ErrorList) {
-	errs = append(errs, validate.IPSloppy(ctx, op, fldPath, obj, oldObj)...)
+	errs = append(errs, validate.IP(ctx, op, fldPath, obj, oldObj)...)
 
 	return errs
 }
@@ -69,7 +69,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			errs = append(errs, validate.IPSloppy(ctx, op, fldPath, obj, oldObj)...)
+			errs = append(errs, validate.IP(ctx, op, fldPath, obj, oldObj)...)
 			return
 		}(fldPath.Child("ipField"), &obj.IPField, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.IPField }))...)
 
@@ -81,7 +81,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			errs = append(errs, validate.IPSloppy(ctx, op, fldPath, obj, oldObj)...)
+			errs = append(errs, validate.IP(ctx, op, fldPath, obj, oldObj)...)
 			return
 		}(fldPath.Child("ipPtrField"), obj.IPPtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.IPPtrField }))...)
 

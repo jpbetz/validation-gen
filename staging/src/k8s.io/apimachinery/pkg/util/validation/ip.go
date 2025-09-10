@@ -17,11 +17,14 @@ limitations under the License.
 package validation
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/netip"
 	"slices"
 
+	"k8s.io/apimachinery/pkg/api/operation"
+	"k8s.io/apimachinery/pkg/api/validate"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
 	netutils "k8s.io/utils/net"
@@ -79,6 +82,9 @@ func parseIP(fldPath *field.Path, value string, strictValidation bool) (net.IP, 
 // historically validated in this way, and strictValidation should be true unless the
 // StrictIPCIDRValidation feature gate is disabled. Use IsValidIP for parsing new fields.
 func IsValidIPForLegacyField(fldPath *field.Path, value string, strictValidation bool, validOldIPs []string) field.ErrorList {
+	// TODO: once the StrictIPCIDRValidation gate is locked to on, this can
+	// simply check the old value (or make callers do it) and call
+	// validate.IP().
 	if slices.Contains(validOldIPs, value) {
 		return nil
 	}
@@ -89,15 +95,7 @@ func IsValidIPForLegacyField(fldPath *field.Path, value string, strictValidation
 // IsValidIP tests that the argument is a valid IP address, according to current
 // Kubernetes standards for IP address validation.
 func IsValidIP(fldPath *field.Path, value string) field.ErrorList {
-	ip, allErrors := parseIP(fldPath, value, true)
-	if len(allErrors) != 0 {
-		return allErrors.WithOrigin("format=k8s-ip")
-	}
-
-	if value != ip.String() {
-		allErrors = append(allErrors, field.Invalid(fldPath, value, fmt.Sprintf("must be in canonical form (%q)", ip.String())))
-	}
-	return allErrors.WithOrigin("format=k8s-ip")
+	return validate.IP(context.Background(), operation.Operation{Type: operation.Create}, fldPath, &value, nil)
 }
 
 // GetWarningsForIP returns warnings for IP address values in non-standard forms. This

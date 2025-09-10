@@ -17,81 +17,63 @@ limitations under the License.
 package validate
 
 import (
-	"context"
-	"net"
 	"strings"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/api/operation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func TestIPSloppy(t *testing.T) {
-	is4 := func(ip net.IP) bool {
-		return ip != nil && ip.To4() != nil
-	}
-
-	is6 := func(ip net.IP) bool {
-		return ip != nil && ip.To4() == nil
-	}
-
+func TestIP(t *testing.T) {
 	for _, tc := range []struct {
-		name   string
-		in     string
-		family int
-		err    string
+		name string
+		in   string
+		err  string
 	}{
 		// Good values
 		{
-			name:   "ipv4",
-			in:     "1.2.3.4",
-			family: 4,
+			name: "ipv4",
+			in:   "1.2.3.4",
 		}, {
-			name:   "ipv4, all zeros",
-			in:     "0.0.0.0",
-			family: 4,
+			name: "ipv4, all zeros",
+			in:   "0.0.0.0",
 		}, {
-			name:   "ipv4, max",
-			in:     "255.255.255.255",
-			family: 4,
+			name: "ipv4, max",
+			in:   "255.255.255.255",
 		}, {
-			name:   "ipv6",
-			in:     "1234::abcd",
-			family: 6,
+			name: "ipv6",
+			in:   "1234::abcd",
 		}, {
-			name:   "ipv6, all zeros, collapsed",
-			in:     "::",
-			family: 6,
+			name: "ipv6, all zeros, collapsed",
+			in:   "::",
 		}, {
-			name:   "ipv6, max",
-			in:     "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-			family: 6,
+			name: "ipv6, max",
+			in:   "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 		},
 
-		// Good, though non-canonical, values
+		// Non-canonical values
 		{
-			name:   "ipv6, all zeros, expanded (non-canonical)",
-			in:     "0:0:0:0:0:0:0:0",
-			family: 6,
+			name: "ipv6, all zeros, expanded (non-canonical)",
+			in:   "0:0:0:0:0:0:0:0",
+			err:  "must be in canonical form",
 		}, {
-			name:   "ipv6, leading 0s (non-canonical)",
-			in:     "0001:002:03:4::",
-			family: 6,
+			name: "ipv6, leading 0s (non-canonical)",
+			in:   "0001:002:03:4::",
+			err:  "must be in canonical form",
 		}, {
-			name:   "ipv6, capital letters (non-canonical)",
-			in:     "1234::ABCD",
-			family: 6,
+			name: "ipv6, capital letters (non-canonical)",
+			in:   "1234::ABCD",
+			err:  "must be in canonical form",
 		},
 
-		// Questionable values that we accept
+		// Questionable values that we choose not to accept
 		{
-			name:   "ipv4 with leading 0s",
-			in:     "1.1.1.01",
-			family: 4,
+			name: "ipv4 with leading 0s",
+			in:   "1.1.1.01",
+			err:  "must not have leading 0s",
 		}, {
-			name:   "ipv4-in-ipv6 value",
-			in:     "::ffff:1.1.1.1",
-			family: 4,
+			name: "ipv4-in-ipv6 value",
+			in:   "::ffff:1.1.1.1",
+			err:  "must not be an IPv4-mapped IPv6 address",
 		},
 
 		// Bad values
@@ -142,7 +124,7 @@ func TestIPSloppy(t *testing.T) {
 		}, {
 			name: "ipv6 with zone",
 			in:   "1234::abcd%eth0",
-			err:  "must be a valid IP address",
+			err:  "must not include an IPv6 zone",
 		}, {
 			name: "ipv4 with zone",
 			in:   "169.254.0.0%eth0",
@@ -151,17 +133,13 @@ func TestIPSloppy(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			in := tc.in
-			ip, errs := ipSloppy(context.Background(), operation.Operation{}, field.NewPath(""), &in, nil)
+			errs := ipstr(field.NewPath("ip"), in)
 			if tc.err == "" {
 				if len(errs) != 0 {
 					t.Errorf("%q: expected valid, got: %v", tc.in, errs)
 				}
-				if tc.family == 4 && !is4(ip) {
-					t.Errorf("%q expected IPv4", tc.in)
-				}
-				if tc.family == 6 && !is6(ip) {
-					t.Errorf("%q expected IPv6", tc.in)
-				}
+			} else if len(errs) == 0 {
+				t.Errorf("%q expected error to contain %q but got no error", tc.in, tc.err)
 			} else {
 				if len(errs) > 1 {
 					t.Errorf("%q: got multiple errors: %v", tc.in, errs)
