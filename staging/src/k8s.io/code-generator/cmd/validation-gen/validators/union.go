@@ -206,11 +206,6 @@ type unionMember struct {
 	discriminatorValue string
 }
 
-type unionMember struct {
-	fieldName          string
-	discriminatorValue string
-}
-
 // unions represents all the unions for a go struct.
 type unions map[string]*union
 

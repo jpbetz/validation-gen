@@ -49,12 +49,13 @@ func (formatTagValidator) ValidScopes() sets.Set[Scope] {
 
 var (
 	// Keep this list alphabetized.
-	ipSloppyValidator   = types.Name{Package: libValidationPkg, Name: "IPSloppy"}
-	labelKeyValidator   = types.Name{Package: libValidationPkg, Name: "LabelKey"}
-	labelValueValidator = types.Name{Package: libValidationPkg, Name: "LabelValue"}
-	longNameValidator   = types.Name{Package: libValidationPkg, Name: "LongName"}
-	shortNameValidator  = types.Name{Package: libValidationPkg, Name: "ShortName"}
-	uuidValidator       = types.Name{Package: libValidationPkg, Name: "UUID"}
+	ipSloppyValidator         = types.Name{Package: libValidationPkg, Name: "IPSloppy"}
+	labelKeyValidator         = types.Name{Package: libValidationPkg, Name: "LabelKey"}
+	labelValueValidator       = types.Name{Package: libValidationPkg, Name: "LabelValue"}
+	longNameCaselessValidator = types.Name{Package: libValidationPkg, Name: "LongNameCaseless"}
+	longNameValidator         = types.Name{Package: libValidationPkg, Name: "LongName"}
+	shortNameValidator        = types.Name{Package: libValidationPkg, Name: "ShortName"}
+	uuidValidator             = types.Name{Package: libValidationPkg, Name: "UUID"}
 )
 
 func (formatTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
@@ -89,6 +90,8 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 		return Function(formatTagName, DefaultFlags, labelValueValidator), nil
 	case "k8s-long-name":
 		return Function(formatTagName, DefaultFlags, longNameValidator), nil
+	case "k8s-long-name-caseless":
+		return Function(formatTagName, DefaultFlags, longNameCaselessValidator), nil
 	case "k8s-short-name":
 		return Function(formatTagName, DefaultFlags, shortNameValidator), nil
 	case "k8s-uuid":
@@ -108,15 +111,6 @@ func (ftv formatTagValidator) Docs() TagDoc {
 		Payloads: []TagPayloadDoc{{ // Keep this list alphabetized.
 			Description: "k8s-ip",
 			Docs:        "This field holds an IPv4 or IPv6 address value. IPv4 octets may have leading zeros.",
-		}, {
-			Description: "k8s-label-key",
-			Docs:        "This field holds a Kubernetes label key.",
-		}, {
-			Description: "k8s-label-value",
-			Docs:        "This field holds a Kubernetes label value.",
-		}, {
-			Description: "k8s-long-name",
-			Docs:        "This field holds a Kubernetes \"long name\", aka a \"DNS subdomain\" value.",
 		}, {
 			Description: "k8s-label-key",
 			Docs:        "This field holds a Kubernetes label key.",

@@ -52,9 +52,11 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 // Validate_ConflictingItemList validates an instance of ConflictingItemList according
 // to declarative validation rules in the API schema.
 func Validate_ConflictingItemList(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj ConflictingItemList) (errs field.ErrorList) {
-	errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
-		return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ConflictingItems[id=target] from typedef")
-	})...)
+	func() { // cohort {"id": "target"}
+		errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
+			return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ConflictingItems[id=target] from typedef")
+		})...)
+	}()
 
 	return errs
 }
@@ -153,9 +155,11 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
-				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ConflictingItems[id=target] from field")
-			})...)
+			func() { // cohort {"id": "target"}
+				errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ConflictingItems[id=target] from field")
+				})...)
+			}()
 			// call the type's validation function
 			errs = append(errs, Validate_ConflictingItemList(ctx, op, fldPath, obj, oldObj)...)
 			return

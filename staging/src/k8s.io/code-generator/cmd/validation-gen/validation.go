@@ -391,7 +391,7 @@ func (td *typeDiscoverer) discoverType(t *types.Type, fldPath *field.Path) (*typ
 		if fldPath.String() != t.String() {
 			panic(fmt.Sprintf("path for type != the type name: %s, %s", t.String(), fldPath.String()))
 		}
-		consts := td.constantsByType[t]
+		consts, _ := td.constantsByType[t]
 		context := validators.Context{
 			Scope:      validators.ScopeType,
 			Type:       t,
@@ -1385,91 +1385,9 @@ func sortIntoCohorts(in []validators.FunctionGen) [][]validators.FunctionGen {
 				later = append(later, fg)
 			}
 		}
-		result := sooner
-		result = append(result, later...)
-		return result
-	}
-
-	validations = sort(validations)
-
-	for _, v := range validations {
-		isShortCircuit := v.Flags.IsSet(validators.ShortCircuit)
-		isNonError := v.Flags.IsSet(validators.NonError)
-
-		targs := generator.Args{
-			"funcName": c.Universe.Type(v.Function),
-			"field":    mkSymbolArgs(c, fieldPkgSymbols),
-		}
-
-		emitCall := func() {
-			sw.Do("$.funcName|raw$", targs)
-			if typeArgs := v.TypeArgs; len(typeArgs) > 0 {
-				sw.Do("[", nil)
-				for i, typeArg := range typeArgs {
-					sw.Do("$.|raw$", c.Universe.Type(typeArg))
-					if i < len(typeArgs)-1 {
-						sw.Do(",", nil)
-					}
-				}
-				sw.Do("]", nil)
-			}
-			sw.Do("(ctx, op, fldPath, obj, oldObj", targs)
-			for _, arg := range v.Args {
-				sw.Do(", ", nil)
-				toGolangSourceDataLiteral(sw, emitterContext{Context: c}, arg)
-			}
-			sw.Do(")", targs)
-		}
-
-		// If validation is conditional, wrap the validation function with a conditions check.
-		if !v.Conditions.Empty() {
-			emitBaseFunction := emitCall
-			emitCall = func() {
-				sw.Do("func() $.field.ErrorList|raw$ {\n", targs)
-				sw.Do("  if ", nil)
-				firstCondition := true
-				if len(v.Conditions.OptionEnabled) > 0 {
-					sw.Do("op.HasOption($.$)", strconv.Quote(v.Conditions.OptionEnabled))
-					firstCondition = false
-				}
-				if len(v.Conditions.OptionDisabled) > 0 {
-					if !firstCondition {
-						sw.Do(" && ", nil)
-					}
-					sw.Do("!op.HasOption($.$)", strconv.Quote(v.Conditions.OptionDisabled))
-				}
-				sw.Do(" {\n", nil)
-				sw.Do("    return ", nil)
-				emitBaseFunction()
-				sw.Do("\n", nil)
-				sw.Do("  } else {\n", nil)
-				sw.Do("    return nil // skip validation\n", nil)
-				sw.Do("  }\n", nil)
-				sw.Do("}()", nil)
-			}
-		}
-
-		for _, comment := range v.Comments {
-			sw.Do("// $.$\n", comment)
-		}
-		if isShortCircuit {
-			sw.Do("if e := ", nil)
-			emitCall()
-			sw.Do("; len(e) != 0 {\n", nil)
-			if !isNonError {
-				sw.Do("errs = append(errs, e...)\n", nil)
-			}
-			sw.Do("    return // do not proceed\n", nil)
-			sw.Do("}\n", nil)
-		} else {
-			if isNonError {
-				emitCall()
-			} else {
-				sw.Do("errs = append(errs, ", nil)
-				emitCall()
-				sw.Do("...)\n", nil)
-			}
-		}
+		sorted := sooner
+		sorted = append(sorted, later...)
+		result = append(result, sorted)
 	}
 	return result
 }
