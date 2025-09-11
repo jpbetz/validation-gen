@@ -29,10 +29,20 @@ import (
 	"k8s.io/kubernetes/pkg/features"
 )
 
-func TestDeclarativeValidateForDeclarative(t *testing.T) {
+var apiVersions = []string{"v1beta1", "v1beta2", "v1"} // "v1alpha3" is excluded because it doesn't have ResourceClaim
+
+func TestDeclarativeValidate(t *testing.T) {
+	for _, apiVersion := range apiVersions {
+		t.Run(apiVersion, func(t *testing.T) {
+			testDeclarativeValidate(t, apiVersion)
+		})
+	}
+}
+
+func testDeclarativeValidate(t *testing.T, apiVersion string) {
 	ctx := genericapirequest.WithRequestInfo(genericapirequest.NewDefaultContext(), &genericapirequest.RequestInfo{
 		APIGroup:   "resource.k8s.io",
-		APIVersion: "v1",
+		APIVersion: apiVersion,
 		Resource:   "resourceclaims",
 	})
 	fakeClient := fake.NewSimpleClientset()
@@ -70,10 +80,18 @@ func TestDeclarativeValidateForDeclarative(t *testing.T) {
 	}
 }
 
-func TestDeclarativeValidateUpdateForDeclarative(t *testing.T) {
+func TestDeclarativeValidateUpdate(t *testing.T) {
+	for _, apiVersion := range apiVersions {
+		t.Run(apiVersion, func(t *testing.T) {
+			testDeclarativeValidateUpdate(t, apiVersion)
+		})
+	}
+}
+
+func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 	ctx := genericapirequest.WithRequestInfo(genericapirequest.NewDefaultContext(), &genericapirequest.RequestInfo{
 		APIGroup:   "resource.k8s.io",
-		APIVersion: "v1",
+		APIVersion: apiVersion,
 		Resource:   "resourceclaims",
 	})
 	fakeClient := fake.NewSimpleClientset()
