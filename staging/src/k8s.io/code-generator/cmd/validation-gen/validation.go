@@ -1490,6 +1490,9 @@ func toGolangSourceDataLiteral(sw *generator.SnippetWriter, c *generator.Context
 				sw.Do("    fldPath *$.field.Path|raw$, ", targs)
 				sw.Do("    obj, oldObj $.objTypePfx$$.objType|raw$ ", targs)
 				sw.Do(") $.field.ErrorList|raw$ {\n", targs)
+				for _, comment := range v.Functions[0].Comments {
+					sw.Do("// $.$\n", comment)
+				}
 				sw.Do("return ", nil)
 				emitFunctionCall(sw, c, v.Functions[0], "ctx", "op", "fldPath", "obj", "oldObj")
 				sw.Do("\n}", targs)
