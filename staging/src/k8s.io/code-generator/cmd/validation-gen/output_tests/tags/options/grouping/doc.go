@@ -38,6 +38,15 @@ type Struct struct {
 	// +k8s:ifDisabled(FeatureA)=+k8s:validateFalse="field Struct.PrimitiveField disabled validation 2"
 	// +k8s:ifEnabled(FeatureB)=+k8s:validateFalse="field Struct.PrimitiveField feature B"
 	PrimitiveField string `json:"primitiveField"`
+
+	// +k8s:ifEnabled(FeatureX)=+k8s:listType=atomic
+	// +k8s:ifEnabled(FeatureX)=+k8s:listMapKey=key
+	// +k8s:ifEnabled(FeatureX)=+k8s:unique=map
+	// +k8s:ifEnabled(FeatureX)=+k8s:relaxUnique
+	// +k8s:ifDisabled(FeatureX)=+k8s:listType=atomic
+	// +k8s:ifDisabled(FeatureX)=+k8s:listMapKey=key
+	// +k8s:ifDisabled(FeatureX)=+k8s:unique=map
+	XEnabledListRelaxUniqueField []Item `json:"listRelaxUniqueField"`
 }
 
 type Item struct {

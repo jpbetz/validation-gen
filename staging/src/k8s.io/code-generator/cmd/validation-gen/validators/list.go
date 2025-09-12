@@ -27,9 +27,10 @@ import (
 )
 
 const (
-	listTypeTagName   = "k8s:listType"
-	ListMapKeyTagName = "k8s:listMapKey"
-	uniqueTagName     = "k8s:unique"
+	listTypeTagName    = "k8s:listType"
+	ListMapKeyTagName  = "k8s:listMapKey"
+	uniqueTagName      = "k8s:unique"
+	relaxUniqueTagName = "k8s:relaxUnique"
 )
 
 // globalListMeta is shared between list-related validators.
@@ -40,6 +41,7 @@ func init() {
 	RegisterTagValidator(listTypeTagValidator{byPath: globalListMeta})
 	RegisterTagValidator(listMapKeyTagValidator{byPath: globalListMeta})
 	RegisterTagValidator(uniqueTagValidator{byPath: globalListMeta})
+	RegisterTagValidator(relaxUniqueTagValidator{byPath: globalListMeta})
 
 	// Finish work on the accumulated list metadata.
 	RegisterFieldValidator(listValidator{byPath: globalListMeta})
@@ -70,6 +72,8 @@ type listMetadata struct {
 	semantic  listSemantic
 	keyFields []string // For semantic == map.
 	keyNames  []string // For semantic == map.
+
+	relaxUnique bool
 }
 
 // makeListMapMatchFunc generates a function that compares two list-map
@@ -308,6 +312,49 @@ func (utv uniqueTagValidator) Docs() TagDoc {
 	return doc
 }
 
+type relaxUniqueTagValidator struct {
+	byPath map[string]*listMetadata
+}
+
+func (relaxUniqueTagValidator) Init(Config) {}
+
+func (relaxUniqueTagValidator) TagName() string {
+	return relaxUniqueTagName
+}
+
+func (relaxUniqueTagValidator) ValidScopes() sets.Set[Scope] {
+	return listTagsValidScopes
+}
+
+func (rutv relaxUniqueTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
+	// NOTE: pointers to lists are not supported, so we should never see a pointer here.
+	t := util.NativeType(context.Type)
+	if t.Kind != types.Slice && t.Kind != types.Array {
+		return Validations{}, fmt.Errorf("can only be used on list types (%s)", t.Kind)
+	}
+
+	lm := rutv.byPath[context.Path.String()]
+	if lm == nil {
+		lm = &listMetadata{}
+		rutv.byPath[context.Path.String()] = lm
+	}
+
+	lm.relaxUnique = true
+
+	// This tag doesn't generate any validations.  It just accumulates
+	// information for other tags to use.
+	return Validations{}, nil
+}
+
+func (rutv relaxUniqueTagValidator) Docs() TagDoc {
+	doc := TagDoc{
+		Tag:         rutv.TagName(),
+		Scopes:      rutv.ValidScopes().UnsortedList(),
+		Description: "Declares that a list field's elements are unique. This tag can be used with listType=atomic to add uniqueness constraints, or independently to specify uniqueness semantics.",
+	}
+	return doc
+}
+
 type listValidator struct {
 	byPath map[string]*listMetadata
 }
@@ -320,6 +367,7 @@ func (listValidator) Name() string {
 
 var (
 	validateUnique            = types.Name{Package: libValidationPkg, Name: "Unique"}
+	validateRelaxUnique       = types.Name{Package: libValidationPkg, Name: "RelaxUnique"}
 	validateSemanticDeepEqual = types.Name{Package: libValidationPkg, Name: "SemanticDeepEqual"}
 	validateDirectEqual       = types.Name{Package: libValidationPkg, Name: "DirectEqual"}
 )
@@ -377,7 +425,11 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 			matchArg = validateDirectEqual
 		}
 		comment := "lists with set semantics require unique values"
-		f := Function("listValidator", DefaultFlags, validateUnique, Identifier(matchArg)).
+		uniqueFunc := validateUnique
+		if lm.relaxUnique {
+			uniqueFunc = validateRelaxUnique
+		}
+		f := Function("listValidator", DefaultFlags, uniqueFunc, Identifier(matchArg)).
 			WithComment(comment)
 		result.AddFunction(f)
 	}
@@ -392,8 +444,11 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 		// is also not able to handle these well.
 		matchArg := lm.makeListMapMatchFunc(nt.Elem)
 		comment := "lists with map semantics require unique keys"
-
-		f := Function("listValidator", DefaultFlags, validateUnique, matchArg).
+		uniqueFunc := validateUnique
+		if lm.relaxUnique {
+			uniqueFunc = validateRelaxUnique
+		}
+		f := Function("listValidator", DefaultFlags, uniqueFunc, matchArg).
 			WithComment(comment)
 		result.AddFunction(f)
 	}

@@ -92,5 +92,22 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			return
 		}(fldPath.Child("primitiveField"), &obj.PrimitiveField, safe.Field(oldObj, func(oldObj *Struct) *string { return &oldObj.PrimitiveField }))...)
 
+	// field Struct.XEnabledListRelaxUniqueField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj []Item) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil
+			}
+			// call field-attached validations
+			errs = append(errs, validate.IfOption(ctx, op, fldPath, obj, oldObj, "FeatureX", false, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []Item) field.ErrorList {
+				return validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })
+			})...)
+			errs = append(errs, validate.IfOption(ctx, op, fldPath, obj, oldObj, "FeatureX", true, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []Item) field.ErrorList {
+				return validate.RelaxUnique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })
+			})...)
+			return
+		}(fldPath.Child("listRelaxUniqueField"), obj.XEnabledListRelaxUniqueField, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.XEnabledListRelaxUniqueField }))...)
+
 	return errs
 }

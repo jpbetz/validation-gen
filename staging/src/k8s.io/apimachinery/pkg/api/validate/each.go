@@ -152,6 +152,69 @@ func Unique[T any](_ context.Context, _ operation.Operation, fldPath *field.Path
 	return errs
 }
 
+func RelaxUnique[T any](_ context.Context, op operation.Operation, fldPath *field.Path, newSlice, oldSlice []T, match MatchFunc[T]) field.ErrorList {
+	var dupsOld []int
+	for i, val := range oldSlice {
+		for j := i + 1; j < len(oldSlice); j++ {
+			other := oldSlice[j]
+			if match(val, other) {
+				if dupsOld == nil {
+					dupsOld = make([]int, 0, len(newSlice))
+				}
+				if lookup(dupsOld, j, func(a, b int) bool { return a == b }) == nil {
+					dupsOld = append(dupsOld, j)
+				}
+			}
+		}
+	}
+
+	var errsOld field.ErrorList
+	sort.Ints(dupsOld)
+	for _, i := range dupsOld {
+		var val any = oldSlice[i]
+		// TODO: we don't want the whole item to be logged in the error, just
+		// the key(s). Unfortunately, the way errors are rendered, it comes out
+		// as something like "map[string]any{...}" which is not very nice. Once
+		// that is fixed, we can consider adding a way for this function to
+		// specify that just the keys should be rendered in the error.
+		errsOld = append(errsOld, field.Duplicate(fldPath.Index(i), val))
+	}
+	if op.Type == operation.Update && len(errsOld) > 0 {
+		// In update operation, if there are duplicates, we will ignore the duplicates error
+		// and only report other validation errors.
+		return nil
+	}
+
+	var dups []int
+	for i, val := range newSlice {
+		for j := i + 1; j < len(newSlice); j++ {
+			other := newSlice[j]
+			if match(val, other) {
+				if dups == nil {
+					dups = make([]int, 0, len(newSlice))
+				}
+				if lookup(dups, j, func(a, b int) bool { return a == b }) == nil {
+					dups = append(dups, j)
+				}
+			}
+		}
+	}
+
+	var errs field.ErrorList
+	sort.Ints(dups)
+	for _, i := range dups {
+		var val any = newSlice[i]
+		// TODO: we don't want the whole item to be logged in the error, just
+		// the key(s). Unfortunately, the way errors are rendered, it comes out
+		// as something like "map[string]any{...}" which is not very nice. Once
+		// that is fixed, we can consider adding a way for this function to
+		// specify that just the keys should be rendered in the error.
+		errs = append(errs, field.Duplicate(fldPath.Index(i), val))
+	}
+
+	return errs
+}
+
 // SemanticDeepEqual is a MatchFunc that uses equality.Semantic.DeepEqual to
 // compare two values.
 // This wrapper is needed because MatchFunc requires a function that takes two
