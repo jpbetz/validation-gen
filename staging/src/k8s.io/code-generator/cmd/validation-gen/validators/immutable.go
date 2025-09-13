@@ -18,6 +18,7 @@ package validators
 
 import (
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/code-generator/cmd/validation-gen/util"
 	"k8s.io/gengo/v2/codetags"
 	"k8s.io/gengo/v2/types"
 )
@@ -46,13 +47,27 @@ func (immutableTagValidator) ValidScopes() sets.Set[Scope] {
 
 var (
 	immutableValidator = types.Name{Package: libValidationPkg, Name: "Immutable"}
+	immutableCompareValidator = types.Name{Package: libValidationPkg, Name: "ImmutableComparable"}
+	immutableReflectValidator = types.Name{Package: libValidationPkg, Name: "ImmutableReflect"}
 )
 
 func (immutableTagValidator) GetValidations(context Context, _ codetags.Tag) (Validations, error) {
 	var result Validations
 
-	// Use ShortCircuit flag so immutable runs in the same group as +k8s:optional.
-	result.AddFunction(Function(immutableTagName, ShortCircuit, immutableValidator))
+	if util.IsDirectComparable(util.NonPointer(util.NativeType(context.Type))) {
+		// This is a minor optimization to just compare primitive values when
+		// possible. Slices and maps are not comparable, and structs might hold
+		// pointer fields, which are directly comparable but not what we need.
+		//
+		// Note: This compares the pointee, not the pointer itself.
+
+		// Use ShortCircuit flag so immutable runs in the same group as +k8s:optional
+		result.AddFunction(Function(immutableTagName, ShortCircuit, immutableCompareValidator))
+	} else {
+		// Use ShortCircuit flag so immutable runs in the same group as +k8s:optional
+		result.AddFunction(Function(immutableTagName, ShortCircuit, immutableReflectValidator))
+	}
+
 	return result, nil
 }
 

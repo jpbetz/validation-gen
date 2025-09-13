@@ -19,6 +19,7 @@ package validate
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/operation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -36,5 +37,29 @@ func Immutable[T any](_ context.Context, op operation.Operation, fldPath *field.
 	}
 	return field.ErrorList{
 		field.Invalid(fldPath, nil, "field is immutable").WithOrigin("immutable"),
+	}
+}
+
+func ImmutableComparable[T comparable](_ context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj T) field.ErrorList {
+	if op.Type != operation.Update {
+		return nil
+	}
+	if obj == oldObj {
+		return nil
+	}
+	return field.ErrorList{
+		field.Invalid(fldPath, nil, "field is immutable"),
+	}
+}
+
+func ImmutableReflect[T any](_ context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj T) field.ErrorList {
+	if op.Type != operation.Update {
+		return nil
+	}
+	if equality.Semantic.DeepEqual(obj, oldObj) {
+		return nil
+	}
+	return field.ErrorList{
+		field.Invalid(fldPath, nil, "field is immutable"),
 	}
 }
