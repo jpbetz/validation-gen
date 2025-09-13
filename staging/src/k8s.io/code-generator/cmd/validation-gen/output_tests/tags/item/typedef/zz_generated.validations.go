@@ -77,7 +77,14 @@ func Validate_DualItemList(ctx context.Context, op operation.Operation, fldPath 
 // to declarative validation rules in the API schema.
 func Validate_ItemList(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj ItemList) (errs field.ErrorList) {
 	func() { // cohort {"key": "immutable"}
-		errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key == "immutable" }, validate.DirectEqual, validate.ImmutableByCompare)...)
+		earlyReturn := false
+		if e := validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key == "immutable" }, validate.DirectEqual, validate.ImmutableByCompare); len(e) != 0 {
+			errs = append(errs, e...)
+			earlyReturn = true
+		}
+		if earlyReturn {
+			return // do not proceed
+		}
 	}()
 	func() { // cohort {"key": "validated"}
 		errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key == "validated" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
