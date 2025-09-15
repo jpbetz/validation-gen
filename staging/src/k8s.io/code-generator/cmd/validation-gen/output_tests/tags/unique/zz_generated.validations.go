@@ -110,6 +110,11 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []string) (errs field.ErrorList) {
 			// Uniqueness validation is implemented via custom, handwritten validation
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil
+			}
+			// call field-attached validations
 			return
 		}(fldPath.Child("customUniqueListWithTypeSet"), obj.CustomUniqueListWithTypeSet, safe.Field(oldObj, func(oldObj *Struct) []string { return oldObj.CustomUniqueListWithTypeSet }))...)
 
@@ -117,6 +122,11 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []Item) (errs field.ErrorList) {
 			// Uniqueness validation is implemented via custom, handwritten validation
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil
+			}
+			// call field-attached validations
 			return
 		}(fldPath.Child("customUniqueListWithTypeMap"), obj.CustomUniqueListWithTypeMap, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.CustomUniqueListWithTypeMap }))...)
 

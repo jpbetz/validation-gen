@@ -102,11 +102,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.StringField")...)
@@ -121,11 +117,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.StringPtrField")...)
@@ -140,11 +132,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.StringTypedefField")...)
@@ -161,11 +149,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.StringTypedefPtrField")...)
@@ -182,11 +166,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.IntField")...)
@@ -201,11 +181,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.IntPtrField")...)
@@ -220,11 +196,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.IntTypedefField")...)
@@ -241,11 +213,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.IntTypedefPtrField")...)
@@ -262,11 +230,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.OtherStructPtrField")...)
@@ -283,11 +247,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalSlice(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.SliceField")...)
@@ -302,11 +262,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalSlice(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.SliceTypedefField")...)
@@ -323,11 +279,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalMap(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.MapField")...)
@@ -342,11 +294,7 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.OptionalMap(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field Struct.MapTypedefField")...)

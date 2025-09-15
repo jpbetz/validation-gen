@@ -1105,12 +1105,10 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 			fldRatchetingChecked := false
 			if !validations.Empty() {
 				emitComments(validations.Comments, bufsw)
-				if len(validations.Functions) > 0 {
-					emitRatchetingCheck(c, fld.childType, bufsw)
-					fldRatchetingChecked = true
-					bufsw.Do("// call field-attached validations\n", nil)
-					emitCallsToValidators(c, validations.Functions, bufsw)
-				}
+				emitRatchetingCheck(c, fld.childType, bufsw)
+				fldRatchetingChecked = true
+				bufsw.Do("// call field-attached validations\n", nil)
+				emitCallsToValidators(c, validations.Functions, bufsw)
 			}
 
 			// If the node is nil, this must be a type in a package we are not
@@ -1134,14 +1132,11 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 					// validations, call its validation function.
 					if validations := fld.fieldValIterations; g.hasValidations(fld.node.elem.node) && !validations.Empty() {
 						emitComments(validations.Comments, bufsw)
-						if len(validations.Functions) > 0 {
-							if !fldRatchetingChecked {
-								emitRatchetingCheck(c, fld.childType, bufsw)
-								fldRatchetingChecked = true
-							}
-							emitCallsToValidators(c, validations.Functions, bufsw)
+						if !fldRatchetingChecked {
+							emitRatchetingCheck(c, fld.childType, bufsw)
+							fldRatchetingChecked = true
 						}
-
+						emitCallsToValidators(c, validations.Functions, bufsw)
 					}
 					// Descend into this field.
 					g.emitValidationForChild(c, fld, bufsw)
@@ -1150,25 +1145,21 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 					// validations, call its validation function.
 					if validations := fld.fieldKeyIterations; g.hasValidations(fld.node.key.node) && !validations.Empty() {
 						emitComments(validations.Comments, bufsw)
-						if len(validations.Functions) > 0 {
-							if !fldRatchetingChecked {
-								emitRatchetingCheck(c, fld.childType, bufsw)
-								fldRatchetingChecked = true
-							}
-							emitCallsToValidators(c, validations.Functions, bufsw)
+						if !fldRatchetingChecked {
+							emitRatchetingCheck(c, fld.childType, bufsw)
+							fldRatchetingChecked = true
 						}
+						emitCallsToValidators(c, validations.Functions, bufsw)
 					}
 					// If this field is a map and the value-type has
 					// validations, call its validation function.
 					if validations := fld.fieldValIterations; g.hasValidations(fld.node.elem.node) && !validations.Empty() {
 						emitComments(validations.Comments, bufsw)
-						if len(validations.Functions) > 0 {
-							if !fldRatchetingChecked {
-								emitRatchetingCheck(c, fld.childType, bufsw)
-								fldRatchetingChecked = true
-							}
-							emitCallsToValidators(c, validations.Functions, bufsw)
+						if !fldRatchetingChecked {
+							emitRatchetingCheck(c, fld.childType, bufsw)
+							fldRatchetingChecked = true
 						}
+						emitCallsToValidators(c, validations.Functions, bufsw)
 					}
 					// Descend into this field.
 					g.emitValidationForChild(c, fld, bufsw)
@@ -1290,21 +1281,7 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 		if cohortName != "" {
 			sw.Do("func() { // cohort $.$\n", cohortName)
 		}
-
-		hasShortCircuits := false
-		lastShortCircuitIdx := -1
-		for i, v := range validations {
-			if v.Flags.IsSet(validators.ShortCircuit) {
-				hasShortCircuits = true
-				lastShortCircuitIdx = i
-			}
-		}
-
-		if hasShortCircuits {
-			sw.Do("earlyReturn := false\n", nil)
-		}
-
-		for i, v := range validations {
+		for _, v := range validations {
 			isShortCircuit := v.Flags.IsSet(validators.ShortCircuit)
 			isNonError := v.Flags.IsSet(validators.NonError)
 
@@ -1341,17 +1318,10 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 				emitCall()
 				sw.Do("; len(e) != 0 {\n", nil)
 				if !isNonError {
-					sw.Do("  errs = append(errs, e...)\n", nil)
+					sw.Do("errs = append(errs, e...)\n", nil)
 				}
-				sw.Do("  earlyReturn = true\n", nil)
+				sw.Do("    return // do not proceed\n", nil)
 				sw.Do("}\n", nil)
-
-				// Check for early return ONLY after the LAST short-circuit
-				if hasShortCircuits && i == lastShortCircuitIdx {
-					sw.Do("if earlyReturn {\n", nil)
-					sw.Do("  return // do not proceed\n", nil)
-					sw.Do("}\n", nil)
-				}
 			} else {
 				if isNonError {
 					emitCall()
