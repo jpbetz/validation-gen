@@ -64,7 +64,7 @@ func Test(t *testing.T) {
 	st.Value(&structA).OldValue(&structA2).ExpectValid()
 	st.Value(&structA2).OldValue(&structA).ExpectValid()
 
-	st.Value(&structA).OldValue(&structB).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
+	st.Value(&structA).OldValue(&structB).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Forbidden(field.NewPath("stringField"), "").WithOrigin("immutable"),
 		field.Forbidden(field.NewPath("stringPtrField"), "").WithOrigin("immutable"),
 		field.Forbidden(field.NewPath("structField"), "").WithOrigin("immutable"),

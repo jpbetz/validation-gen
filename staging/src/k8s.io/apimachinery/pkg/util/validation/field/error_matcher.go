@@ -33,10 +33,11 @@ type ErrorMatcher struct {
 	matchField bool
 	// TODO(thockin): consider whether value could be assumed - if the
 	// "want" error has a nil value, don't match on value.
-	matchValue               bool
-	matchOrigin              bool
-	matchDetail              func(want, got string) bool
-	requireOriginWhenInvalid bool
+	matchValue                bool
+	matchOrigin               bool
+	matchDetail               func(want, got string) bool
+	requireOriginWhenInvalid  bool
+	matchCoveredByDeclarative bool
 }
 
 // Matches returns true if the two Error objects match according to the
@@ -64,6 +65,10 @@ func (m ErrorMatcher) Matches(want, got *Error) bool {
 	if m.matchDetail != nil && !m.matchDetail(want.Detail, got.Detail) {
 		return false
 	}
+	if m.matchCoveredByDeclarative && want.CoveredByDeclarative != got.CoveredByDeclarative {
+		return false
+	}
+
 	return true
 }
 
@@ -110,6 +115,10 @@ func (m ErrorMatcher) Render(e *Error) string {
 		comma()
 		buf.WriteString(fmt.Sprintf("Detail=%q", e.Detail))
 	}
+	if m.matchCoveredByDeclarative {
+		comma()
+		buf.WriteString(fmt.Sprintf("CoveredByDeclarative=%t", e.CoveredByDeclarative))
+	}
 	return "{" + buf.String() + "}"
 }
 
@@ -147,6 +156,13 @@ func (m ErrorMatcher) ByValue() ErrorMatcher {
 // errors might be returned, or in what order, or with what wording.
 func (m ErrorMatcher) ByOrigin() ErrorMatcher {
 	m.matchOrigin = true
+	return m
+}
+
+// ByCoveredByDeclarative returns a derived ErrorMatcher which also matches by the CoveredByDeclarative
+// value of field errors.
+func (m ErrorMatcher) ByCoveredByDeclarative() ErrorMatcher {
+	m.matchCoveredByDeclarative = true
 	return m
 }
 

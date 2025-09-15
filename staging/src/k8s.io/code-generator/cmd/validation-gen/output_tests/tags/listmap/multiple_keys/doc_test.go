@@ -105,7 +105,7 @@ func TestUpdateCorrelation(t *testing.T) {
 
 	st.Value(&structA2).OldValue(&structA1).ExpectValid()
 
-	st.Value(&structA1).OldValue(&structB).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	st.Value(&structA1).OldValue(&structB).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Forbidden(field.NewPath("listField").Index(0), "immutable").WithOrigin("immutable"),
 		field.Forbidden(field.NewPath("listField").Index(1), "immutable").WithOrigin("immutable"),
 		field.Forbidden(field.NewPath("listTypedefField").Index(0), "immutable").WithOrigin("immutable"),
@@ -114,7 +114,7 @@ func TestUpdateCorrelation(t *testing.T) {
 		field.Forbidden(field.NewPath("typedefField").Index(1), "immutable").WithOrigin("immutable"),
 	})
 
-	st.Value(&structB).OldValue(&structA1).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	st.Value(&structB).OldValue(&structA1).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Forbidden(field.NewPath("listField").Index(0), "immutable").WithOrigin("immutable"),
 		field.Forbidden(field.NewPath("listField").Index(1), "immutable").WithOrigin("immutable"),
 		field.Forbidden(field.NewPath("listField").Index(2), "immutable").WithOrigin("immutable"),

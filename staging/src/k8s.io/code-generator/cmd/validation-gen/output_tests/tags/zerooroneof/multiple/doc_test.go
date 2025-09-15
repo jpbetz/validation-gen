@@ -37,18 +37,18 @@ func Test(t *testing.T) {
 	st.Value(&Struct{U2M2: &M2{}}).ExpectValid()
 
 	// Multiple members in one union
-	st.Value(&Struct{U1M1: &M1{}, U1M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	st.Value(&Struct{U1M1: &M1{}, U1M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify at most one of").WithOrigin("zeroOrOneOf"),
 	})
 
-	st.Value(&Struct{U2M1: &M1{}, U2M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	st.Value(&Struct{U2M1: &M1{}, U2M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify at most one of").WithOrigin("zeroOrOneOf"),
 	})
 
 	st.Value(&Struct{
 		U1M1: &M1{}, U1M2: &M2{},
 		U2M1: &M1{}, U2M2: &M2{},
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify at most one of").WithOrigin("zeroOrOneOf"),
 	})
 

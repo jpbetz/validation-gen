@@ -51,9 +51,14 @@ type Error struct {
 	// can still identify the unique source of the error.
 	Origin string
 
-	// CoveredByDeclarative is true when this error is covered by declarative
-	// validation. This field is to identify errors from imperative validation
-	// that should also be caught by declarative validation.
+	// CoveredByDeclarative indicates whether an error is related to declarative validation.
+	// This field has a dual meaning depending on the source of the error:
+	//  - For errors from imperative validation: true means the validation is also
+	//    covered by a declarative validation.
+	//  - For errors from declarative validation: true means the validation is
+	//    *only* declarative and has no imperative equivalent.
+	// This allows for filtering of validation errors to identify mirrored validations
+	// or declarative-only validations.
 	CoveredByDeclarative bool
 }
 

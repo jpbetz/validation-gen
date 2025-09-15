@@ -25,19 +25,19 @@ import (
 func Test(t *testing.T) {
 	st := localSchemeBuilder.Test(t)
 
-	st.Value(&Struct{}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	st.Value(&Struct{}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify one of").WithOrigin("union"),
 	})
 
 	st.Value(&Struct{U1M1: &M1{}, U2M1: &M1{}}).ExpectValid()
 	st.Value(&Struct{U1M2: &M2{}, U2M2: &M2{}}).ExpectValid()
 
-	st.Value(&Struct{U1M1: &M1{}, U1M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	st.Value(&Struct{U1M1: &M1{}, U1M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify exactly one of").WithOrigin("union"),
 		field.Invalid(nil, nil, "must specify one of").WithOrigin("union"),
 	})
 
-	st.Value(&Struct{U2M1: &M1{}, U2M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	st.Value(&Struct{U2M1: &M1{}, U2M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify one of").WithOrigin("union"),
 		field.Invalid(nil, nil, "must specify exactly one of").WithOrigin("union"),
 	})
@@ -45,7 +45,7 @@ func Test(t *testing.T) {
 	st.Value(&Struct{
 		U1M1: &M1{}, U1M2: &M2{},
 		U2M1: &M1{}, U2M2: &M2{},
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify exactly one of").WithOrigin("union"),
 	})
 

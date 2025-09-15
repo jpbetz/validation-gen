@@ -53,7 +53,7 @@ func Test(t *testing.T) {
 		ValidatedTypedefPtrField: ptr.To(ValidatedStringType("disallowed-on-type")),
 	}
 
-	st.Value(invalid).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
+	st.Value(invalid).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Invalid(field.NewPath("stringField"), nil, "").WithOrigin("neq"),
 		field.Invalid(field.NewPath("stringPtrField"), nil, "").WithOrigin("neq"),
 		field.Invalid(field.NewPath("stringTypedefField"), nil, "").WithOrigin("neq"),

@@ -57,7 +57,7 @@ func Test(t *testing.T) {
 		ValidatedStructField: ValidatedInnerStruct{StringField: "disallowed-typedef-struct"},
 	}
 
-	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
+	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Invalid(field.NewPath("structField", "stringField"), nil, "").WithOrigin("neq"),
 		field.Invalid(field.NewPath("structPtrField", "stringField"), nil, "").WithOrigin("neq"),
 		field.Invalid(field.NewPath("stringSliceField").Index(1), nil, "").WithOrigin("neq"),

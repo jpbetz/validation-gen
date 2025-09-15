@@ -52,7 +52,7 @@ func Test(t *testing.T) {
 			{Key: "immutable", Data: "changed"},
 		},
 	}
-	st.Value(newStruct).OldValue(oldStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
+	st.Value(newStruct).OldValue(oldStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
 		field.Forbidden(field.NewPath("typedefItems").Index(0), "immutable").WithOrigin("immutable"),
 	})
 
