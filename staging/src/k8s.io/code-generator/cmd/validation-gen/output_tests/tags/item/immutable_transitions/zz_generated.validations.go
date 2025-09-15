@@ -65,24 +65,16 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			// lists with map semantics require unique keys
 			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key1 == b.Key1 })...)
 			func() { // cohort {"key1": "a"}
-				earlyReturn := false
 				if e := validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key1 == "a" }, validate.DirectEqual, validate.ImmutableComparable); len(e) != 0 {
 					errs = append(errs, e...)
-					earlyReturn = true
-				}
-				if earlyReturn {
 					return // do not proceed
 				}
 			}()
 			func() { // cohort {"key1": "b"}
-				earlyReturn := false
 				if e := validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key1 == "b" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
 					return validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *Item) *string { return &o.StringField }, validate.DirectEqualPtr, validate.ImmutableComparable)
 				}); len(e) != 0 {
 					errs = append(errs, e...)
-					earlyReturn = true
-				}
-				if earlyReturn {
 					return // do not proceed
 				}
 			}()

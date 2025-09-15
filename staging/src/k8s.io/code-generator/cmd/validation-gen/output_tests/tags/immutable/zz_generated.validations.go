@@ -52,12 +52,8 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 // Validate_ImmutableType validates an instance of ImmutableType according
 // to declarative validation rules in the API schema.
 func Validate_ImmutableType(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ImmutableType) (errs field.ErrorList) {
-	earlyReturn := false
 	if e := validate.ImmutableComparable(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 		errs = append(errs, e...)
-		earlyReturn = true
-	}
-	if earlyReturn {
 		return // do not proceed
 	}
 
@@ -77,12 +73,8 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.ImmutableComparable(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -96,12 +88,8 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.ImmutableComparable(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -115,12 +103,8 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.ImmutableReflect(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -134,12 +118,8 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.ImmutableReflect(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -153,12 +133,8 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.ImmutableReflect(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -172,12 +148,8 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.ImmutableReflect(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -191,12 +163,8 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.ImmutableReflect(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -210,12 +178,8 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
 			if e := validate.ImmutableReflect(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
 				return // do not proceed
 			}
 			return

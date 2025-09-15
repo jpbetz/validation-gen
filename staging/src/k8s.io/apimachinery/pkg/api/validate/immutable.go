@@ -40,7 +40,7 @@ func Immutable[T any](_ context.Context, op operation.Operation, fldPath *field.
 	}
 }
 
-func ImmutableComparable[T comparable](_ context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj T) field.ErrorList {
+func ImmutableByCompare[T comparable](_ context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj T) field.ErrorList {
 	if op.Type != operation.Update {
 		return nil
 	}
@@ -53,6 +53,30 @@ func ImmutableComparable[T comparable](_ context.Context, op operation.Operation
 }
 
 func ImmutableReflect[T any](_ context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj T) field.ErrorList {
+	if op.Type != operation.Update {
+		return nil
+	}
+	if equality.Semantic.DeepEqual(obj, oldObj) {
+		return nil
+	}
+	return field.ErrorList{
+		field.Invalid(fldPath, nil, "field is immutable"),
+	}
+}
+
+func ImmutableComparable[T comparable](_ context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj T) field.ErrorList {
+	if op.Type != operation.Update {
+		return nil
+	}
+	if obj == oldObj {
+		return nil
+	}
+	return field.ErrorList{
+		field.Invalid(fldPath, nil, "field is immutable"),
+	}
+}
+
+func ImmutableByReflect[T any](_ context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj T) field.ErrorList {
 	if op.Type != operation.Update {
 		return nil
 	}
