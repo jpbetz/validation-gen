@@ -113,8 +113,12 @@ func Validate_DeviceRequestAllocationResult(ctx context.Context, op operation.Op
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.RequiredValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.ResourcePoolName(ctx, op, fldPath, obj, oldObj)...)
@@ -185,7 +189,11 @@ func Validate_ResourceClaimStatus(ctx context.Context, op operation.Operation, f
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// call the type's validation function
@@ -201,7 +209,11 @@ func Validate_ResourceClaimStatus(ctx context.Context, op operation.Operation, f
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalSlice(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -217,7 +229,11 @@ func Validate_ResourceClaimStatus(ctx context.Context, op operation.Operation, f
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalSlice(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			return
