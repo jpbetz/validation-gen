@@ -62,7 +62,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call field-attached validations
-			errs = append(errs, validate.UUID(ctx, op, fldPath, obj, oldObj).MarkCoveredByDeclarative()...)
+			errs = append(errs, validate.UUID(ctx, op, fldPath, obj, oldObj).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("uuidField"), &obj.UUIDField, safe.Field(oldObj, func(oldObj *MyObject) *string { return &oldObj.UUIDField }))...)
 
@@ -86,7 +86,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call field-attached validations
-			errs = append(errs, validate.UUID(ctx, op, fldPath, obj, oldObj).MarkCoveredByDeclarative()...)
+			errs = append(errs, validate.UUID(ctx, op, fldPath, obj, oldObj).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("uuidPtrField"), obj.UUIDPtrField, safe.Field(oldObj, func(oldObj *MyObject) *string { return oldObj.UUIDPtrField }))...)
 
@@ -110,7 +110,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call the type's validation function
-			errs = append(errs, Validate_UUIDString(ctx, op, fldPath, obj, oldObj).MarkCoveredByDeclarative()...)
+			errs = append(errs, Validate_UUIDString(ctx, op, fldPath, obj, oldObj).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("uuidTypedefField"), &obj.UUIDTypedefField, safe.Field(oldObj, func(oldObj *MyObject) *UUIDString { return &oldObj.UUIDTypedefField }))...)
 
@@ -134,11 +134,11 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call field-attached validations
-			if e := validate.RequiredValue(ctx, op, fldPath, obj, oldObj).MarkCoveredByDeclarative(); len(e) != 0 {
+			if e := validate.RequiredValue(ctx, op, fldPath, obj, oldObj).MarkDeclarativeOnly(); len(e) != 0 {
 				errs = append(errs, e...)
 				return // do not proceed
 			}
-			errs = append(errs, validate.MaxLength(ctx, op, fldPath, obj, oldObj, 60).MarkCoveredByDeclarative()...)
+			errs = append(errs, validate.MaxLength(ctx, op, fldPath, obj, oldObj, 60).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("fieldForLength"), &obj.FieldForLength, safe.Field(oldObj, func(oldObj *MyObject) *string { return &oldObj.FieldForLength }))...)
 
@@ -162,7 +162,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call the type's validation function
-			errs = append(errs, Validate_StableType(ctx, op, fldPath, obj, oldObj).MarkCoveredByDeclarative()...)
+			errs = append(errs, Validate_StableType(ctx, op, fldPath, obj, oldObj).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("stableTypeField"), &obj.StableTypeField, safe.Field(oldObj, func(oldObj *MyObject) *StableType { return &oldObj.StableTypeField }))...)
 
@@ -186,7 +186,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call the type's validation function
-			errs = append(errs, Validate_StableType(ctx, op, fldPath, obj, oldObj).MarkCoveredByDeclarative()...)
+			errs = append(errs, Validate_StableType(ctx, op, fldPath, obj, oldObj).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("stableTypeFieldPointer"), obj.StableTypeFieldPointer, safe.Field(oldObj, func(oldObj *MyObject) *StableType { return oldObj.StableTypeFieldPointer }))...)
 
@@ -210,12 +210,12 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call field-attached validations
-			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 5).MarkCoveredByDeclarative(); len(e) != 0 {
+			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 5).MarkDeclarativeOnly(); len(e) != 0 {
 				errs = append(errs, e...)
 				return // do not proceed
 			}
 			// iterate the list and call the type's validation function
-			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, nil, nil, Validate_StableType).MarkCoveredByDeclarative()...)
+			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, nil, nil, Validate_StableType).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("stableTypeSlice"), obj.StableTypeSlice, safe.Field(oldObj, func(oldObj *MyObject) []StableType { return oldObj.StableTypeSlice }))...)
 
@@ -245,7 +245,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 			}
 			// call field-attached validations
 			// lists with set semantics require unique values
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual).MarkCoveredByDeclarative()...)
+			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("setList"), obj.SetList, safe.Field(oldObj, func(oldObj *MyObject) []string { return oldObj.SetList }))...)
 
@@ -270,7 +270,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call the type's validation function
-			errs = append(errs, Validate_NestedStableType(ctx, op, fldPath, obj, oldObj).MarkCoveredByDeclarative()...)
+			errs = append(errs, Validate_NestedStableType(ctx, op, fldPath, obj, oldObj).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("nestedStable"), &obj.NestedStable, safe.Field(oldObj, func(oldObj *MyObject) *NestedStableType { return &oldObj.NestedStable }))...)
 
@@ -294,7 +294,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call field-attached validations
-			errs = append(errs, validate.IPSloppy(ctx, op, fldPath, obj, oldObj).MarkCoveredByDeclarative()...)
+			errs = append(errs, validate.IPSloppy(ctx, op, fldPath, obj, oldObj).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("ipAddress"), &obj.IPAddress, safe.Field(oldObj, func(oldObj *MyObject) *string { return &oldObj.IPAddress }))...)
 
@@ -324,7 +324,7 @@ func Validate_NestedStableType(ctx context.Context, op operation.Operation, fldP
 				return nil
 			}
 			// call the type's validation function
-			errs = append(errs, Validate_StableType(ctx, op, fldPath, obj, oldObj).MarkCoveredByDeclarative()...)
+			errs = append(errs, Validate_StableType(ctx, op, fldPath, obj, oldObj).MarkDeclarativeOnly()...)
 			return
 		}(fldPath.Child("nestedField"), &obj.NestedField, safe.Field(oldObj, func(oldObj *NestedStableType) *StableType { return &oldObj.NestedField }))...)
 

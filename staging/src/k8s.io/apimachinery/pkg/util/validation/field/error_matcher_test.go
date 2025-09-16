@@ -242,8 +242,8 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		actualErr: &Error{Type: ErrorTypeRequired, Field: "field", BadValue: "value", Detail: "detail", Origin: "origin"},
 		matches:   false,
 	}, {
-		name:    "ByCoveredByDeclarative: match",
-		matcher: ErrorMatcher{}.ByCoveredByDeclarative(),
+		name:    "ByDeclarativeOnly: match",
+		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
 		wantedErr: func() *Error {
 			e := baseErr()
 			e.CoveredByDeclarative = true
@@ -252,11 +252,11 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		actualErr: &Error{CoveredByDeclarative: true},
 		matches:   true,
 	}, {
-		name:    "ByCoveredByDeclarative: no match",
-		matcher: ErrorMatcher{}.ByCoveredByDeclarative(),
+		name:    "ByDeclarativeOnly: no match",
+		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
 		wantedErr: func() *Error {
 			e := baseErr()
-			e.CoveredByDeclarative = true
+			e.DeclarativeOnly = true
 			return e
 		},
 		actualErr: &Error{CoveredByDeclarative: false},
@@ -329,15 +329,15 @@ func TestErrorMatcher_Test(t *testing.T) {
 		got:            ErrorList{Invalid(NewPath("f2"), "v", "d")},
 		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
 	}, {
-		name:    "with covered: match",
-		matcher: ErrorMatcher{}.ByCoveredByDeclarative(),
-		want:    ErrorList{{CoveredByDeclarative: true}},
-		got:     ErrorList{{CoveredByDeclarative: true}},
+		name:    "declarative only: match",
+		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
+		want:    ErrorList{{DeclarativeOnly: true}},
+		got:     ErrorList{{DeclarativeOnly: true}},
 	}, {
-		name:           "with covered: no match",
-		matcher:        ErrorMatcher{}.ByCoveredByDeclarative(),
-		want:           ErrorList{{CoveredByDeclarative: true}},
-		got:            ErrorList{{CoveredByDeclarative: false}},
+		name:           "declarative only: no match",
+		matcher:        ErrorMatcher{}.ByDeclarativeOnly(),
+		want:           ErrorList{{DeclarativeOnly: true}},
+		got:            ErrorList{{DeclarativeOnly: false}},
 		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
 	}, {
 		name:    "with origin: single match",
@@ -443,23 +443,23 @@ func TestErrorMatcher_Render(t *testing.T) {
 		},
 		{
 			name:    "with covered by declarative",
-			matcher: ErrorMatcher{}.ByCoveredByDeclarative(),
+			matcher: ErrorMatcher{}.ByDeclarativeOnly(),
 			err: func() *Error {
 				e := Invalid(NewPath("field"), "value", "detail")
-				e.CoveredByDeclarative = true
+				e.DeclarativeOnly = true
 				return e
 			}(),
-			expected: `{CoveredByDeclarative=true}`,
+			expected: `{DeclarativeOnly=true}`,
 		},
 		{
 			name:    "all fields with covered by declarative",
-			matcher: ErrorMatcher{}.ByType().ByField().ByValue().ByOrigin().ByDetailExact().ByCoveredByDeclarative(),
+			matcher: ErrorMatcher{}.ByType().ByField().ByValue().ByOrigin().ByDetailExact().ByDeclarativeOnly(),
 			err: func() *Error {
 				e := Invalid(NewPath("field"), "value", "detail").WithOrigin("origin")
-				e.CoveredByDeclarative = true
+				e.DeclarativeOnly = true
 				return e
 			}(),
-			expected: `{Type="Invalid value", Field="field", Value="value", Origin="origin", Detail="detail", CoveredByDeclarative=true}`,
+			expected: `{Type="Invalid value", Field="field", Value="value", Origin="origin", Detail="detail", DeclarativeOnly=true}`,
 		},
 		{
 			name:     "requireOriginWhenInvalid with origin",

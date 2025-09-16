@@ -1282,7 +1282,7 @@ func (g *genValidations) emitCallToOtherTypeFunc(c *generator.Context, node *typ
 	sw.Do("// call the type's validation function\n", nil)
 	sw.Do("errs = append(errs, $.funcName|raw$(ctx, op, fldPath, obj, oldObj)", targs)
 	if declarativeNative {
-		sw.Do(".MarkCoveredByDeclarative()", nil)
+		sw.Do(".MarkDeclarativeOnly()", nil)
 	}
 	sw.Do("...)\n", targs)
 }
@@ -1379,7 +1379,7 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 				}
 				sw.Do(")", targs)
 				if declarativeNative {
-					sw.Do(".MarkCoveredByDeclarative()", nil)
+					sw.Do(".MarkDeclarativeOnly()", nil)
 				}
 			}
 

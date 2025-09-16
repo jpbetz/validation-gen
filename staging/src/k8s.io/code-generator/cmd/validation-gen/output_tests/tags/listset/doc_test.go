@@ -56,7 +56,7 @@ func Test(t *testing.T) {
 			{StringPtrField: ptrS1},
 			{StringPtrField: ptrS2},
 		},
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
 		field.Duplicate(field.NewPath("sliceStringField").Index(3), nil),
 		field.Duplicate(field.NewPath("sliceStringField").Index(4), nil),
 		field.Duplicate(field.NewPath("sliceStringField").Index(5), nil),

@@ -44,7 +44,7 @@ func Test(t *testing.T) {
 		ValidatedTypedefField: true,
 	}
 
-	st.Value(invalid).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(invalid).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
 		field.Invalid(field.NewPath("neqTrueField"), nil, "").WithOrigin("neq"),
 		field.Invalid(field.NewPath("neqFalsePtrField"), nil, "").WithOrigin("neq"),
 		field.Invalid(field.NewPath("validatedTypedefField"), nil, "").WithOrigin("neq"),

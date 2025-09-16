@@ -30,11 +30,11 @@ func Test(t *testing.T) {
 	st.Value(&Struct{D: DM1, M1: &M1{}}).ExpectValid()
 	st.Value(&Struct{D: DM2}).ExpectValid()
 
-	st.Value(&Struct{D: DM2, M1: &M1{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(&Struct{D: DM2, M1: &M1{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
 		field.Invalid(field.NewPath("m1"), nil, "may only be specified when").WithOrigin("union"),
 	})
 
-	st.Value(&Struct{D: DM1}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(&Struct{D: DM1}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
 		field.Invalid(field.NewPath("m1"), nil, "must be specified when").WithOrigin("union"),
 	})
 

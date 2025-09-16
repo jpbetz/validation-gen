@@ -33,11 +33,11 @@ type ErrorMatcher struct {
 	matchField bool
 	// TODO(thockin): consider whether value could be assumed - if the
 	// "want" error has a nil value, don't match on value.
-	matchValue                bool
-	matchOrigin               bool
-	matchDetail               func(want, got string) bool
-	requireOriginWhenInvalid  bool
-	matchCoveredByDeclarative bool
+	matchValue               bool
+	matchOrigin              bool
+	matchDetail              func(want, got string) bool
+	requireOriginWhenInvalid bool
+	matchDeclarativeOnly     bool
 }
 
 // Matches returns true if the two Error objects match according to the
@@ -65,7 +65,7 @@ func (m ErrorMatcher) Matches(want, got *Error) bool {
 	if m.matchDetail != nil && !m.matchDetail(want.Detail, got.Detail) {
 		return false
 	}
-	if m.matchCoveredByDeclarative && want.CoveredByDeclarative != got.CoveredByDeclarative {
+	if m.matchDeclarativeOnly && want.DeclarativeOnly != got.DeclarativeOnly {
 		return false
 	}
 
@@ -115,9 +115,9 @@ func (m ErrorMatcher) Render(e *Error) string {
 		comma()
 		buf.WriteString(fmt.Sprintf("Detail=%q", e.Detail))
 	}
-	if m.matchCoveredByDeclarative {
+	if m.matchDeclarativeOnly {
 		comma()
-		buf.WriteString(fmt.Sprintf("CoveredByDeclarative=%t", e.CoveredByDeclarative))
+		buf.WriteString(fmt.Sprintf("DeclarativeOnly=%t", e.DeclarativeOnly))
 	}
 	return "{" + buf.String() + "}"
 }
@@ -159,18 +159,18 @@ func (m ErrorMatcher) ByOrigin() ErrorMatcher {
 	return m
 }
 
-// ByCoveredByDeclarative returns a derived ErrorMatcher which also matches by the CoveredByDeclarative
-// value of field errors.
-func (m ErrorMatcher) ByCoveredByDeclarative() ErrorMatcher {
-	m.matchCoveredByDeclarative = true
-	return m
-}
-
 // RequireOriginWhenInvalid returns a derived ErrorMatcher which also requires
 // the Origin field to be set when the Type is Invalid and the matcher is
 // matching by Origin.
 func (m ErrorMatcher) RequireOriginWhenInvalid() ErrorMatcher {
 	m.requireOriginWhenInvalid = true
+	return m
+}
+
+// ByDeclarativeOnly returns a derived ErrorMatcher which also matches by the DeclarativeOnly
+// value of field errors.
+func (m ErrorMatcher) ByDeclarativeOnly() ErrorMatcher {
+	m.matchDeclarativeOnly = true
 	return m
 }
 

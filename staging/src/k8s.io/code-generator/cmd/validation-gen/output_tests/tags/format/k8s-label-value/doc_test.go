@@ -73,7 +73,7 @@ func Test(t *testing.T) {
 				LabelValuePtrField:     ptr.To(tc.value),
 				LabelValueTypedefField: LabelValueStringType(tc.value),
 			}
-			st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+			st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
 				field.Invalid(field.NewPath("labelValueField"), nil, "").WithOrigin("format=k8s-label-value"),
 				field.Invalid(field.NewPath("labelValuePtrField"), nil, "").WithOrigin("format=k8s-label-value"),
 				field.Invalid(field.NewPath("labelValueTypedefField"), nil, "").WithOrigin("format=k8s-label-value"),

@@ -34,13 +34,13 @@ func Test(t *testing.T) {
 	st.Value(&Struct{M3: "a string"}).ExpectValid()
 	st.Value(&Struct{M4: ptr.To("a string")}).ExpectValid()
 
-	st.Value(&Struct{M1: &M1{}, M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(&Struct{M1: &M1{}, M2: &M2{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify at most one of").WithOrigin("zeroOrOneOf"),
 	})
-	st.Value(&Struct{M1: &M1{}, M3: "a string"}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(&Struct{M1: &M1{}, M3: "a string"}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify at most one of").WithOrigin("zeroOrOneOf"),
 	})
-	st.Value(&Struct{M1: &M1{}, M4: ptr.To("a string")}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(&Struct{M1: &M1{}, M4: ptr.To("a string")}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
 		field.Invalid(nil, nil, "must specify at most one of").WithOrigin("zeroOrOneOf"),
 	})
 

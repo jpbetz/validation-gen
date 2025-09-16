@@ -42,7 +42,7 @@ func Test(t *testing.T) {
 		ShortNameField:        "",
 		ShortNamePtrField:     ptr.To(""),
 		ShortNameTypedefField: "",
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
 		field.Invalid(field.NewPath("shortNameField"), nil, "").WithOrigin("format=k8s-short-name"),
 		field.Invalid(field.NewPath("shortNamePtrField"), nil, "").WithOrigin("format=k8s-short-name"),
 		field.Invalid(field.NewPath("shortNameTypedefField"), nil, "").WithOrigin("format=k8s-short-name"),
@@ -52,7 +52,7 @@ func Test(t *testing.T) {
 		ShortNameField:        "Not a DNS label",
 		ShortNamePtrField:     ptr.To("Not a DNS label"),
 		ShortNameTypedefField: "Not a DNS label",
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
 		field.Invalid(field.NewPath("shortNameField"), nil, "").WithOrigin("format=k8s-short-name"),
 		field.Invalid(field.NewPath("shortNamePtrField"), nil, "").WithOrigin("format=k8s-short-name"),
 		field.Invalid(field.NewPath("shortNameTypedefField"), nil, "").WithOrigin("format=k8s-short-name"),

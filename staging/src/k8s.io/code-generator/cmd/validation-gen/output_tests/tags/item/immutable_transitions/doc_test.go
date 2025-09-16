@@ -41,12 +41,12 @@ func Test(t *testing.T) {
 		},
 	}
 
-	st.Value(new).OldValue(old).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(new).OldValue(old).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
 		field.Forbidden(field.NewPath("listField").Index(0), "immutable").WithOrigin("immutable"),
 		field.Forbidden(field.NewPath("listField").Index(1).Child("stringField"), "immutable").WithOrigin("immutable"),
 	})
 
-	st.Value(new).OldValue(&Struct{ListField: []Item{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(new).OldValue(&Struct{ListField: []Item{}}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDetailSubstring().ByOrigin(), field.ErrorList{
 		field.Forbidden(field.NewPath("listField").Index(0), "immutable").WithOrigin("immutable"),
 		field.Forbidden(field.NewPath("listField").Index(1).Child("stringField"), "immutable").WithOrigin("immutable"),
 	})

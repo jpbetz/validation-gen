@@ -42,7 +42,7 @@ func Test(t *testing.T) {
 		IPField:        "",
 		IPPtrField:     ptr.To(""),
 		IPTypedefField: "",
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
 		field.Invalid(field.NewPath("ipField"), nil, "").WithOrigin("format=k8s-ip"),
 		field.Invalid(field.NewPath("ipPtrField"), nil, "").WithOrigin("format=k8s-ip"),
 		field.Invalid(field.NewPath("ipTypedefField"), nil, "").WithOrigin("format=k8s-ip"),
@@ -52,7 +52,7 @@ func Test(t *testing.T) {
 		IPField:        "Not an IP",
 		IPPtrField:     ptr.To("Not an IP"),
 		IPTypedefField: "Not an IP",
-	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	}).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
 		field.Invalid(field.NewPath("ipField"), nil, "").WithOrigin("format=k8s-ip"),
 		field.Invalid(field.NewPath("ipPtrField"), nil, "").WithOrigin("format=k8s-ip"),
 		field.Invalid(field.NewPath("ipTypedefField"), nil, "").WithOrigin("format=k8s-ip"),

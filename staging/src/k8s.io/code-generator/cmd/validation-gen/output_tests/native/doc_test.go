@@ -70,9 +70,9 @@ func TestMyObjectValidation(t *testing.T) {
 				return *obj
 			}(),
 			errs: field.ErrorList{
-				field.Invalid(field.NewPath("uuidField"), "invalid", "is not a valid UUID").MarkCoveredByDeclarative(),
+				field.Invalid(field.NewPath("uuidField"), "invalid", "is not a valid UUID").MarkDeclarativeOnly(),
 				field.Invalid(field.NewPath("uuidFieldWithoutDV"), "invalid", "is not a valid UUID"),
-				field.Invalid(field.NewPath("uuidPtrField"), "invalid", "is not a valid UUID").MarkCoveredByDeclarative(),
+				field.Invalid(field.NewPath("uuidPtrField"), "invalid", "is not a valid UUID").MarkDeclarativeOnly(),
 				field.Invalid(field.NewPath("uuidPtrFieldWithoutDV"), "invalid", "is not a valid UUID"),
 			},
 		},
@@ -85,7 +85,7 @@ func TestMyObjectValidation(t *testing.T) {
 				return *obj
 			}(),
 			errs: field.ErrorList{
-				field.Invalid(field.NewPath("uuidTypedefField"), UUIDString("invalid"), "is not a valid UUID").MarkCoveredByDeclarative(),
+				field.Invalid(field.NewPath("uuidTypedefField"), UUIDString("invalid"), "is not a valid UUID").MarkDeclarativeOnly(),
 				field.Invalid(field.NewPath("uuidTypedefFieldWithoutDV"), UUIDString("invalid"), "is not a valid UUID"),
 			},
 		},
@@ -98,7 +98,7 @@ func TestMyObjectValidation(t *testing.T) {
 				return *obj
 			}(),
 			errs: field.ErrorList{
-				field.Required(field.NewPath("stableTypeField", "innerField"), "").MarkCoveredByDeclarative(),
+				field.Required(field.NewPath("stableTypeField", "innerField"), "").MarkDeclarativeOnly(),
 				field.Required(field.NewPath("stableTypeFieldWithoutDV", "innerField"), ""),
 			},
 		},
@@ -111,7 +111,7 @@ func TestMyObjectValidation(t *testing.T) {
 				return *obj
 			}(),
 			errs: field.ErrorList{
-				field.TooMany(field.NewPath("stableTypeSlice"), 6, 5).MarkCoveredByDeclarative(),
+				field.TooMany(field.NewPath("stableTypeSlice"), 6, 5).MarkDeclarativeOnly(),
 				field.TooMany(field.NewPath("stableTypeSliceWithoutDV"), 6, 5),
 			},
 		},
@@ -124,7 +124,7 @@ func TestMyObjectValidation(t *testing.T) {
 				return *obj
 			}(),
 			errs: field.ErrorList{
-				field.Duplicate(field.NewPath("setList").Index(1), "a").MarkCoveredByDeclarative(),
+				field.Duplicate(field.NewPath("setList").Index(1), "a").MarkDeclarativeOnly(),
 				field.Duplicate(field.NewPath("setListWithoutDV").Index(1), "a"),
 			},
 		},
@@ -139,10 +139,10 @@ func TestMyObjectValidation(t *testing.T) {
 				return *obj
 			}(),
 			errs: field.ErrorList{
-				field.Required(field.NewPath("nestedStable", "nestedField", "innerField"), "").MarkCoveredByDeclarative(),
-				field.Required(field.NewPath("nestedStable", "nestedFieldWithoutDV", "innerField"), "").MarkCoveredByDeclarative(),
+				field.Required(field.NewPath("nestedStable", "nestedField", "innerField"), "").MarkDeclarativeOnly(),
+				field.Required(field.NewPath("nestedStable", "nestedFieldWithoutDV", "innerField"), "").MarkDeclarativeOnly(),
 				field.Required(field.NewPath("nestedStableWithoutDV", "nestedFieldWithoutDV", "innerField"), ""),
-				field.Required(field.NewPath("nestedStableWithoutDV", "nestedField", "innerField"), "").MarkCoveredByDeclarative(),
+				field.Required(field.NewPath("nestedStableWithoutDV", "nestedField", "innerField"), "").MarkDeclarativeOnly(),
 			},
 		},
 		{
@@ -154,7 +154,7 @@ func TestMyObjectValidation(t *testing.T) {
 				return *obj
 			}(),
 			errs: field.ErrorList{
-				field.Invalid(field.NewPath("ipAddress"), "invalid", "is not a valid IP address").MarkCoveredByDeclarative(),
+				field.Invalid(field.NewPath("ipAddress"), "invalid", "is not a valid IP address").MarkDeclarativeOnly(),
 				field.Invalid(field.NewPath("ipAddressWithoutDV"), "invalid", "is not a valid IP address"),
 			},
 		},
@@ -163,7 +163,7 @@ func TestMyObjectValidation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			st := localSchemeBuilder.Test(t)
-			st.Value(&tc.obj).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByCoveredByDeclarative(), tc.errs)
+			st.Value(&tc.obj).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByDeclarativeOnly(), tc.errs)
 		})
 	}
 }

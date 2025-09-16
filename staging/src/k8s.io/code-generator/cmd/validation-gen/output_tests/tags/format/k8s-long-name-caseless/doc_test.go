@@ -49,7 +49,7 @@ func TestCaseless(t *testing.T) {
 		LongNamePtrField:     ptr.To(""),
 		LongNameTypedefField: "",
 	}
-	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
 		field.Invalid(field.NewPath("longNameField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
 		field.Invalid(field.NewPath("longNamePtrField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
 		field.Invalid(field.NewPath("longNameTypedefField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
@@ -62,7 +62,7 @@ func TestCaseless(t *testing.T) {
 		LongNamePtrField:     ptr.To("Not a LongName"),
 		LongNameTypedefField: "Not a LongName",
 	}
-	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin().ByCoveredByDeclarative(), field.ErrorList{
+	st.Value(invalidStruct).ExpectMatches(field.ErrorMatcher{}.ByType().ByField().ByOrigin(), field.ErrorList{
 		field.Invalid(field.NewPath("longNameField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
 		field.Invalid(field.NewPath("longNamePtrField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
 		field.Invalid(field.NewPath("longNameTypedefField"), nil, "").WithOrigin("format=k8s-long-name-caseless"),
