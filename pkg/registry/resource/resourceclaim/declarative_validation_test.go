@@ -17,18 +17,24 @@ limitations under the License.
 package resourceclaim
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"k8s.io/api/resource/v1alpha2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/client-go/kubernetes/fake"
 	apitesting "k8s.io/kubernetes/pkg/api/testing"
+	"k8s.io/kubernetes/pkg/api/validation"
 	"k8s.io/kubernetes/pkg/apis/resource"
 	pointer "k8s.io/utils/ptr"
 )
@@ -468,7 +474,7 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 			},
 		},
 		"spec immutable: add request": {
-			update: mkValidResourceClaim(tweakAddDeviceRequest(mkDeviceRequest("req-1"))),
+			update: mkValidResourceClaim(tweakAddDeviceRequest(mkDeviceRequest("req-1")У)),
 			old:    validClaim,
 			expectedErrs: field.ErrorList{
 				field.Invalid(field.NewPath("spec"), "field is immutable", "").WithOrigin("immutable"),
@@ -1068,4 +1074,193 @@ func addStatusAllocationResult(obj resource.ResourceClaim) resource.ResourceClai
 			})
 	}
 	return obj
+}
+
+func TestValidateResourceClaimUpdate(t *testing.T) {
+	validClaim := func() *v1alpha2.ResourceClaim {
+		return &v1alpha2.ResourceClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "valid-claim",
+				Namespace: "default",
+			},
+			Spec: v1alpha2.ResourceClaimSpec{
+				ResourceClassName: "valid-class",
+			},
+		}
+	}
+
+	testScenarios := map[string]struct {
+		oldClaim      *v1alpha2.ResourceClaim
+		claim         *v1alpha2.ResourceClaim
+		expectedError string
+	}{
+		"good-claim-update": {
+			oldClaim: validClaim(),
+			claim:    validClaim(),
+		},
+		"good-claim-update-with-parameters": {
+			oldClaim: validClaim(),
+			claim: func() *v1alpha2.ResourceClaim {
+				claim := validClaim()
+				claim.Spec.ParametersRef = &v1alpha2.ResourceClaimParametersReference{
+					APIGroup: "resource.k8s.io",
+					Kind:     "ResourceClaimParameters",
+					Name:     "valid-parameters",
+				}
+				return claim
+			}(),
+		},
+		"invalid-claim-update-with-parameters": {
+			oldClaim: validClaim(),
+			claim: func() *v1alpha2.ResourceClaim {
+				claim := validClaim()
+				claim.Spec.ParametersRef = &v1alpha2.ResourceClaimParametersReference{
+					APIGroup: "resource.k8s.io",
+					Kind:     "ResourceClaimParameters",
+					Name:     "invalid-parameters-@!",
+				}
+				return claim
+			}(),
+			expectedError: "Invalid value: \"invalid-parameters-@!\": a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')",
+		},
+	}
+
+	for name, scenario := range testScenarios {
+		t.Run(name, func(t *testing.T) {
+			scenario.oldClaim.ResourceVersion = "1"
+			scenario.claim.ResourceVersion = "1"
+			err := ValidateResourceClaimUpdate(scenario.claim, scenario.oldClaim)
+			if len(err) == 0 && scenario.expectedError == "" {
+				return
+			}
+			if len(err) > 0 && err[0].Error() != scenario.expectedError {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if len(err) == 0 && scenario.expectedError != "" {
+				t.Errorf("expected error %q, got none", scenario.expectedError)
+			}
+		})
+	}
+}
+
+func TestValidateResourceClaimStatusUpdate(t *testing.T) {
+	testScenarios := map[string]struct {
+		oldClaim      *v1alpha2.ResourceClaim
+		claim         *v1alpha2.ResourceClaim
+		expectedError string
+	}{
+		"good-claim-update": {
+			oldClaim: &v1alpha2.ResourceClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "good-claim",
+					Namespace: "default",
+				},
+				Spec: v1alpha2.ResourceClaimSpec{
+					ResourceClassName: "valid-class",
+				},
+			},
+			claim: &v1alpha2.ResourceClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "good-claim",
+					Namespace: "default",
+				},
+				Spec: v1alpha2.ResourceClaimSpec{
+					ResourceClassName: "valid-class",
+				},
+				Status: v1alpha2.ResourceClaimStatus{
+					DriverName: "valid-driver",
+					ReservedFor: []v1alpha2.ResourceClaimConsumerReference{
+						{
+							Resource: "pods",
+							Name:     "my-pod",
+							UID:      "ac02192d-803b-4403-9542-318c6a45df30",
+						},
+					},
+				},
+			},
+		},
+		"reservedFor-is-immutable": {
+			oldClaim: &v1alpha2.ResourceClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "bad-claim",
+					Namespace: "default",
+				},
+				Spec: v1alpha2.ResourceClaimSpec{
+					ResourceClassName: "valid-class",
+				},
+				Status: v1alpha2.ResourceClaimStatus{
+					DriverName: "valid-driver",
+					ReservedFor: []v1alpha2.ResourceClaimConsumerReference{
+						{
+							Resource: "pods",
+							Name:     "my-pod",
+							UID:      "ac02192d-803b-4403-9542-318c6a45df30",
+						},
+					},
+				},
+			},
+			claim: &v1alpha2.ResourceClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "bad-claim",
+					Namespace: "default",
+				},
+				Spec: v1alpha2.ResourceClaimSpec{
+					ResourceClassName: "valid-class",
+				},
+				Status: v1alpha2.ResourceClaimStatus{
+					DriverName: "valid-driver",
+					ReservedFor: []v1alpha2.ResourceClaimConsumerReference{
+						{
+							Resource: "pods",
+							Name:     "my-pod",
+							UID:      "ac02192d-803b-4403-9542-318c6a45df31",
+						},
+					},
+				},
+			},
+			expectedError: "Forbidden: status.reservedFor is immutable",
+		},
+		"driverName-is-immutable": {
+			oldClaim: &v1alpha2.ResourceClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "bad-claim",
+					Namespace: "default",
+				},
+				Spec: v1alpha2.ResourceClaimSpec{
+					ResourceClassName: "valid-class",
+				},
+				Status: v1alpha2.ResourceClaimStatus{
+					DriverName: "valid-driver",
+				},
+			},
+			claim: &v1alpha2.ResourceClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "bad-claim",
+					Namespace: "default",
+				},
+				Spec: v1alpha2.ResourceClaimSpec{
+					ResourceClassName: "valid-class",
+				},
+				Status: v1alpha2.ResourceClaimStatus{
+					DriverName: "another-valid-driver",
+				},
+			},
+			expectedError: "Forbidden: status.driverName is immutable",
+		},
+	}
+
+	for name, scenario := range testScenarios {
+		t.Run(name, func(t *testing.T) {
+			err := ValidateResourceClaimStatusUpdate(scenario.claim, scenario.oldClaim)
+			if len(err) == 0 && scenario.expectedError == "" {
+				return
+			}
+			if len(err) > 0 && err[0].Error() != scenario.expectedError {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if len(err) == 0 && scenario.expectedError != "" {
+				t.Errorf("expected error %q, got none", scenario.expectedError)
+			}
+		})
+	}
 }
