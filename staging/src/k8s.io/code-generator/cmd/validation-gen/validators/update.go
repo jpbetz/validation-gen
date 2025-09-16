@@ -18,7 +18,6 @@ package validators
 
 import (
 	"fmt"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/code-generator/cmd/validation-gen/util"
@@ -42,14 +41,14 @@ const (
 )
 
 func init() {
-	shared := map[string][]updateConstraint{}
+	shared := map[string]sets.Set[updateConstraint]{}
 	RegisterFieldValidator(updateFieldValidator{byFieldPath: shared})
 	RegisterTagValidator(updateTagCollector{byFieldPath: shared})
 }
 
 // updateTagCollector collects +k8s:update tags
 type updateTagCollector struct {
-	byFieldPath map[string][]updateConstraint
+	byFieldPath map[string]sets.Set[updateConstraint]
 }
 
 func (updateTagCollector) Init(_ Config) {}
@@ -65,40 +64,32 @@ func (updateTagCollector) ValidScopes() sets.Set[Scope] {
 }
 
 func (utc updateTagCollector) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
-	tagValue := strings.TrimSpace(tag.Value)
-	tagValue = strings.Trim(tagValue, "`\"")
-
-	if tagValue == "" {
-		return Validations{}, nil
+	// Parse constraint from this tag instance
+	var constraint updateConstraint
+	switch tag.Value {
+	case string(constraintNoSet):
+		constraint = constraintNoSet
+	case string(constraintNoUnset):
+		constraint = constraintNoUnset
+	case string(constraintNoModify):
+		constraint = constraintNoModify
+	default:
+		return Validations{}, fmt.Errorf("unknown +k8s:update constraint: %s", tag.Value)
 	}
 
-	var constraints []updateConstraint
-
-	// Parse constraints from payload
-	for _, value := range strings.Split(tagValue, ",") {
-		constraintStr := strings.TrimSpace(value)
-		var constraint updateConstraint
-		switch constraintStr {
-		case string(constraintNoSet):
-			constraint = constraintNoSet
-		case string(constraintNoUnset):
-			constraint = constraintNoUnset
-		case string(constraintNoModify):
-			constraint = constraintNoModify
-		default:
-			return Validations{}, fmt.Errorf("unknown +k8s:update constraint: %s", constraintStr)
-		}
-
-		constraints = append(constraints, constraint)
+	// Initialize set if doesn't exist
+	fieldPath := context.Path.String()
+	if utc.byFieldPath[fieldPath] == nil {
+		utc.byFieldPath[fieldPath] = sets.New[updateConstraint]()
 	}
+
+	// Add this constraint to the set for this field
+	utc.byFieldPath[fieldPath].Insert(constraint)
 
 	// Validate constraints are appropriate for the field type
-	if err := utc.validateConstraintsForType(context, constraints); err != nil {
+	if err := utc.validateConstraintsForType(context, utc.byFieldPath[fieldPath].UnsortedList()); err != nil {
 		return Validations{}, err
 	}
-
-	// Store the constraints for this field
-	utc.byFieldPath[context.Path.String()] = constraints
 
 	// Don't generate validations here, just collect
 	return Validations{}, nil
@@ -133,18 +124,18 @@ func (utc updateTagCollector) Docs() TagDoc {
 		Tag:          utc.TagName(),
 		Scopes:       utc.ValidScopes().UnsortedList(),
 		PayloadsType: codetags.ValueTypeString,
-		Description: "Provides fine-grained control over field update operations. " +
-			"Only for non-list/map fields: NoSet (prevents unset->set), NoUnset (prevents set->unset), " +
+		Description: "Provides constraints on the allowed update operations of a field. " +
+			"Supports: NoSet (prevents unset->set), NoUnset (prevents set->unset), " +
 			"NoModify (prevents value changes but allows set/unset transitions). " +
-			"Multiple values can be specified separated by commas. " +
-			"Examples: +k8s:update=`NoModify,NoUnset` for set-once fields; " +
-			"+k8s:update=`NoSet` for fields that must be set at creation or never.",
+			"Multiple constraints can be specified using multiple tags. " +
+			"Examples: +k8s:update=\"NoModify\" +k8s:update=\"NoUnset\" for set-once fields; " +
+			"+k8s:update=\"NoSet\" for fields that must be set at creation or never.",
 	}
 }
 
 // updateFieldValidator processes all collected update tags and generates validations
 type updateFieldValidator struct {
-	byFieldPath map[string][]updateConstraint
+	byFieldPath map[string]sets.Set[updateConstraint]
 }
 
 func (updateFieldValidator) Init(_ Config) {}
@@ -165,10 +156,12 @@ var (
 )
 
 func (ufv updateFieldValidator) GetValidations(context Context) (Validations, error) {
-	constraints, ok := ufv.byFieldPath[context.Path.String()]
-	if !ok || len(constraints) == 0 {
+	constraintSet, ok := ufv.byFieldPath[context.Path.String()]
+	if !ok || constraintSet.Len() == 0 {
 		return Validations{}, nil
 	}
+
+	constraints := constraintSet.UnsortedList()
 
 	t := util.NonPointer(util.NativeType(context.Type))
 	if t.Kind == types.Slice || t.Kind == types.Map {
