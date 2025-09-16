@@ -32,7 +32,7 @@ func MaxLength[T ~string](_ context.Context, _ operation.Operation, fldPath *fie
 		return nil
 	}
 	if len(*value) > max {
-		return field.ErrorList{field.Invalid(fldPath, *value, content.MaxLenError(max)).WithOrigin("maxLength")}
+		return field.ErrorList{field.TooLong(fldPath, *value, max).WithOrigin("maxLength")}
 	}
 	return nil
 }
