@@ -42,7 +42,7 @@ func TestMaxLength(t *testing.T) {
 		value: "0",
 		max:   0,
 		wantErrs: field.ErrorList{
-			field.Invalid(field.NewPath("fldpath"), nil, "must be no more than").WithOrigin("maxLength"),
+			field.TooLong(field.NewPath("fldpath"), nil, 0).WithOrigin("maxLength"),
 		},
 	}, {
 		name:     "one character",
@@ -54,13 +54,13 @@ func TestMaxLength(t *testing.T) {
 		value: "01",
 		max:   1,
 		wantErrs: field.ErrorList{
-			field.Invalid(field.NewPath("fldpath"), nil, "must be no more than").WithOrigin("maxLength"),
+			field.TooLong(field.NewPath("fldpath"), nil, 1).WithOrigin("maxLength"),
 		},
 	}, {
 		value: "",
 		max:   -1,
 		wantErrs: field.ErrorList{
-			field.Invalid(field.NewPath("fldpath"), nil, "must be no more than").WithOrigin("maxLength"),
+			field.TooLong(field.NewPath("fldpath"), nil, -1).WithOrigin("maxLength"),
 		},
 	}}
 
