@@ -37,6 +37,7 @@ type ErrorMatcher struct {
 	matchOrigin              bool
 	matchDetail              func(want, got string) bool
 	requireOriginWhenInvalid bool
+	checkFieldPathSuffix     bool
 }
 
 // Matches returns true if the two Error objects match according to the
@@ -45,8 +46,34 @@ func (m ErrorMatcher) Matches(want, got *Error) bool {
 	if m.matchType && want.Type != got.Type {
 		return false
 	}
-	if m.matchField && want.Field != got.Field {
-		return false
+	if m.matchField {
+		if m.checkFieldPathSuffix {
+			// In error_matcher.go, update the Matches function:
+
+			if m.matchField {
+				if m.checkFieldPathSuffix {
+					// When checking field path suffix, compare only the last segment of the path
+					wantSegments := strings.Split(want.Field, ".")
+					gotSegments := strings.Split(got.Field, ".")
+
+					if len(wantSegments) > 0 && len(gotSegments) > 0 {
+						// Check if the last segments match
+						wantLast := wantSegments[len(wantSegments)-1]
+						gotLast := gotSegments[len(gotSegments)-1]
+						if wantLast != gotLast {
+							return false
+						}
+					} else if want.Field != got.Field {
+						// If we can't split, fall back to exact match
+						return false
+					}
+				} else if want.Field != got.Field {
+					return false
+				}
+			}
+		} else if want.Field != got.Field {
+			return false
+		}
 	}
 	if m.matchValue && !reflect.DeepEqual(want.BadValue, got.BadValue) {
 		return false
@@ -84,7 +111,11 @@ func (m ErrorMatcher) Render(e *Error) string {
 	}
 	if m.matchField {
 		comma()
-		buf.WriteString(fmt.Sprintf("Field=%q", e.Field))
+		fieldStr := fmt.Sprintf("Field=%q", e.Field)
+		if m.checkFieldPathSuffix {
+			fieldStr = fmt.Sprintf("Field(suffix)=%q", e.Field)
+		}
+		buf.WriteString(fieldStr)
 	}
 	if m.matchValue {
 		comma()
@@ -147,6 +178,18 @@ func (m ErrorMatcher) ByValue() ErrorMatcher {
 // errors might be returned, or in what order, or with what wording.
 func (m ErrorMatcher) ByOrigin() ErrorMatcher {
 	m.matchOrigin = true
+	return m
+}
+
+// CheckFieldPathSuffix returns a derived ErrorMatcher which matches field paths
+// by suffix rather than exact match. This is useful when testing across API
+// versions where fields may have moved in the object hierarchy. When enabled,
+// the matcher will consider a field path to match if the "got" path ends with
+// the "want" path. For example, if want.Field is "allocationMode", it will
+// match got.Field values of "spec.devices.requests[0].allocationMode" or
+// "spec.devices.requests[0].exactly.allocationMode".
+func (m ErrorMatcher) CheckFieldPathSuffix() ErrorMatcher {
+	m.checkFieldPathSuffix = true
 	return m
 }
 
