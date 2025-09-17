@@ -102,8 +102,9 @@ func (s *resourceclaimStrategy) Validate(ctx context.Context, obj runtime.Object
 
 	if utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidation) {
 		takeover := utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidationTakeover)
-		declarativeErrs := rest.ValidateDeclaratively(ctx, legacyscheme.Scheme, claim, rest.WithTakeover(takeover))
-		rest.CompareDeclarativeErrorsAndEmitMismatches(ctx, allErrs, declarativeErrs, takeover)
+		const validationIdentifier = "resource_claim_create"
+		declarativeErrs := rest.ValidateDeclaratively(ctx, legacyscheme.Scheme, claim, rest.WithTakeover(takeover), rest.WithValidationIdentifier(validationIdentifier))
+		rest.CompareDeclarativeErrorsAndEmitMismatches(ctx, allErrs, declarativeErrs, takeover, validationIdentifier)
 		if takeover {
 			allErrs = append(allErrs.RemoveCoveredByDeclarative(), declarativeErrs...)
 		}
@@ -137,10 +138,11 @@ func (s *resourceclaimStrategy) ValidateUpdate(ctx context.Context, obj, old run
 	errorList := validation.ValidateResourceClaim(newClaim)
 	errorList = append(errorList, validation.ValidateResourceClaimUpdate(newClaim, oldClaim)...)
 
+	const validationIdentifier = "resource_claim_update"
 	if utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidation) {
 		takeover := utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidationTakeover)
-		declarativeErrs := rest.ValidateUpdateDeclaratively(ctx, legacyscheme.Scheme, newClaim, oldClaim, rest.WithTakeover(takeover))
-		rest.CompareDeclarativeErrorsAndEmitMismatches(ctx, errorList, declarativeErrs, takeover)
+		declarativeErrs := rest.ValidateUpdateDeclaratively(ctx, legacyscheme.Scheme, newClaim, oldClaim, rest.WithTakeover(takeover), rest.WithValidationIdentifier(validationIdentifier))
+		rest.CompareDeclarativeErrorsAndEmitMismatches(ctx, errorList, declarativeErrs, takeover, validationIdentifier)
 		if takeover {
 			errorList = append(errorList.RemoveCoveredByDeclarative(), declarativeErrs...)
 		}
@@ -213,11 +215,12 @@ func (r *resourceclaimStatusStrategy) ValidateUpdate(ctx context.Context, obj, o
 	if utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidation) {
 		// Determine if takeover is enabled
 		takeover := utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidationTakeover)
+		const validationIdentifier = "resource_claim_status_update"
 
 		// Run declarative update validation with panic recovery
-		declarativeErrs := rest.ValidateUpdateDeclaratively(ctx, legacyscheme.Scheme, newClaim, oldClaim, rest.WithTakeover(takeover))
+		declarativeErrs := rest.ValidateUpdateDeclaratively(ctx, legacyscheme.Scheme, newClaim, oldClaim, rest.WithTakeover(takeover), rest.WithValidationIdentifier(validationIdentifier))
 		// Compare imperative and declarative errors and emit metric if there's a mismatch
-		rest.CompareDeclarativeErrorsAndEmitMismatches(ctx, errs, declarativeErrs, takeover)
+		rest.CompareDeclarativeErrorsAndEmitMismatches(ctx, errs, declarativeErrs, takeover, validationIdentifier)
 
 		// Only apply declarative errors if takeover is enabled
 		if takeover {
