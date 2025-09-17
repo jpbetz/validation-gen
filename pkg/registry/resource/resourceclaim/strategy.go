@@ -102,7 +102,7 @@ func (s *resourceclaimStrategy) Validate(ctx context.Context, obj runtime.Object
 
 	if utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidation) {
 		takeover := utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidationTakeover)
-		const validationIdentifier = "resource_claim_create"
+		const validationIdentifier = "resourceclaim_create"
 		declarativeErrs := rest.ValidateDeclaratively(ctx, legacyscheme.Scheme, claim, rest.WithTakeover(takeover), rest.WithValidationIdentifier(validationIdentifier))
 		rest.CompareDeclarativeErrorsAndEmitMismatches(ctx, allErrs, declarativeErrs, takeover, validationIdentifier)
 		if takeover {
@@ -138,7 +138,7 @@ func (s *resourceclaimStrategy) ValidateUpdate(ctx context.Context, obj, old run
 	errorList := validation.ValidateResourceClaim(newClaim)
 	errorList = append(errorList, validation.ValidateResourceClaimUpdate(newClaim, oldClaim)...)
 
-	const validationIdentifier = "resource_claim_update"
+	const validationIdentifier = "resourceclaim_update"
 	if utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidation) {
 		takeover := utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidationTakeover)
 		declarativeErrs := rest.ValidateUpdateDeclaratively(ctx, legacyscheme.Scheme, newClaim, oldClaim, rest.WithTakeover(takeover), rest.WithValidationIdentifier(validationIdentifier))
@@ -215,7 +215,7 @@ func (r *resourceclaimStatusStrategy) ValidateUpdate(ctx context.Context, obj, o
 	if utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidation) {
 		// Determine if takeover is enabled
 		takeover := utilfeature.DefaultFeatureGate.Enabled(features.DeclarativeValidationTakeover)
-		const validationIdentifier = "resource_claim_status_update"
+		const validationIdentifier = "resourceclaim_status_update"
 
 		// Run declarative update validation with panic recovery
 		declarativeErrs := rest.ValidateUpdateDeclaratively(ctx, legacyscheme.Scheme, newClaim, oldClaim, rest.WithTakeover(takeover), rest.WithValidationIdentifier(validationIdentifier))
