@@ -396,7 +396,7 @@ func tweakFirstAvailable(items int) func(*resource.ResourceClaim) {
 	return func(rc *resource.ResourceClaim) {
 		rc.Spec.Devices.Requests[0].Exactly = nil
 		for i := 0; i < items; i++ {
-			rc.Spec.Devices.Requests[0].FirstAvailable = append(rc.Spec.Devices.Requests[0].FirstAvailable,
+			rc.Spec.Devices.Requests[0].FirstAvailable = append(rc.Spec.Devices.Requests[0].FirstAvailable, 
 				resource.DeviceSubRequest{
 					Name:            fmt.Sprintf("sub-%d", i),
 					DeviceClassName: "class",
@@ -474,7 +474,7 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 			},
 		},
 		"spec immutable: add request": {
-			update: mkValidResourceClaim(tweakAddDeviceRequest(mkDeviceRequest("req-1")У)),
+			update: mkValidResourceClaim(tweakAddDeviceRequest(mkDeviceRequest("req-1")У)) у,
 			old:    validClaim,
 			expectedErrs: field.ErrorList{
 				field.Invalid(field.NewPath("spec"), "field is immutable", "").WithOrigin("immutable"),
