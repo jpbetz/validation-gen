@@ -29,6 +29,7 @@ import (
 	apitesting "k8s.io/kubernetes/pkg/api/testing"
 	"k8s.io/kubernetes/pkg/apis/resource"
 	"k8s.io/kubernetes/pkg/features"
+	pointer "k8s.io/utils/ptr"
 )
 
 var apiVersions = []string{"v1beta1", "v1beta2", "v1"} // "v1alpha3" is excluded because it doesn't have ResourceClaim
@@ -57,6 +58,33 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 		"valid": {
 			input: mkValidResourceClaim(),
 		},
+		"valid requests, max allowed": {
+			input: addDevicesRequests(mkValidResourceClaim(), 32),
+		},
+		"valid constraints, max allowed": {
+			input: addDevicesConstraints(mkValidResourceClaim(), 32),
+		},
+		"valid config, max allowed": {
+			input: addDevicesConfigs(mkValidResourceClaim(), 32),
+		},
+		"invalid requests, too many": {
+			input: addDevicesRequests(mkValidResourceClaim(), 33),
+			expectedErrs: field.ErrorList{
+				field.TooMany(field.NewPath("spec", "devices", "requests"), 33, 32),
+			},
+		},
+		"invalid constraints, too many": {
+			input: addDevicesConstraints(mkValidResourceClaim(), 33),
+			expectedErrs: field.ErrorList{
+				field.TooMany(field.NewPath("spec", "devices", "constraints"), 33, 32),
+			},
+		},
+		"invalid config, too many": {
+			input: addDevicesConfigs(mkValidResourceClaim(), 33),
+			expectedErrs: field.ErrorList{
+				field.TooMany(field.NewPath("spec", "devices", "config"), 33, 32),
+			},
+		},
 		// TODO: Add more test cases
 	}
 	for k, tc := range testCases {
@@ -79,6 +107,50 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 
 			apitesting.VerifyVersionedValidationEquivalence(t, &tc.input, nil)
 		})
+	}
+}
+
+func addDevicesConfigs(claim resource.ResourceClaim, items int) resource.ResourceClaim {
+	for i := 0; i < items; i++ {
+		claim.Spec.Devices.Config = append(claim.Spec.Devices.Config, mkDeviceClaimConfiguration())
+	}
+	return claim
+}
+
+func addDevicesConstraints(claim resource.ResourceClaim, items int) resource.ResourceClaim {
+	for i := 0; i < items; i++ {
+		claim.Spec.Devices.Constraints = append(claim.Spec.Devices.Constraints, mkDeviceConstraint())
+	}
+	return claim
+}
+
+func addDevicesRequests(claim resource.ResourceClaim, items int) resource.ResourceClaim {
+	for i := 0; i < items; i++ {
+		claim.Spec.Devices.Requests = append(claim.Spec.Devices.Requests, mkDeviceRequest(fmt.Sprintf("req-%d", i)))
+	}
+	return resource.ResourceClaim{}
+}
+
+func mkDeviceClaimConfiguration() resource.DeviceClaimConfiguration {
+	return resource.DeviceClaimConfiguration{
+		Requests: []string{"req-0"},
+	}
+}
+
+func mkDeviceConstraint() resource.DeviceConstraint {
+	return resource.DeviceConstraint{
+		Requests:       []string{"req-0"},
+		MatchAttribute: pointer.To(resource.FullyQualifiedName("a")),
+	}
+}
+
+func mkDeviceRequest(name string) resource.DeviceRequest {
+	return resource.DeviceRequest{
+		Name: name,
+		Exactly: &resource.ExactDeviceRequest{
+			DeviceClassName: "class",
+			AllocationMode:  resource.DeviceAllocationModeAll,
+		},
 	}
 }
 
