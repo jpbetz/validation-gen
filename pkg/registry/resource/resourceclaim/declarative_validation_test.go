@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
@@ -85,6 +86,39 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				field.TooMany(field.NewPath("spec", "devices", "config"), 33, 32),
 			},
 		},
+		"valid opaque driver, lowercase": {
+			input: addDeviceConfig(mkValidResourceClaim(), "dra.example.com"),
+		},
+		"valid opaque driver, mixed case": {
+			input: addDeviceConfig(mkValidResourceClaim(), "DRA.Example.COM"),
+		},
+		"valid opaque driver, max length": {
+			input: addDeviceConfig(mkValidResourceClaim(), strings.Repeat("a", 63)),
+		},
+		"invalid opaque driver, empty": {
+			input: addDeviceConfig(mkValidResourceClaim(), ""),
+			expectedErrs: field.ErrorList{
+				field.Required(field.NewPath("spec", "devices", "config").Index(0).Child("opaque", "driver"), ""),
+			},
+		},
+		"invalid opaque driver, too long": {
+			input: addDeviceConfig(mkValidResourceClaim(), strings.Repeat("a", 64)),
+			expectedErrs: field.ErrorList{
+				field.TooLong(field.NewPath("spec", "devices", "config").Index(0).Child("opaque", "driver"), "", 63),
+			},
+		},
+		"invalid opaque driver, invalid character": {
+			input: addDeviceConfig(mkValidResourceClaim(), "dra_example.com"),
+			expectedErrs: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "devices", "config").Index(0).Child("opaque", "driver"), "dra_example.com", "").WithOrigin("format=k8s-long-name-caseless"),
+			},
+		},
+		"invalid opaque driver, invalid DNS name (leading dot)": {
+			input: addDeviceConfig(mkValidResourceClaim(), ".example.com"),
+			expectedErrs: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "devices", "config").Index(0).Child("opaque", "driver"), ".example.com", "").WithOrigin("format=k8s-long-name-caseless"),
+			},
+		},
 		// TODO: Add more test cases
 	}
 	for k, tc := range testCases {
@@ -137,6 +171,12 @@ func tweakDevicesRequests(items int) func(*resource.ResourceClaim) {
 func mkDeviceClaimConfiguration() resource.DeviceClaimConfiguration {
 	return resource.DeviceClaimConfiguration{
 		Requests: []string{"req-0"},
+		DeviceConfiguration: resource.DeviceConfiguration{
+			Opaque: &resource.OpaqueDeviceConfiguration{
+				Driver:     "test.driver.com",
+				Parameters: runtime.RawExtension{Raw: []byte(`{"key":"value"}`)},
+			},
+		},
 	}
 }
 
@@ -484,4 +524,19 @@ func addStatusAllocationResult(obj resource.ResourceClaim) resource.ResourceClai
 			})
 	}
 	return obj
+}
+
+func addDeviceConfig(claim resource.ResourceClaim, driverName string) resource.ResourceClaim {
+	claim.Spec.Devices.Config = []resource.DeviceClaimConfiguration{
+		{
+			Requests: []string{"req-0"},
+			DeviceConfiguration: resource.DeviceConfiguration{
+				Opaque: &resource.OpaqueDeviceConfiguration{
+					Driver:     driverName,
+					Parameters: runtime.RawExtension{Raw: []byte(`{"key":"value"}`)},
+				},
+			},
+		},
+	}
+	return claim
 }
