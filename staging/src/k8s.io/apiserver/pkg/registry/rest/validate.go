@@ -350,13 +350,11 @@ func ValidateDeclarativelyWithMigrationChecks(ctx context.Context, scheme *runti
 	}
 
 	// Directly create the config and call the core validation logic.
-	cfg := &validationConfigOption{
-		opType:               opType,
-		takeover:             takeover,
-		validationIdentifier: validationIdentifier,
-	}
-	for _, opt := range configOpts {
-		opt(cfg)
+	cfg := &validationConfigOption{opType: opType}
+	opts := []ValidationConfig{WithTakeover(takeover), WithValidationIdentifier(validationIdentifier)}
+	opts = append(opts, configOpts...)
+	for _, o := range opts {
+		o(cfg)
 	}
 
 	// Call the panic-safe wrapper with the real validation function.
