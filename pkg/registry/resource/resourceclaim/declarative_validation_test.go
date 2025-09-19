@@ -59,28 +59,28 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 			input: mkValidResourceClaim(),
 		},
 		"valid requests, max allowed": {
-			input: addDevicesRequests(mkValidResourceClaim(), 32),
+			input: mkValidResourceClaim(tweakDevicesConfigs(32)),
 		},
 		"valid constraints, max allowed": {
-			input: addDevicesConstraints(mkValidResourceClaim(), 32),
+			input: mkValidResourceClaim(tweakDevicesConstraints(32)),
 		},
 		"valid config, max allowed": {
-			input: addDevicesConfigs(mkValidResourceClaim(), 32),
+			input: mkValidResourceClaim(tweakDevicesRequests(32)),
 		},
 		"invalid requests, too many": {
-			input: addDevicesRequests(mkValidResourceClaim(), 33),
+			input: mkValidResourceClaim(tweakDevicesConfigs(33)),
 			expectedErrs: field.ErrorList{
 				field.TooMany(field.NewPath("spec", "devices", "requests"), 33, 32),
 			},
 		},
 		"invalid constraints, too many": {
-			input: addDevicesConstraints(mkValidResourceClaim(), 33),
+			input: mkValidResourceClaim(tweakDevicesConstraints(33)),
 			expectedErrs: field.ErrorList{
 				field.TooMany(field.NewPath("spec", "devices", "constraints"), 33, 32),
 			},
 		},
 		"invalid config, too many": {
-			input: addDevicesConfigs(mkValidResourceClaim(), 33),
+			input: mkValidResourceClaim(tweakDevicesRequests(33)),
 			expectedErrs: field.ErrorList{
 				field.TooMany(field.NewPath("spec", "devices", "config"), 33, 32),
 			},
@@ -110,25 +110,28 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 	}
 }
 
-func addDevicesConfigs(claim resource.ResourceClaim, items int) resource.ResourceClaim {
-	for i := 0; i < items; i++ {
-		claim.Spec.Devices.Config = append(claim.Spec.Devices.Config, mkDeviceClaimConfiguration())
+func tweakDevicesConfigs(items int) func(*resource.ResourceClaim) {
+	return func(rc *resource.ResourceClaim) {
+		for i := 0; i < items; i++ {
+			rc.Spec.Devices.Config = append(rc.Spec.Devices.Config, mkDeviceClaimConfiguration())
+		}
 	}
-	return claim
 }
 
-func addDevicesConstraints(claim resource.ResourceClaim, items int) resource.ResourceClaim {
-	for i := 0; i < items; i++ {
-		claim.Spec.Devices.Constraints = append(claim.Spec.Devices.Constraints, mkDeviceConstraint())
+func tweakDevicesConstraints(items int) func(*resource.ResourceClaim) {
+	return func(rc *resource.ResourceClaim) {
+		for i := 0; i < items; i++ {
+			rc.Spec.Devices.Constraints = append(rc.Spec.Devices.Constraints, mkDeviceConstraint())
+		}
 	}
-	return claim
 }
 
-func addDevicesRequests(claim resource.ResourceClaim, items int) resource.ResourceClaim {
-	for i := 0; i < items; i++ {
-		claim.Spec.Devices.Requests = append(claim.Spec.Devices.Requests, mkDeviceRequest(fmt.Sprintf("req-%d", i)))
+func tweakDevicesRequests(items int) func(*resource.ResourceClaim) {
+	return func(rc *resource.ResourceClaim) {
+		for i := 0; i < items; i++ {
+			rc.Spec.Devices.Requests = append(rc.Spec.Devices.Requests, mkDeviceRequest(fmt.Sprintf("req-%d", i)))
+		}
 	}
-	return resource.ResourceClaim{}
 }
 
 func mkDeviceClaimConfiguration() resource.DeviceClaimConfiguration {
@@ -225,50 +228,50 @@ func TestValidateStatusUpdateForDeclarative(t *testing.T) {
 	}{
 		"valid pool name": {
 			old:    mkValidResourceClaim(),
-			update: tweakStatusDeviceRequestAllocationResultPool(mkResourceClaimWithStatus(), "dra.example.com/pool-a"),
+			update: mkResourceClaimWithStatus(tweakStatusDeviceRequestAllocationResultPool("dra.example.com/pool-a")),
 		},
 		"valid pool name, max length": {
 			old:    mkValidResourceClaim(),
-			update: tweakStatusDeviceRequestAllocationResultPool(mkResourceClaimWithStatus(), strings.Repeat("a", 63)+"."+strings.Repeat("b", 63)+"."+strings.Repeat("c", 63)+"."+strings.Repeat("d", 55)),
+			update: mkResourceClaimWithStatus(tweakStatusDeviceRequestAllocationResultPool(strings.Repeat("a", 63) + "." + strings.Repeat("b", 63) + "." + strings.Repeat("c", 63) + "." + strings.Repeat("d", 55))),
 		},
 		"invalid pool name, required": {
 			old:    mkValidResourceClaim(),
-			update: tweakStatusDeviceRequestAllocationResultPool(mkResourceClaimWithStatus(), ""),
+			update: mkResourceClaimWithStatus(tweakStatusDeviceRequestAllocationResultPool("")),
 			expectedErrs: field.ErrorList{
 				field.Required(poolPath, ""),
 			},
 		},
 		"invalid pool name, too long": {
 			old:    mkValidResourceClaim(),
-			update: tweakStatusDeviceRequestAllocationResultPool(mkResourceClaimWithStatus(), strings.Repeat("a", 253)+"/"+strings.Repeat("a", 253)),
+			update: mkResourceClaimWithStatus(tweakStatusDeviceRequestAllocationResultPool(strings.Repeat("a", 253) + "/" + strings.Repeat("a", 253))),
 			expectedErrs: field.ErrorList{
 				field.TooLong(poolPath, "", 253).WithOrigin("format=k8s-resource-pool-name"),
 			},
 		},
 		"invalid pool name, format": {
 			old:    mkValidResourceClaim(),
-			update: tweakStatusDeviceRequestAllocationResultPool(mkResourceClaimWithStatus(), "a/Not_Valid"),
+			update: mkResourceClaimWithStatus(tweakStatusDeviceRequestAllocationResultPool("a/Not_Valid")),
 			expectedErrs: field.ErrorList{
 				field.Invalid(poolPath, "Not_Valid", "").WithOrigin("format=k8s-resource-pool-name"),
 			},
 		},
 		"invalid pool name, leading slash": {
 			old:    mkValidResourceClaim(),
-			update: tweakStatusDeviceRequestAllocationResultPool(mkResourceClaimWithStatus(), "/a"),
+			update: mkResourceClaimWithStatus(tweakStatusDeviceRequestAllocationResultPool("/a")),
 			expectedErrs: field.ErrorList{
 				field.Invalid(poolPath, "", "").WithOrigin("format=k8s-resource-pool-name"),
 			},
 		},
 		"invalid pool name, trailing slash": {
 			old:    mkValidResourceClaim(),
-			update: tweakStatusDeviceRequestAllocationResultPool(mkResourceClaimWithStatus(), "a/"),
+			update: mkResourceClaimWithStatus(tweakStatusDeviceRequestAllocationResultPool("a/")),
 			expectedErrs: field.ErrorList{
 				field.Invalid(poolPath, "", "").WithOrigin("format=k8s-resource-pool-name"),
 			},
 		},
 		"invalid pool name, double slash": {
 			old:    mkValidResourceClaim(),
-			update: tweakStatusDeviceRequestAllocationResultPool(mkResourceClaimWithStatus(), "a//b"),
+			update: mkResourceClaimWithStatus(tweakStatusDeviceRequestAllocationResultPool("a//b")),
 			expectedErrs: field.ErrorList{
 				field.Invalid(poolPath, "", "").WithOrigin("format=k8s-resource-pool-name"),
 			},
@@ -327,8 +330,8 @@ func TestValidateStatusUpdateForDeclarative(t *testing.T) {
 	}
 }
 
-func mkValidResourceClaim() resource.ResourceClaim {
-	return resource.ResourceClaim{
+func mkValidResourceClaim(tweaks ...func(rc *resource.ResourceClaim)) resource.ResourceClaim {
+	rc := resource.ResourceClaim{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "valid-claim",
 			Namespace: "default",
@@ -347,10 +350,15 @@ func mkValidResourceClaim() resource.ResourceClaim {
 			},
 		},
 	}
+
+	for _, tweak := range tweaks {
+		tweak(&rc)
+	}
+	return rc
 }
 
-func mkResourceClaimWithStatus() resource.ResourceClaim {
-	return resource.ResourceClaim{
+func mkResourceClaimWithStatus(tweaks ...func(rc *resource.ResourceClaim)) resource.ResourceClaim {
+	rc := resource.ResourceClaim{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "valid-claim",
 			Namespace: "default",
@@ -383,11 +391,16 @@ func mkResourceClaimWithStatus() resource.ResourceClaim {
 			},
 		},
 	}
+	for _, tweak := range tweaks {
+		tweak(&rc)
+	}
+	return rc
 }
 
-func tweakStatusDeviceRequestAllocationResultPool(obj resource.ResourceClaim, pool string) resource.ResourceClaim {
-	for i := range obj.Status.Allocation.Devices.Results {
-		obj.Status.Allocation.Devices.Results[i].Pool = pool
+func tweakStatusDeviceRequestAllocationResultPool(pool string) func(rc *resource.ResourceClaim) {
+	return func(rc *resource.ResourceClaim) {
+		for i := range rc.Status.Allocation.Devices.Results {
+			rc.Status.Allocation.Devices.Results[i].Pool = pool
+		}
 	}
-	return obj
 }
