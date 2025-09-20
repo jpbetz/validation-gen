@@ -27,9 +27,10 @@ func Test(t *testing.T) {
 		// All zero values
 	}).ExpectValidateFalseByPath(map[string][]string{
 		// All ifDisabled validations should trigger
-		"xDisabledField": {"field Struct.XDisabledField"},
-		"yDisabledField": {"field Struct.YDisabledField"},
-		"xyMixedField":   {"field Struct.XYMixedField/Y"},
+		"xDisabledField":     {"field Struct.XDisabledField"},
+		"yDisabledField":     {"field Struct.YDisabledField"},
+		"xyMixedField":       {"field Struct.XYMixedField/Y"},
+		"xDisabledListField": {"field Struct.XDisabledListField"},
 	})
 
 	st.Value(&Struct{
@@ -40,25 +41,30 @@ func Test(t *testing.T) {
 		"xEnabledField":          {"field Struct.XEnabledField"},
 		"yEnabledField":          {"field Struct.YEnabledField"},
 		"xyMixedField":           {"field Struct.XYMixedField/X"},
+		"xEnabledListField":      {"field Struct.XEnabledListField"},
 	})
 
 	st.Value(&Struct{
 		// All zero values
 	}).Opts([]string{"FeatureX"}).ExpectValidateFalseByPath(map[string][]string{
-		// All ifEnabled validations should trigger
+		// All ifEnabled(FeatureX) validations should trigger
+		// All ifDisabled(<non-FeatureX>) validations should trigger
 		"metadata.xEnabledField": {"field Struct.ObjectMeta.XEnabledField"},
 		"xEnabledField":          {"field Struct.XEnabledField"},
 		"yDisabledField":         {"field Struct.YDisabledField"},
 		"xyMixedField": {
 			"field Struct.XYMixedField/X",
 			"field Struct.XYMixedField/Y"},
+		"xEnabledListField": {"field Struct.XEnabledListField"},
 	})
 
 	st.Value(&Struct{
 		// All zero values
 	}).Opts([]string{"FeatureY"}).ExpectValidateFalseByPath(map[string][]string{
-		// All ifEnabled validations should trigger
-		"xDisabledField": {"field Struct.XDisabledField"},
-		"yEnabledField":  {"field Struct.YEnabledField"},
+		// All ifEnabled(FeatureY) validations should trigger
+		// All ifEnabled(<non-FeatureY>) validations should trigger
+		"xDisabledField":     {"field Struct.XDisabledField"},
+		"yEnabledField":      {"field Struct.YEnabledField"},
+		"xDisabledListField": {"field Struct.XDisabledListField"},
 	})
 }

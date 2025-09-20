@@ -195,7 +195,7 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 	for _, vfn := range validations.Functions {
 		comm := vfn.Comments
 		vfn.Comments = nil
-		f := Function(eachValTagName, vfn.Flags, validateEachSliceVal, matchArg, equivArg, WrapperFunction{vfn, nt.Elem}).WithComments(comm...)
+		f := Function(eachValTagName, vfn.Flags, validateEachSliceVal, matchArg, equivArg, WrapperFunction{[]FunctionGen{vfn}, nt.Elem}).WithComments(comm...)
 		result.AddFunction(f)
 	}
 
@@ -216,7 +216,7 @@ func (evtv eachValTagValidator) getMapValidations(t *types.Type, validations Val
 	for _, vfn := range validations.Functions {
 		comm := vfn.Comments
 		vfn.Comments = nil
-		f := Function(eachValTagName, vfn.Flags, validateEachMapVal, equivArg, WrapperFunction{vfn, nt.Elem}).WithComments(comm...)
+		f := Function(eachValTagName, vfn.Flags, validateEachMapVal, equivArg, WrapperFunction{[]FunctionGen{vfn}, nt.Elem}).WithComments(comm...)
 		result.AddFunction(f)
 	}
 
@@ -293,7 +293,7 @@ func (ektv eachKeyTagValidator) getValidations(t *types.Type, validations Valida
 	for _, vfn := range validations.Functions {
 		comm := vfn.Comments
 		vfn.Comments = nil
-		f := Function(eachKeyTagName, vfn.Flags, validateEachMapKey, WrapperFunction{vfn, nt.Key}).WithComments(comm...)
+		f := Function(eachKeyTagName, vfn.Flags, validateEachMapKey, WrapperFunction{[]FunctionGen{vfn}, nt.Key}).WithComments(comm...)
 		result.AddFunction(f)
 	}
 	return result, nil

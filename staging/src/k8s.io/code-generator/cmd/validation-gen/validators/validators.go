@@ -515,12 +515,12 @@ type VariableGen struct {
 	Initializer any
 }
 
-// WrapperFunction describes a function literal which has the fingerprint of a
-// regular validation function (op, fldPath, obj, oldObj) and calls another
-// validation function with the same signature, plus extra args if needed.
+// WrapperFunction describes function literal which have the fingerprint of
+// regular validation function (op, fldPath, obj, oldObj) and calls other
+// validation functions with the same signature, plus extra args if needed.
 type WrapperFunction struct {
-	Function FunctionGen
-	ObjType  *types.Type
+	Functions []FunctionGen
+	ObjType   *types.Type
 }
 
 // Literal is a literal value that, when used as an argument to a validator,
