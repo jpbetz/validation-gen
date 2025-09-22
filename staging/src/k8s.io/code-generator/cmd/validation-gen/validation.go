@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/code-generator/cmd/validation-gen/util"
 	"k8s.io/code-generator/cmd/validation-gen/validators"
+	"k8s.io/gengo/v2/codetags"
 	"k8s.io/gengo/v2/generator"
 	"k8s.io/gengo/v2/namer"
 	"k8s.io/gengo/v2/parser/tags"
@@ -214,8 +215,11 @@ type childNode struct {
 	childType *types.Type // the real type of the child (may be a pointer)
 	node      *typeNode   // the node of the child's value type, or nil if it is in a foreign package
 
-	fieldValidations  validators.Validations // validations on the field
-	declarativeNative bool                   // represents whether field has DV only validations or not.
+	fieldValidations validators.Validations // validations on the field
+	// declarativeNative is true if the field only has declarative validations,
+	// false if the field is being migrated and also has equivalent handwritten validation
+	declarativeNative bool
+
 	// These are not the same as fieldValidations, and are not considered in
 	// hasValidations. These let us emit the iteration code for list and
 	// map types, but we might not have enough information to know if we can
@@ -243,9 +247,9 @@ type typeNode struct {
 	// hasValidations. These let us emit the iteration code for list and
 	// map types, but we might not have enough information to know if we can
 	// skip them at discovery time.
-	typeValIterations       validators.Validations // validations on each val
-	typeKeyIterations       validators.Validations // validations on each key
-	hasNonStableValidations bool                   // populated to true, if type has declarative validations with non stable tags
+	typeValIterations    validators.Validations    // validations on each val
+	typeKeyIterations    validators.Validations    // validations on each key
+	lowestStabilityLevel validators.StabilityLevel // populated to the lowest stability level of any validation in this type
 }
 
 // DiscoverType walks the given type recursively, building a type-graph in this
@@ -298,10 +302,11 @@ func (td *typeDiscoverer) discoverType(t *types.Type, fldPath *field.Path) (*typ
 	if node, found := td.typeNodes[t]; found {
 		return node, nil
 	}
-
+	klog.V(4).InfoS("discoverType", "type", t, "kind", t.Kind, "path", fldPath.String())
 	// This is the type-node being assembled in the rest of this function.
 	thisNode := &typeNode{
-		valueType: t,
+		valueType:            t,
+		lowestStabilityLevel: validators.Stable,
 	}
 	td.typeNodes[t] = thisNode
 
@@ -590,15 +595,9 @@ func (td *typeDiscoverer) verifySupportedType(t *types.Type) error {
 // discoverStruct walks a struct type recursively.
 func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path) error {
 	var fields []*childNode
-	var hasNonStable bool
+	structLowestStability := validators.Stable
 
 	klog.V(5).InfoS("discoverStruct", "type", thisNode.valueType)
-
-	// Pre-calculate stability of all known tags.
-	stabilityMap := make(map[string]validators.StabilityLevel)
-	for _, doc := range td.validator.Docs() {
-		stabilityMap[doc.Tag] = doc.StabilityLevel
-	}
 
 	// Discover into each field of this struct.
 	for _, memb := range thisNode.valueType.Members {
@@ -636,9 +635,12 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 				childType: childType,
 				node:      node,
 			}
-			// New: Propagate non-stable status up from children.
-			if node != nil && node.hasNonStableValidations {
-				hasNonStable = true
+			// Propagate non-stable status up from children.
+			if node != nil {
+				structLowestStability, err = structLowestStability.Min(node.lowestStabilityLevel)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -656,34 +658,14 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 			return fmt.Errorf("field %s: %w", childPath.String(), err)
 		}
 
-		var isDeclarativeNative bool
-		for _, tag := range tags {
-			if tag.Name == declarativeNativeTag {
-				isDeclarativeNative = true
-			}
-			// New: Track if any tag on this field is non-stable.
-			if stability, ok := stabilityMap[tag.Name]; ok && stability != validators.Stable {
-				hasNonStable = true
-			}
+		memberLowestStabilityLevel, err := td.analyzeFieldTags(tags, child, childPath)
+		if err != nil {
+			return err
 		}
-
-		if isDeclarativeNative {
-			child.declarativeNative = true
-			for _, tag := range tags {
-				if stability, ok := stabilityMap[tag.Name]; !ok {
-					// This case should ideally not be hit if our tag registry is complete.
-					return fmt.Errorf("field %s: unknown validation tag %q used with +k8s:declarativeValidationNative", childPath.String(), tag.Name)
-				} else if stability != validators.Stable {
-					return fmt.Errorf("field %s: +k8s:declarativeValidationNative can only be used with stable validation tags, but found %q which is %s", childPath.String(), tag.Name, stability)
-				}
-			}
-
-			// If the type has non stable validations.
-			if child.node != nil && child.node.hasNonStableValidations {
-				return fmt.Errorf("field %s: is marked with +k8s:declarativeValidationNative but its type %q contains non-stable validation tags", childPath.String(), child.node.valueType.Name)
-			}
+		structLowestStability, err = structLowestStability.Min(memberLowestStabilityLevel)
+		if err != nil {
+			return err
 		}
-
 		if validations, err := td.validator.ExtractValidations(context, tags...); err != nil {
 			return fmt.Errorf("field %s: %w", childPath.String(), err)
 		} else if validations.Empty() {
@@ -824,8 +806,49 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 	}
 
 	thisNode.fields = fields
-	thisNode.hasNonStableValidations = hasNonStable
+	thisNode.lowestStabilityLevel = structLowestStability
 	return nil
+}
+
+// analyzeFieldTags processes the tags for a field, checking for declarative native
+// validation and stability levels.
+// This returns lowest stability level of tags for the field.
+func (td *typeDiscoverer) analyzeFieldTags(tags []codetags.Tag, node *childNode, fldPath *field.Path) (validators.StabilityLevel, error) {
+	fieldLowestStabilityLevel := validators.Stable
+	var isDeclarativeNative bool
+	for _, tag := range tags {
+		if tag.Name == declarativeNativeTag {
+			isDeclarativeNative = true
+		}
+
+		tagStability, err := td.validator.Stability(tag.Name)
+		if err != nil {
+			return fieldLowestStabilityLevel, err
+		}
+
+		fieldLowestStabilityLevel, err = fieldLowestStabilityLevel.Min(tagStability)
+		if err != nil {
+			return fieldLowestStabilityLevel, err
+		}
+	}
+
+	if isDeclarativeNative {
+		node.declarativeNative = true
+		for _, tag := range tags {
+			if stability, err := td.validator.Stability(tag.Name); err != nil {
+				// This case should ideally not be hit if our tag registry is complete.
+				return fieldLowestStabilityLevel, fmt.Errorf("field %s: error occurred while finding stability level for %s tag: %w", fldPath.String(), tag.Name, err)
+			} else if stability != validators.Stable {
+				return fieldLowestStabilityLevel, fmt.Errorf("field %s: +k8s:declarativeValidationNative can only be used with stable validation tags, but found %q which is %s", fldPath.String(), tag.Name, stability)
+			}
+		}
+
+		// If the type has non stable validations.
+		if node.node != nil && node.node.lowestStabilityLevel != validators.Stable {
+			return fieldLowestStabilityLevel, fmt.Errorf("field %s: is marked with +k8s:declarativeValidationNative but its type %q contains non-stable validation tags", fldPath.String(), node.node.valueType.Name)
+		}
+	}
+	return fieldLowestStabilityLevel, nil
 }
 
 // getValidationFunctionName looks up the name of the specified type's
@@ -1050,7 +1073,7 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 			panic(fmt.Sprintf("unexpected type-validations on type %v, kind %s", thisNode.valueType, thisNode.valueType.Kind))
 		}
 		emitComments(validations.Comments, sw)
-		emitCallsToValidators(c, validations.Functions, sw, thisChild.declarativeNative)
+		emitCallsToValidators(c, validations.Functions, sw)
 		if thisNode.valueType.Kind == types.Alias {
 			underlyingNode := thisNode.underlying.node
 			switch underlyingNode.valueType.Kind {
@@ -1059,20 +1082,20 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 				// call its validation function.
 				if validations := thisNode.typeValIterations; g.hasValidations(underlyingNode.elem.node) && !validations.Empty() {
 					emitComments(validations.Comments, sw)
-					emitCallsToValidators(c, validations.Functions, sw, thisChild.declarativeNative)
+					emitCallsToValidators(c, validations.Functions, sw)
 				}
 			case types.Map:
 				// If this field is a map and the key-type has validations,
 				// call its validation function.
 				if validations := thisNode.typeKeyIterations; g.hasValidations(underlyingNode.key.node) && !validations.Empty() {
 					emitComments(validations.Comments, sw)
-					emitCallsToValidators(c, validations.Functions, sw, thisChild.declarativeNative)
+					emitCallsToValidators(c, validations.Functions, sw)
 				}
 				// If this field is a map and the value-type has validations,
 				// call its validation function.
 				if validations := thisNode.typeValIterations; g.hasValidations(underlyingNode.elem.node) && !validations.Empty() {
 					emitComments(validations.Comments, sw)
-					emitCallsToValidators(c, validations.Functions, sw, thisChild.declarativeNative)
+					emitCallsToValidators(c, validations.Functions, sw)
 				}
 			}
 		}
@@ -1170,7 +1193,7 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 							emitRatchetingCheck(c, fld.childType, bufsw)
 							fldRatchetingChecked = true
 						}
-						g.emitCallToOtherTypeFunc(c, fld.node, bufsw, fld.declarativeNative)
+						g.emitCallToOtherTypeFunc(c, fld.node, bufsw)
 					}
 				case types.Slice:
 					// If this field is a list and the value-type has
@@ -1199,7 +1222,6 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 							}
 							emitCallsToValidators(c, validations.Functions, bufsw)
 						}
-						emitCallsToValidators(c, validations.Functions, bufsw, fld.declarativeNative)
 					}
 					// If this field is a map and the value-type has
 					// validations, call its validation function.
@@ -1237,6 +1259,12 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 				sw.Do("// field $.inType|raw$.$.fieldName$\n", targs)
 				sw.Do("errs = append(errs,\n", targs)
 				sw.Do("  func(fldPath *$.field.Path|raw$, obj, oldObj $.fieldTypePfx$$.fieldType|raw$) (errs $.field.ErrorList|raw$) {\n", targs)
+				if fld.declarativeNative {
+					sw.Do("// this field validations are marked declarative only\n", nil)
+					sw.Do("defer func() {\n", nil)
+					sw.Do("    errs = errs.MarkDeclarativeOnly()\n", nil)
+					sw.Do("}()\n", nil)
+				}
 				if err := sw.Merge(buf, bufsw); err != nil {
 					panic(fmt.Sprintf("failed to merge buffer: %v", err))
 				}
@@ -1275,16 +1303,12 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 // Emitted code assumes that the value in question is always a pair of nilable
 // variables named "obj" and "oldObj", and the field path to this value is
 // named "fldPath".
-func (g *genValidations) emitCallToOtherTypeFunc(c *generator.Context, node *typeNode, sw *generator.SnippetWriter, declarativeNative bool) {
+func (g *genValidations) emitCallToOtherTypeFunc(c *generator.Context, node *typeNode, sw *generator.SnippetWriter) {
 	targs := generator.Args{
 		"funcName": c.Universe.Type(node.funcName),
 	}
 	sw.Do("// call the type's validation function\n", nil)
-	sw.Do("errs = append(errs, $.funcName|raw$(ctx, op, fldPath, obj, oldObj)", targs)
-	if declarativeNative {
-		sw.Do(".MarkDeclarativeOnly()", nil)
-	}
-	sw.Do("...)\n", targs)
+	sw.Do("errs = append(errs, $.funcName|raw$(ctx, op, fldPath, obj, oldObj)...)\n", targs)
 }
 
 // emitRatchetingCheck emits an equivalence check for default ratcheting.
@@ -1328,7 +1352,7 @@ func emitRatchetingCheck(c *generator.Context, t *types.Type, sw *generator.Snip
 // Emitted code assumes that the value in question is always a pair of nilable
 // variables named "obj" and "oldObj", and the field path to this value is
 // named "fldPath".
-func emitCallsToValidators(c *generator.Context, validations []validators.FunctionGen, sw *generator.SnippetWriter, declarativeNative bool) {
+func emitCallsToValidators(c *generator.Context, validations []validators.FunctionGen, sw *generator.SnippetWriter) {
 	// Group and sort the inputs.
 	cohorts := sortIntoCohorts(validations)
 
@@ -1378,9 +1402,6 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 					toGolangSourceDataLiteral(sw, c, arg)
 				}
 				sw.Do(")", targs)
-				if declarativeNative {
-					sw.Do(".MarkDeclarativeOnly()", nil)
-				}
 			}
 
 			for _, comment := range v.Comments {

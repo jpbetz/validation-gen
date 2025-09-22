@@ -21,7 +21,6 @@ import (
 	"reflect"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/code-generator/cmd/validation-gen/validators"
 	"k8s.io/gengo/v2/generator"
 	"k8s.io/gengo/v2/namer"
@@ -490,10 +489,10 @@ func TestDiscoverStruct(t *testing.T) {
 	validator := validators.InitGlobalValidator(c)
 
 	testCases := []struct {
-		name               string
-		typeToTest         *types.Type
-		expectErr          error
-		expectHasNonStable bool
+		name                   string
+		typeToTest             *types.Type
+		expectErr              error
+		expectedStabilityLevel validators.StabilityLevel
 	}{
 		{
 			name: "simple struct with stable validations",
@@ -524,8 +523,8 @@ func TestDiscoverStruct(t *testing.T) {
 					},
 				},
 			},
-			expectErr:          nil,
-			expectHasNonStable: false,
+			expectErr:              nil,
+			expectedStabilityLevel: validators.Stable,
 		},
 		{
 			name: "struct with non-stable validation on a field",
@@ -541,8 +540,8 @@ func TestDiscoverStruct(t *testing.T) {
 					},
 				},
 			},
-			expectErr:          nil,
-			expectHasNonStable: true,
+			expectErr:              nil,
+			expectedStabilityLevel: validators.Alpha,
 		},
 		{
 			name: "struct with declarative native fields with stable validations",
@@ -571,8 +570,8 @@ func TestDiscoverStruct(t *testing.T) {
 					},
 				},
 			},
-			expectErr:          nil,
-			expectHasNonStable: false,
+			expectErr:              nil,
+			expectedStabilityLevel: validators.Stable,
 		},
 		{
 			name: "struct with declarative native field string with non-stable validations",
@@ -588,7 +587,7 @@ func TestDiscoverStruct(t *testing.T) {
 					},
 				},
 			},
-			expectErr: fmt.Errorf("field root.declarativeField: +k8s:declarativeValidationNative can only be used with stable validation tags, but found \"k8s:validateFalse\" which is Alpha"),
+			expectErr: fmt.Errorf("field MyStruct.declarativeField: +k8s:declarativeValidationNative can only be used with stable validation tags, but found \"k8s:validateFalse\" which is Alpha"),
 		},
 		{
 			name: "struct with declarative native field integer with non-stable validations",
@@ -604,7 +603,7 @@ func TestDiscoverStruct(t *testing.T) {
 					},
 				},
 			},
-			expectErr: fmt.Errorf("field root.declarativeField: +k8s:declarativeValidationNative can only be used with stable validation tags, but found \"k8s:validateFalse\" which is Alpha"),
+			expectErr: fmt.Errorf("field MyStruct.declarativeField: +k8s:declarativeValidationNative can only be used with stable validation tags, but found \"k8s:validateFalse\" which is Alpha"),
 		},
 		{
 			name: "struct with declarative native field slice with non-stable validations",
@@ -623,7 +622,34 @@ func TestDiscoverStruct(t *testing.T) {
 					},
 				},
 			},
-			expectErr: fmt.Errorf("field root.declarativeField: +k8s:declarativeValidationNative can only be used with stable validation tags, but found \"k8s:item\" which is Alpha"),
+			expectErr: fmt.Errorf("field MyStruct.declarativeField: +k8s:declarativeValidationNative can only be used with stable validation tags, but found \"k8s:item\" which is Alpha"),
+		},
+		{
+			name: "struct with a field whose type has non-stable validations",
+			typeToTest: &types.Type{
+				Kind: types.Struct,
+				Name: types.Name{Name: "MyStruct"},
+				Members: []types.Member{
+					{
+						Name: "OtherField",
+						Type: &types.Type{
+							Kind: types.Struct,
+							Name: types.Name{Name: "OtherType"},
+							Members: []types.Member{
+								{
+									Name:         "AlphaField",
+									Type:         types.String,
+									CommentLines: []string{"+k8s:validateFalse"},
+									Tags:         `json:"alphaField"`,
+								},
+							},
+						},
+						Tags: `json:"otherField"`,
+					},
+				},
+			},
+			expectErr:              nil,
+			expectedStabilityLevel: validators.Alpha,
 		},
 	}
 	for _, tc := range testCases {
@@ -633,25 +659,29 @@ func TestDiscoverStruct(t *testing.T) {
 				t.Fatalf("discoverer.Init() failed: %v", err)
 			}
 
-			thisNode := &typeNode{
-				valueType: tc.typeToTest,
-			}
-			fldPath := field.NewPath("root")
-
-			err := discoverer.discoverStruct(thisNode, fldPath)
-			if tc.expectErr != nil {
-				if err == nil {
-					t.Fatalf("expected error %q, but got nil", tc.expectErr)
-				} else if err.Error() != tc.expectErr.Error() {
-					t.Fatalf("expected error %q, but got %q", tc.expectErr, err)
+			// Manually discover the types to populate the typeNodes map
+			if err := discoverer.DiscoverType(tc.typeToTest); err != nil {
+				if tc.expectErr != nil {
+					if err.Error() != tc.expectErr.Error() {
+						t.Fatalf("expected error %q, but got %q", tc.expectErr, err)
+					}
+					return
 				}
+				t.Fatalf("discoverer.DiscoverType() failed: %v", err)
+			}
+
+			thisNode := discoverer.typeNodes[tc.typeToTest]
+			if thisNode == nil {
+				t.Fatalf("typeNode for %s not found", tc.typeToTest.Name.Name)
+			}
+
+			if tc.expectErr != nil {
+				// Error was expected during DiscoverType
 				return
 			}
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if thisNode.hasNonStableValidations != tc.expectHasNonStable {
-				t.Errorf("Expected hasNonStableValidations to be %v, but got %v", tc.expectHasNonStable, thisNode.hasNonStableValidations)
+
+			if thisNode.lowestStabilityLevel != tc.expectedStabilityLevel {
+				t.Errorf("Expected lowestStabilityLevel to be %v, but got %v", tc.expectedStabilityLevel, thisNode.lowestStabilityLevel)
 			}
 		})
 	}

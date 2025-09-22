@@ -47,7 +47,7 @@ func (d *declarativeValidationNative) GetValidations(context Context, tag codeta
 func (d *declarativeValidationNative) Docs() TagDoc {
 	return TagDoc{
 		Tag:            d.TagName(),
-		Description:    "Marks a field to indicate that all its validations (including its type's) must come from stable tags. It also signals the generator to wrap validation errors with a special marker, used to filter errors from DV-only validations.",
+		Description:    "Indicates that all validations for the field, including any on the field's type, are declarative and do not have a corresponding handwritten equivalent. This is only allowed for validations that are 'Stable'. When used, validation errors will be marked to show they originated from a declarative-only validation.",
 		Scopes:         d.ValidScopes().UnsortedList(),
 		StabilityLevel: Stable,
 	}

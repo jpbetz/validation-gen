@@ -56,9 +56,9 @@ type Error struct {
 	// that should also be caught by declarative validation.
 	CoveredByDeclarative bool
 
-	// DeclarativeOnly is true when this error is coming from validations that
-	// is coming from the native declarative validations. This field is used to filer out
-	// the errors coming from declarative only validations.
+	// DeclarativeOnly is true when this error is coming from the native
+	// declarative validations. This field is used to filer out the
+	// errors coming from declarative only validations.
 	DeclarativeOnly bool
 }
 

@@ -246,10 +246,10 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
 		wantedErr: func() *Error {
 			e := baseErr()
-			e.CoveredByDeclarative = true
+			e.DeclarativeOnly = true
 			return e
 		},
-		actualErr: &Error{CoveredByDeclarative: true},
+		actualErr: &Error{DeclarativeOnly: true},
 		matches:   true,
 	}, {
 		name:    "ByDeclarativeOnly: no match",
@@ -259,7 +259,7 @@ func TestErrorMatcher_Matches(t *testing.T) {
 			e.DeclarativeOnly = true
 			return e
 		},
-		actualErr: &Error{CoveredByDeclarative: false},
+		actualErr: &Error{DeclarativeOnly: false},
 		matches:   false,
 	}, {
 		name:      "RequireOriginWhenInvalid: match",
