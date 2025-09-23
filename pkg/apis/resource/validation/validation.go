@@ -194,9 +194,17 @@ func gatherAllocatedDevices(allocationResult *resource.DeviceAllocationResult) s
 func validateDeviceRequest(request resource.DeviceRequest, fldPath *field.Path, stored bool) field.ErrorList {
 	allErrs := validateRequestName(request.Name, fldPath.Child("name"))
 
-	numDeviceRequestType := 0
-	if len(request.FirstAvailable) > 0 {
-		numDeviceRequestType++
+	hasFirstAvailable := len(request.FirstAvailable) > 0
+	hasExactly := request.Exactly != nil
+
+	// This block correctly enforces the "oneOf" constraint. It ensures that
+	// we only validate the path that the user actually intended to use. This
+	// is the key fix for the bug where a v1beta1 object using "firstAvailable"
+	// would cause a validation error on the zero-valued "exactly" field after
+	// conversion to the internal type.
+	if hasFirstAvailable && hasExactly {
+		allErrs = append(allErrs, field.Invalid(fldPath, nil, "exactly one of `exactly` or `firstAvailable` is required, but multiple fields are set"))
+	} else if hasFirstAvailable {
 		allErrs = append(allErrs, validateSet(request.FirstAvailable, resource.FirstAvailableDeviceRequestMaxSize,
 			func(subRequest resource.DeviceSubRequest, fldPath *field.Path) field.ErrorList {
 				return validateDeviceSubRequest(subRequest, fldPath, stored)
@@ -205,20 +213,13 @@ func validateDeviceRequest(request resource.DeviceRequest, fldPath *field.Path, 
 				return subRequest.Name, "name"
 			},
 			fldPath.Child("firstAvailable"))...)
-	}
-
-	if request.Exactly != nil {
-		numDeviceRequestType++
+	} else if hasExactly {
 		allErrs = append(allErrs, validateExactDeviceRequest(*request.Exactly, fldPath.Child("exactly"), stored)...)
+	} else {
+		// Neither field is set.
+		allErrs = append(allErrs, field.Required(fldPath, "exactly one of `exactly` or `firstAvailable` is required"))
 	}
 
-	switch numDeviceRequestType {
-	case 0:
-		allErrs = append(allErrs, field.Required(fldPath, "exactly one of `exactly` or `firstAvailable` is required"))
-	case 1:
-	default:
-		allErrs = append(allErrs, field.Invalid(fldPath, nil, "exactly one of `exactly` or `firstAvailable` is required, but multiple fields are set"))
-	}
 	return allErrs
 }
 
@@ -247,15 +248,23 @@ func validateExactDeviceRequest(request resource.ExactDeviceRequest, fldPath *fi
 func validateDeviceAllocationMode(deviceAllocationMode resource.DeviceAllocationMode, count int64, allocModeFldPath, countFldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 	switch deviceAllocationMode {
+	case "":
+		// An empty string for this field means it's required but was not provided.
+		// This is distinct from providing an unsupported value.
+		allErrs = append(allErrs, field.Required(allocModeFldPath, "must be either 'All' or 'ExactCount'"))
 	case resource.DeviceAllocationModeAll:
 		if count != 0 {
+			// This is cross-field validation, which remains imperative.
 			allErrs = append(allErrs, field.Invalid(countFldPath, count, fmt.Sprintf("must not be specified when allocationMode is '%s'", deviceAllocationMode)))
 		}
 	case resource.DeviceAllocationModeExactCount:
 		if count <= 0 {
+			// This is cross-field validation, which remains imperative.
 			allErrs = append(allErrs, field.Invalid(countFldPath, count, "must be greater than zero"))
 		}
 	default:
+		// This handles cases where a value is provided, but it's not one of the supported enum values.
+		// This is the part that is directly equivalent to a declarative enum validation rule.
 		allErrs = append(allErrs, field.NotSupported(allocModeFldPath, deviceAllocationMode, []resource.DeviceAllocationMode{resource.DeviceAllocationModeAll, resource.DeviceAllocationModeExactCount}).WithOrigin("enum").MarkCoveredByDeclarative())
 	}
 	return allErrs
