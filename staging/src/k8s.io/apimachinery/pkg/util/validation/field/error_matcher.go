@@ -25,19 +25,14 @@ import (
 
 // ErrorMatcher is a helper for comparing Error objects.
 type ErrorMatcher struct {
-	// TODO(thockin): consider whether type is ever NOT required, maybe just
-	// assume it.
-	matchType bool
-	// TODO(thockin): consider whether field could be assumed - if the
-	// "want" error has a nil field, don't match on field.
-	matchField bool
-	// TODO(thockin): consider whether value could be assumed - if the
-	// "want" error has a nil value, don't match on value.
+	matchType                bool
+	matchField               bool
 	matchValue               bool
 	matchOrigin              bool
 	matchDetail              func(want, got string) bool
 	requireOriginWhenInvalid bool
-	checkFieldPathSuffix     bool
+	// pathTranslations stores bidirectional mappings of equivalent field paths.
+	pathTranslations map[string]string
 }
 
 // Matches returns true if the two Error objects match according to the
@@ -47,31 +42,18 @@ func (m ErrorMatcher) Matches(want, got *Error) bool {
 		return false
 	}
 	if m.matchField {
-		if m.checkFieldPathSuffix {
-			// In error_matcher.go, update the Matches function:
+		wantPath := want.Field
+		gotPath := got.Field
+		isMatch := (wantPath == gotPath)
 
-			if m.matchField {
-				if m.checkFieldPathSuffix {
-					// When checking field path suffix, compare only the last segment of the path
-					wantSegments := strings.Split(want.Field, ".")
-					gotSegments := strings.Split(got.Field, ".")
-
-					if len(wantSegments) > 0 && len(gotSegments) > 0 {
-						// Check if the last segments match
-						wantLast := wantSegments[len(wantSegments)-1]
-						gotLast := gotSegments[len(gotSegments)-1]
-						if wantLast != gotLast {
-							return false
-						}
-					} else if want.Field != got.Field {
-						// If we can't split, fall back to exact match
-						return false
-					}
-				} else if want.Field != got.Field {
-					return false
-				}
+		// If it's not a direct match, check for a configured translation.
+		if !isMatch && m.pathTranslations != nil {
+			if translatedWant, ok := m.pathTranslations[wantPath]; ok && translatedWant == gotPath {
+				isMatch = true
 			}
-		} else if want.Field != got.Field {
+		}
+
+		if !isMatch {
 			return false
 		}
 	}
@@ -112,8 +94,9 @@ func (m ErrorMatcher) Render(e *Error) string {
 	if m.matchField {
 		comma()
 		fieldStr := fmt.Sprintf("Field=%q", e.Field)
-		if m.checkFieldPathSuffix {
-			fieldStr = fmt.Sprintf("Field(suffix)=%q", e.Field)
+		if m.pathTranslations != nil {
+			// Clarify in the output that path translation is active for this matcher.
+			fieldStr = fmt.Sprintf("Field(translated)=%q", e.Field)
 		}
 		buf.WriteString(fieldStr)
 	}
@@ -181,15 +164,20 @@ func (m ErrorMatcher) ByOrigin() ErrorMatcher {
 	return m
 }
 
-// CheckFieldPathSuffix returns a derived ErrorMatcher which matches field paths
-// by suffix rather than exact match. This is useful when testing across API
-// versions where fields may have moved in the object hierarchy. When enabled,
-// the matcher will consider a field path to match if the "got" path ends with
-// the "want" path. For example, if want.Field is "allocationMode", it will
-// match got.Field values of "spec.devices.requests[0].allocationMode" or
-// "spec.devices.requests[0].exactly.allocationMode".
-func (m ErrorMatcher) CheckFieldPathSuffix() ErrorMatcher {
-	m.checkFieldPathSuffix = true
+// WithPathTranslations returns a derived ErrorMatcher which considers field paths
+// in the provided map to be equivalent. This is useful when testing across API
+// versions where a field may have moved. For example, providing `{"a.b": "c.d"}`
+// will cause the matcher to treat an error on field "a.b" and an error on field
+// "c.d" as having the same path. Mappings are bidirectional.
+func (m ErrorMatcher) WithPathTranslations(translations map[string]string) ErrorMatcher {
+	// Create a new map that contains both forward and reverse mappings to
+	// simplify the logic in the Matches() function.
+	bidirectionalMap := make(map[string]string, len(translations)*2)
+	for from, to := range translations {
+		bidirectionalMap[from] = to
+		bidirectionalMap[to] = from
+	}
+	m.pathTranslations = bidirectionalMap
 	return m
 }
 

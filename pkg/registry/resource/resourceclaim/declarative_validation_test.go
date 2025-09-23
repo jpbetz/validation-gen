@@ -33,7 +33,18 @@ import (
 	pointer "k8s.io/utils/ptr"
 )
 
-var apiVersions = []string{"v1beta1", "v1beta2", "v1"} // "v1alpha3" is excluded because it doesn't have ResourceClaim
+var apiVersions = []string{"v1beta1", "v1beta2", "v1"}
+
+// v1beta1PathTranslations maps field paths from the flat v1beta1 API structure
+// to the nested 'exactly' structure of the internal and v1/v1beta2 APIs. This
+// allows the ErrorMatcher to correctly compare validation errors across versions.
+var v1beta1PathTranslations = map[string]string{
+	"spec.devices.requests[0].allocationMode": "spec.devices.requests[0].exactly.allocationMode",
+	"spec.devices.requests[0].count":          "spec.devices.requests[0].exactly.count",
+	"spec.devices.requests[0].adminAccess":    "spec.devices.requests[0].exactly.adminAccess",
+	"spec.devices.requests[0].tolerations":    "spec.devices.requests[0].exactly.tolerations",
+	"spec.devices.requests[0].selectors":      "spec.devices.requests[0].exactly.selectors",
+}
 
 func TestDeclarativeValidate(t *testing.T) {
 	for _, apiVersion := range apiVersions {
@@ -55,9 +66,6 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 	testCases := map[string]struct {
 		input        resource.ResourceClaim
 		expectedErrs field.ErrorList
-		// useSuffixMatching indicates this test should use suffix matching for field paths
-		// This is needed for enum tests where v1beta1 has AllocationMode at a different path
-		useSuffixMatching bool
 	}{
 		"valid": {
 			input: mkValidResourceClaim(),
@@ -89,14 +97,11 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				field.TooMany(field.NewPath("spec", "devices", "config"), 33, 32),
 			},
 		},
-		// DeviceAllocationMode enum tests - these need suffix matching for v1beta1
 		"valid DeviceAllocationMode - ExactCount": {
-			input:             mkValidResourceClaim(tweakAllocationMode(resource.DeviceAllocationModeExactCount, 5)),
-			useSuffixMatching: true,
+			input: mkValidResourceClaim(tweakAllocationMode(resource.DeviceAllocationModeExactCount, 5)),
 		},
 		"valid DeviceAllocationMode - All": {
-			input:             mkValidResourceClaim(tweakAllocationMode(resource.DeviceAllocationModeAll, 0)),
-			useSuffixMatching: true,
+			input: mkValidResourceClaim(tweakAllocationMode(resource.DeviceAllocationModeAll, 0)),
 		},
 		"invalid DeviceAllocationMode": {
 			input: mkValidResourceClaim(tweakAllocationMode("InvalidMode", 0)),
@@ -104,21 +109,18 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				field.NotSupported(
 					field.NewPath("spec", "devices", "requests").Index(0).Child("exactly", "allocationMode"),
 					"InvalidMode",
-					[]string{"ExactCount", "All"},
+					[]string{"All", "ExactCount"},
 				).WithOrigin("enum"),
 			},
-			useSuffixMatching: true,
 		},
 		"invalid DeviceAllocationMode - empty string": {
 			input: mkValidResourceClaim(tweakAllocationMode("", 0)),
 			expectedErrs: field.ErrorList{
-				field.NotSupported(
+				field.Required(
 					field.NewPath("spec", "devices", "requests").Index(0).Child("exactly", "allocationMode"),
-					"",
-					[]string{"ExactCount", "All"},
-				).WithOrigin("enum"),
+					"must be either 'All' or 'ExactCount'",
+				),
 			},
-			useSuffixMatching: true,
 		},
 		"invalid DeviceAllocationMode - case sensitive": {
 			input: mkValidResourceClaim(tweakAllocationMode("exactcount", 1)),
@@ -126,14 +128,12 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				field.NotSupported(
 					field.NewPath("spec", "devices", "requests").Index(0).Child("exactly", "allocationMode"),
 					"exactcount",
-					[]string{"ExactCount", "All"},
+					[]string{"All", "ExactCount"},
 				).WithOrigin("enum"),
 			},
-			useSuffixMatching: true,
 		},
 		"valid DeviceAllocationMode in FirstAvailable": {
-			input:             mkValidResourceClaim(tweakFirstAvailableAllocationMode(resource.DeviceAllocationModeAll)),
-			useSuffixMatching: true,
+			input: mkValidResourceClaim(tweakFirstAvailableAllocationMode(resource.DeviceAllocationModeAll)),
 		},
 		"invalid DeviceAllocationMode in FirstAvailable": {
 			input: mkValidResourceClaim(tweakFirstAvailableAllocationMode("BadMode")),
@@ -141,10 +141,9 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				field.NotSupported(
 					field.NewPath("spec", "devices", "requests").Index(0).Child("firstAvailable").Index(0).Child("allocationMode"),
 					"BadMode",
-					[]string{"ExactCount", "All"},
+					[]string{"All", "ExactCount"},
 				).WithOrigin("enum"),
 			},
-			useSuffixMatching: true,
 		},
 	}
 	for k, tc := range testCases {
@@ -166,17 +165,11 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				}
 			}
 
-			// Create equivalence matcher based on test requirements
-			var equivalenceMatcher field.ErrorMatcher
-			if tc.useSuffixMatching {
-				// Use suffix matching for enum tests to handle v1beta1's different field paths
-				equivalenceMatcher = field.ErrorMatcher{}.ByType().ByField().CheckFieldPathSuffix().ByOrigin()
-			} else {
-				// Use standard matching for original tests
-				equivalenceMatcher = field.ErrorMatcher{}.ByType().ByField().ByOrigin()
-			}
+			// Create a matcher that is aware of the path differences between API versions.
+			equivalenceMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin().WithPathTranslations(v1beta1PathTranslations)
 			equivalenceMatcher.Test(t, imperativeErrs, declarativeTakeoverErrs)
 
+			// Now that the imperative validation logic is correct, all tests should pass versioned validation.
 			apitesting.VerifyVersionedValidationEquivalence(t, &tc.input, nil)
 		})
 	}
@@ -273,13 +266,9 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 	Strategy := NewStrategy(mockNSClient)
 	validClaim := mkValidResourceClaim()
 	testCases := map[string]struct {
-		update       resource.ResourceClaim
-		old          resource.ResourceClaim
-		expectedErrs field.ErrorList
-		// useSuffixMatching for enum tests
-		useSuffixMatching bool
-		// skipEquivalenceCheck is used when spec immutability prevents enum validation
-		// from running, causing complex error differences
+		update               resource.ResourceClaim
+		old                  resource.ResourceClaim
+		expectedErrs         field.ErrorList
 		skipEquivalenceCheck bool
 	}{
 		"valid": {
@@ -287,14 +276,12 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 			old:    validClaim,
 		},
 		"valid DeviceAllocationMode update - same value": {
-			update:            mkValidResourceClaim(tweakAllocationMode(resource.DeviceAllocationModeExactCount, 3)),
-			old:               mkValidResourceClaim(tweakAllocationMode(resource.DeviceAllocationModeExactCount, 3)),
-			useSuffixMatching: true,
+			update: mkValidResourceClaim(tweakAllocationMode(resource.DeviceAllocationModeExactCount, 3)),
+			old:    mkValidResourceClaim(tweakAllocationMode(resource.DeviceAllocationModeExactCount, 3)),
 		},
 		"invalid DeviceAllocationMode update - invalid new value": {
-			update:            mkValidResourceClaim(tweakAllocationMode("NewBadMode", 0)),
-			old:               mkValidResourceClaim(),
-			useSuffixMatching: true,
+			update: mkValidResourceClaim(tweakAllocationMode("NewBadMode", 0)),
+			old:    mkValidResourceClaim(),
 			// Spec immutability check may prevent enum validation from running
 			skipEquivalenceCheck: true,
 		},
@@ -329,15 +316,7 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 					t.Errorf("expected declarative validation errors but got none")
 				}
 			} else {
-				// Create equivalence matcher based on test requirements
-				var equivalenceMatcher field.ErrorMatcher
-				if tc.useSuffixMatching {
-					// Use suffix matching for enum tests
-					equivalenceMatcher = field.ErrorMatcher{}.ByType().ByField().CheckFieldPathSuffix().ByOrigin()
-				} else {
-					// Use standard matching for original tests
-					equivalenceMatcher = field.ErrorMatcher{}.ByType().ByField().ByOrigin()
-				}
+				equivalenceMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin().WithPathTranslations(v1beta1PathTranslations)
 				equivalenceMatcher.Test(t, imperativeErrs, declarativeTakeoverErrs)
 
 				if !tc.skipEquivalenceCheck {
@@ -471,9 +450,6 @@ func TestValidateStatusUpdateForDeclarative(t *testing.T) {
 			var imperativeErrs field.ErrorList
 			for _, gateVal := range []bool{true, false} {
 				t.Run(fmt.Sprintf("gate=%v", gateVal), func(t *testing.T) {
-					// We only need to test both gate enabled and disabled together, because
-					// 1) the DeclarativeValidationTakeover won't take effect if DeclarativeValidation is disabled.
-					// 2) the validation output, when only DeclarativeValidation is enabled, is the same as when both gates are disabled.
 					featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.DeclarativeValidation, gateVal)
 					featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.DeclarativeValidationTakeover, gateVal)
 					errs := strategy.ValidateUpdate(ctx, &tc.update, &tc.old)
@@ -482,7 +458,6 @@ func TestValidateStatusUpdateForDeclarative(t *testing.T) {
 					} else {
 						imperativeErrs = errs
 					}
-					// The errOutputMatcher is used to verify the output matches the expected errors in test cases.
 					errOutputMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin()
 
 					if len(tc.expectedErrs) > 0 {
@@ -492,11 +467,7 @@ func TestValidateStatusUpdateForDeclarative(t *testing.T) {
 					}
 				})
 			}
-			// The equivalenceMatcher is used to verify the output errors from hand-written imperative validation
-			// are equivalent to the output errors when DeclarativeValidationTakeover is enabled.
-			// Note: Status update tests don't use suffix matching as they don't have enum field path issues
 			equivalenceMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin()
-			// TODO: remove this once ErrorMatcher has been extended to handle this form of deduplication.
 			dedupedImperativeErrs := field.ErrorList{}
 			for _, err := range imperativeErrs {
 				found := false
