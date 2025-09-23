@@ -242,6 +242,26 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		actualErr: &Error{Type: ErrorTypeRequired, Field: "field", BadValue: "value", Detail: "detail", Origin: "origin"},
 		matches:   false,
 	}, {
+		name:    "ByDeclarativeOnly: match",
+		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.DeclarativeOnly = true
+			return e
+		},
+		actualErr: &Error{DeclarativeOnly: true},
+		matches:   true,
+	}, {
+		name:    "ByDeclarativeOnly: no match",
+		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.DeclarativeOnly = true
+			return e
+		},
+		actualErr: &Error{DeclarativeOnly: false},
+		matches:   false,
+	}, {
 		name:      "RequireOriginWhenInvalid: match",
 		matcher:   ErrorMatcher{}.ByOrigin().RequireOriginWhenInvalid(),
 		wantedErr: baseErr,
@@ -307,6 +327,17 @@ func TestErrorMatcher_Test(t *testing.T) {
 		matcher:        ErrorMatcher{}.ByField(),
 		want:           ErrorList{Invalid(NewPath("f1"), nil, "")},
 		got:            ErrorList{Invalid(NewPath("f2"), "v", "d")},
+		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
+	}, {
+		name:    "declarative only: match",
+		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
+		want:    ErrorList{{DeclarativeOnly: true}},
+		got:     ErrorList{{DeclarativeOnly: true}},
+	}, {
+		name:           "declarative only: no match",
+		matcher:        ErrorMatcher{}.ByDeclarativeOnly(),
+		want:           ErrorList{{DeclarativeOnly: true}},
+		got:            ErrorList{{DeclarativeOnly: false}},
 		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
 	}, {
 		name:    "with origin: single match",
@@ -409,6 +440,26 @@ func TestErrorMatcher_Render(t *testing.T) {
 			matcher:  ErrorMatcher{}.ByType().ByField().ByValue().ByOrigin().ByDetailExact(),
 			err:      Invalid(NewPath("field"), "value", "detail").WithOrigin("origin"),
 			expected: `{Type="Invalid value", Field="field", Value="value", Origin="origin", Detail="detail"}`,
+		},
+		{
+			name:    "with covered by declarative",
+			matcher: ErrorMatcher{}.ByDeclarativeOnly(),
+			err: func() *Error {
+				e := Invalid(NewPath("field"), "value", "detail")
+				e.DeclarativeOnly = true
+				return e
+			}(),
+			expected: `{DeclarativeOnly=true}`,
+		},
+		{
+			name:    "all fields with covered by declarative",
+			matcher: ErrorMatcher{}.ByType().ByField().ByValue().ByOrigin().ByDetailExact().ByDeclarativeOnly(),
+			err: func() *Error {
+				e := Invalid(NewPath("field"), "value", "detail").WithOrigin("origin")
+				e.DeclarativeOnly = true
+				return e
+			}(),
+			expected: `{Type="Invalid value", Field="field", Value="value", Origin="origin", Detail="detail", DeclarativeOnly=true}`,
 		},
 		{
 			name:     "requireOriginWhenInvalid with origin",
