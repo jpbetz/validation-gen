@@ -58,11 +58,6 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 		// useSuffixMatching indicates this test should use suffix matching for field paths
 		// This is needed for enum tests where v1beta1 has AllocationMode at a different path
 		useSuffixMatching bool
-		// v1beta1HasDifferentValidation is only set for tests where v1beta1 genuinely has
-		// different validation behavior that cannot be resolved by suffix matching.
-		// This occurs when v1beta1 validates the AllocationMode field at the DeviceRequest
-		// level (which doesn't exist in internal types) in addition to other validation.
-		v1beta1HasDifferentValidation bool
 	}{
 		"valid": {
 			input: mkValidResourceClaim(),
@@ -139,8 +134,6 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 		"valid DeviceAllocationMode in FirstAvailable": {
 			input:             mkValidResourceClaim(tweakFirstAvailableAllocationMode(resource.DeviceAllocationModeAll)),
 			useSuffixMatching: true,
-			// v1beta1 produces an additional error for the empty AllocationMode at DeviceRequest level
-			v1beta1HasDifferentValidation: true,
 		},
 		"invalid DeviceAllocationMode in FirstAvailable": {
 			input: mkValidResourceClaim(tweakFirstAvailableAllocationMode("BadMode")),
@@ -152,8 +145,6 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				).WithOrigin("enum"),
 			},
 			useSuffixMatching: true,
-			// v1beta1 produces an additional error for the empty AllocationMode at DeviceRequest level
-			v1beta1HasDifferentValidation: true,
 		},
 	}
 	for k, tc := range testCases {
@@ -175,39 +166,18 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				}
 			}
 
-			// For v1beta1 FirstAvailable tests, the declarative validation produces an extra error
-			// because it validates the AllocationMode field at the DeviceRequest level (which is
-			// empty when FirstAvailable is used). The imperative validation cannot access this
-			// field after conversion to internal types.
-			if apiVersion == "v1beta1" && tc.v1beta1HasDifferentValidation {
-				// We expect the validations to differ, so we don't test equivalence
-				// Just ensure both validation paths produce some errors if expectedErrs is set
-				if len(tc.expectedErrs) > 0 {
-					if len(imperativeErrs) == 0 {
-						t.Errorf("expected imperative validation errors but got none")
-					}
-					if len(declarativeTakeoverErrs) == 0 {
-						t.Errorf("expected declarative validation errors but got none")
-					}
-				}
+			// Create equivalence matcher based on test requirements
+			var equivalenceMatcher field.ErrorMatcher
+			if tc.useSuffixMatching {
+				// Use suffix matching for enum tests to handle v1beta1's different field paths
+				equivalenceMatcher = field.ErrorMatcher{}.ByType().ByField().CheckFieldPathSuffix().ByOrigin()
 			} else {
-				// Create equivalence matcher based on test requirements
-				var equivalenceMatcher field.ErrorMatcher
-				if tc.useSuffixMatching {
-					// Use suffix matching for enum tests to handle v1beta1's different field paths
-					equivalenceMatcher = field.ErrorMatcher{}.ByType().ByField().CheckFieldPathSuffix().ByOrigin()
-				} else {
-					// Use standard matching for original tests
-					equivalenceMatcher = field.ErrorMatcher{}.ByType().ByField().ByOrigin()
-				}
-				equivalenceMatcher.Test(t, imperativeErrs, declarativeTakeoverErrs)
+				// Use standard matching for original tests
+				equivalenceMatcher = field.ErrorMatcher{}.ByType().ByField().ByOrigin()
 			}
+			equivalenceMatcher.Test(t, imperativeErrs, declarativeTakeoverErrs)
 
-			// Skip versioned validation for tests with v1beta1 differences or FirstAvailable
-			// (FirstAvailable requires a feature gate that might not be enabled for all versions)
-			if !tc.v1beta1HasDifferentValidation && !strings.Contains(k, "FirstAvailable") {
-				apitesting.VerifyVersionedValidationEquivalence(t, &tc.input, nil)
-			}
+			apitesting.VerifyVersionedValidationEquivalence(t, &tc.input, nil)
 		})
 	}
 }
