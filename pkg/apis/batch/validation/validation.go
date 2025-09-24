@@ -24,6 +24,7 @@ import (
 	"time"
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/validate/content"
 	apimachineryapivalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unversionedvalidation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"

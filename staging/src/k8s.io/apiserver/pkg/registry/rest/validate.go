@@ -31,7 +31,6 @@ import (
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	validationmetrics "k8s.io/apiserver/pkg/validation"
 	"k8s.io/klog/v2"
-	"k8s.io/kubernetes/pkg/features"
 )
 
 // ValidationConfig defines how a declarative validation request may be configured.
@@ -350,11 +349,13 @@ func ValidateDeclarativelyWithMigrationChecks(ctx context.Context, scheme *runti
 	}
 
 	// Directly create the config and call the core validation logic.
-	cfg := &validationConfigOption{opType: opType}
-	opts := []ValidationConfig{WithTakeover(takeover), WithValidationIdentifier(validationIdentifier)}
-	opts = append(opts, configOpts...)
-	for _, o := range opts {
-		o(cfg)
+	cfg := &validationConfigOption{
+		opType:               opType,
+		takeover:             takeover,
+		validationIdentifier: validationIdentifier,
+	}
+	for _, opt := range configOpts {
+		opt(cfg)
 	}
 
 	// Call the panic-safe wrapper with the real validation function.

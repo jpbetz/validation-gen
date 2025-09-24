@@ -57,6 +57,10 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.UUIDField
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -81,6 +85,10 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.UUIDPtrField
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -105,6 +113,10 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.UUIDTypedefField
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *UUIDString) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -129,13 +141,21 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.FieldForLength
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.RequiredValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -146,6 +166,10 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.StableTypeField
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *StableType) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -170,6 +194,10 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.StableTypeFieldPointer
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *StableType) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -194,13 +222,21 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.StableTypeSlice
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []StableType) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 5); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// iterate the list and call the type's validation function
@@ -216,8 +252,12 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 5); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// iterate the list and call the type's validation function
@@ -228,6 +268,10 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.SetList
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []string) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil
@@ -254,6 +298,10 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.NestedStable
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *NestedStableType) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -278,6 +326,10 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 	// field MyObject.IPAddress
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *string) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -308,6 +360,10 @@ func Validate_NestedStableType(ctx context.Context, op operation.Operation, fldP
 	// field NestedStableType.NestedField
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *StableType) (errs field.ErrorList) {
+			// this field validations are marked declarative only
+			defer func() {
+				errs = errs.MarkDeclarativeOnly()
+			}()
 			// don't revalidate unchanged data
 			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -343,8 +399,12 @@ func Validate_StableType(ctx context.Context, op operation.Operation, fldPath *f
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.RequiredValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			return

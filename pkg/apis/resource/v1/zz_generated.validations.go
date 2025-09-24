@@ -59,7 +59,7 @@ func RegisterValidations(scheme *runtime.Scheme) error {
 	// type ResourceClaim
 	scheme.AddValidationFunc((*resourcev1.ResourceClaim)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}) field.ErrorList {
 		switch op.Request.SubresourcePath() {
-		case "/", "status":
+		case "/", "/status":
 			return Validate_ResourceClaim(ctx, op, nil /* fldPath */, obj.(*resourcev1.ResourceClaim), safe.Cast[*resourcev1.ResourceClaim](oldObj))
 		}
 		return field.ErrorList{field.InternalError(nil, fmt.Errorf("no validation found for %T, subresource: %v", obj, op.Request.SubresourcePath()))}
@@ -106,7 +106,11 @@ func Validate_AllocatedDeviceStatus(ctx context.Context, op operation.Operation,
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.UUID(ctx, op, fldPath, obj, oldObj)...)
@@ -173,8 +177,12 @@ func Validate_DeviceAllocationResult(ctx context.Context, op operation.Operation
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// iterate the list and call the type's validation function
@@ -192,8 +200,12 @@ func Validate_DeviceAllocationResult(ctx context.Context, op operation.Operation
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 64); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// iterate the list and call the type's validation function
@@ -217,8 +229,12 @@ func Validate_DeviceClaim(ctx context.Context, op operation.Operation, fldPath *
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
@@ -236,8 +252,12 @@ func Validate_DeviceClaim(ctx context.Context, op operation.Operation, fldPath *
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// iterate the list and call the type's validation function
@@ -253,8 +273,12 @@ func Validate_DeviceClaim(ctx context.Context, op operation.Operation, fldPath *
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// iterate the list and call the type's validation function
@@ -276,8 +300,12 @@ func Validate_DeviceClaimConfiguration(ctx context.Context, op operation.Operati
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// lists with set semantics require unique values
@@ -375,11 +403,15 @@ func Validate_DeviceClassSpec(ctx context.Context, op operation.Operation, fldPa
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
-				return // do not proceed
+				earlyReturn = true
 			}
 			if e := validate.OptionalSlice(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -393,11 +425,15 @@ func Validate_DeviceClassSpec(ctx context.Context, op operation.Operation, fldPa
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
-				return // do not proceed
+				earlyReturn = true
 			}
 			if e := validate.OptionalSlice(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// iterate the list and call the type's validation function
@@ -420,7 +456,11 @@ func Validate_DeviceConfiguration(ctx context.Context, op operation.Operation, f
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// call the type's validation function
@@ -444,8 +484,12 @@ func Validate_DeviceConstraint(ctx context.Context, op operation.Operation, fldP
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// lists with set semantics require unique values
@@ -471,7 +515,11 @@ func Validate_DeviceRequest(ctx context.Context, op operation.Operation, fldPath
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// call the type's validation function
@@ -487,8 +535,12 @@ func Validate_DeviceRequest(ctx context.Context, op operation.Operation, fldPath
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 8); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
@@ -515,8 +567,12 @@ func Validate_DeviceRequestAllocationResult(ctx context.Context, op operation.Op
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.RequiredValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.ResourcePoolName(ctx, op, fldPath, obj, oldObj)...)
@@ -551,7 +607,11 @@ func Validate_DeviceRequestAllocationResult(ctx context.Context, op operation.Op
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.UUID(ctx, op, fldPath, obj, oldObj)...)
@@ -576,8 +636,12 @@ func Validate_DeviceSubRequest(ctx context.Context, op operation.Operation, fldP
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -613,7 +677,11 @@ func Validate_DeviceToleration(ctx context.Context, op operation.Operation, fldP
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.LabelKey(ctx, op, fldPath, obj, oldObj)...)
@@ -640,8 +708,12 @@ func Validate_ExactDeviceRequest(ctx context.Context, op operation.Operation, fl
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 32); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			return
@@ -678,8 +750,12 @@ func Validate_OpaqueDeviceConfiguration(ctx context.Context, op operation.Operat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.RequiredValue(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			errs = append(errs, validate.LongNameCaseless(ctx, op, fldPath, obj, oldObj)...)
@@ -704,8 +780,12 @@ func Validate_ResourceClaim(ctx context.Context, op operation.Operation, fldPath
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.ImmutableReflect(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// call the type's validation function
@@ -778,11 +858,15 @@ func Validate_ResourceClaimStatus(ctx context.Context, op operation.Operation, f
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
-				return // do not proceed
+				earlyReturn = true
 			}
 			if e := validate.UpdatePointer(ctx, op, fldPath, obj, oldObj, validate.NoModify); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// call the type's validation function
@@ -798,11 +882,15 @@ func Validate_ResourceClaimStatus(ctx context.Context, op operation.Operation, f
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 256); len(e) != 0 {
 				errs = append(errs, e...)
-				return // do not proceed
+				earlyReturn = true
 			}
 			if e := validate.OptionalSlice(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
@@ -822,7 +910,11 @@ func Validate_ResourceClaimStatus(ctx context.Context, op operation.Operation, f
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
 			if e := validate.OptionalSlice(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
 				return // do not proceed
 			}
 			// iterate the list and call the type's validation function
