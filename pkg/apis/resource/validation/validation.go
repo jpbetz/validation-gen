@@ -64,14 +64,14 @@ var (
 func validatePoolName(name string, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 	if name == "" {
-		allErrs = append(allErrs, field.Required(fldPath, "").MarkCoveredByDeclarative())
+		allErrs = append(allErrs, field.Required(fldPath, ""))
 	} else {
 		if len(name) > resource.PoolNameMaxLength {
-			allErrs = append(allErrs, field.TooLong(fldPath, "" /*unused*/, resource.PoolNameMaxLength).WithOrigin("format=k8s-resource-pool-name").MarkCoveredByDeclarative())
+			allErrs = append(allErrs, field.TooLong(fldPath, "" /*unused*/, resource.PoolNameMaxLength).WithOrigin("format=k8s-resource-pool-name"))
 		}
 		parts := strings.Split(name, "/")
 		for _, part := range parts {
-			allErrs = append(allErrs, corevalidation.ValidateDNS1123Subdomain(part, fldPath).WithOrigin("format=k8s-resource-pool-name").MarkCoveredByDeclarative()...)
+			allErrs = append(allErrs, corevalidation.ValidateDNS1123Subdomain(part, fldPath).WithOrigin("format=k8s-resource-pool-name")...)
 		}
 	}
 	return allErrs
@@ -128,15 +128,15 @@ func validateDeviceClaim(deviceClaim *resource.DeviceClaim, fldPath *field.Path,
 		func(request resource.DeviceRequest) (string, string) {
 			return request.Name, "name"
 		},
-		fldPath.Child("requests"), sizeCovered)...)
+		fldPath.Child("requests"))...)
 	allErrs = append(allErrs, validateSlice(deviceClaim.Constraints, resource.DeviceConstraintsMaxSize,
 		func(constraint resource.DeviceConstraint, fldPath *field.Path) field.ErrorList {
 			return validateDeviceConstraint(constraint, fldPath, requestNames)
-		}, fldPath.Child("constraints"), sizeCovered)...)
+		}, fldPath.Child("constraints"))...)
 	allErrs = append(allErrs, validateSlice(deviceClaim.Config, resource.DeviceConfigMaxSize,
 		func(config resource.DeviceClaimConfiguration, fldPath *field.Path) field.ErrorList {
 			return validateDeviceClaimConfiguration(config, fldPath, requestNames, stored)
-		}, fldPath.Child("config"), sizeCovered)...)
+		}, fldPath.Child("config"))...)
 	return allErrs
 }
 
@@ -433,7 +433,7 @@ func validateResourceClaimStatusUpdate(status, oldStatus *resource.ResourceClaim
 	// in this particular case, must not be validated again because
 	// validation for new results is tighter than it was before.
 	if oldStatus.Allocation != nil && status.Allocation != nil {
-		allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(status.Allocation, oldStatus.Allocation, fldPath.Child("allocation")).WithOrigin("update").MarkCoveredByDeclarative()...)
+		allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(status.Allocation, oldStatus.Allocation, fldPath.Child("allocation"))...)
 	} else if status.Allocation != nil {
 		allErrs = append(allErrs, validateAllocationResult(status.Allocation, fldPath.Child("allocation"), requestNames, false)...)
 	}
@@ -485,7 +485,7 @@ func validateDeviceRequestAllocationResult(result resource.DeviceRequestAllocati
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateRequestNameRef(result.Request, fldPath.Child("request"), requestNames)...)
 	allErrs = append(allErrs, validateDriverName(result.Driver, fldPath.Child("driver"))...)
-	allErrs = append(allErrs, validatePoolName(result.Pool, fldPath.Child("pool"))...)
+	allErrs = append(allErrs, validatePoolName(result.Pool, fldPath.Child("pool")).MarkCoveredByDeclarative()...)
 	allErrs = append(allErrs, validateDeviceName(result.Device, fldPath.Child("device"))...)
 	allErrs = append(allErrs, validateDeviceBindingParameters(result.BindingConditions, result.BindingFailureConditions, fldPath)...)
 	if result.ShareID != nil {
@@ -1126,7 +1126,7 @@ func validateSlice[T any](slice []T, maxSize int, validateItem func(T, *field.Pa
 		// Dumping the entire field into the error message is likely to be too long,
 		// in particular when it is already beyond the maximum size. Instead this
 		// just shows the number of entries.
-		err := field.TooMany(fldPath, len(slice), maxSize).WithOrigin("maxItems")
+		err := field.TooMany(fldPath, len(slice), maxSize)
 		if slices.Contains(opts, sizeCovered) {
 			err = err.MarkCoveredByDeclarative()
 		}
@@ -1208,7 +1208,7 @@ func truncateIfTooLong(str string, maxLen int) string {
 func validateDeviceStatus(device resource.AllocatedDeviceStatus, fldPath *field.Path, allocatedDevices sets.Set[structured.SharedDeviceID]) field.ErrorList {
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateDriverName(device.Driver, fldPath.Child("driver"))...)
-	allErrs = append(allErrs, validatePoolName(device.Pool, fldPath.Child("pool"))...)
+	allErrs = append(allErrs, validatePoolName(device.Pool, fldPath.Child("pool")).MarkCoveredByDeclarative()...)
 	allErrs = append(allErrs, validateDeviceName(device.Device, fldPath.Child("device"))...)
 	if device.ShareID != nil {
 		allErrs = append(allErrs, validateUID(*device.ShareID, fldPath.Child("shareID"))...)

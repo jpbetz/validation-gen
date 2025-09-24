@@ -17,7 +17,6 @@ limitations under the License.
 package resourceclaim
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -103,7 +102,7 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 }
 
 func TestValidateStatusUpdateForDeclarative(t *testing.T) {
-	fakeClient := fake.NewSimpleClientset()
+	fakeClient := fake.NewClientset()
 	mockNSClient := fakeClient.CoreV1().Namespaces()
 	Strategy := NewStrategy(mockNSClient)
 	strategy := NewStatusStrategy(Strategy)
@@ -169,103 +168,10 @@ func TestValidateStatusUpdateForDeclarative(t *testing.T) {
 				field.Invalid(poolPath, "", "").WithOrigin("format=k8s-resource-pool-name"),
 			},
 		},
-		"valid status.allocation unchanged": {
-			old:    mkResourceClaimWithStatus(),
-			update: mkResourceClaimWithStatus(),
-		},
-		"valid status.allocation set from nil": {
-			old:    mkValidResourceClaim(),
-			update: mkResourceClaimWithStatus(),
-		},
-		"valid status.allocation cleared (Unset is allowed)": {
-			old:    mkResourceClaimWithStatus(),
-			update: mkValidResourceClaim(),
-		},
-		"invalid status.allocation changed device (NoModify)": {
-			old:    mkResourceClaimWithStatus(),
-			update: tweakStatusAllocationDevice(mkResourceClaimWithStatus(), "device-different"),
-			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("status", "allocation"), nil, "field is immutable").WithOrigin("update"),
-			},
-		},
-		"invalid status.allocation changed driver (NoModify)": {
-			old:    mkResourceClaimWithStatus(),
-			update: tweakStatusAllocationDriver(mkResourceClaimWithStatus(), "different.example.com"),
-			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("status", "allocation"), nil, "field is immutable").WithOrigin("update"),
-			},
-		},
-		"invalid status.allocation changed pool (NoModify)": {
-			old:    mkResourceClaimWithStatus(),
-			update: tweakStatusAllocationPool(mkResourceClaimWithStatus(), "different-pool"),
-			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("status", "allocation"), nil, "field is immutable").WithOrigin("update"),
-			},
-		},
-		"invalid status.allocation added result (NoModify)": {
-			old:    mkResourceClaimWithStatus(),
-			update: addStatusAllocationResult(mkResourceClaimWithStatus()),
-			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("status", "allocation"), nil, "field is immutable").WithOrigin("update"),
-			},
-		},
-		"invalid status.allocation removed result (NoModify)": {
-			old:    addStatusAllocationResult(mkResourceClaimWithStatus()),
-			update: mkResourceClaimWithStatus(),
-			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("status", "allocation"), nil, "field is immutable").WithOrigin("update"),
-			},
-		},
 	}
 	for k, tc := range testCases {
 		t.Run(k, func(t *testing.T) {
-			tc.old.ObjectMeta.ResourceVersion = "1"
-			tc.update.ObjectMeta.ResourceVersion = "1"
-			var declarativeTakeoverErrs field.ErrorList
-			var imperativeErrs field.ErrorList
-			for _, gateVal := range []bool{true, false} {
-				t.Run(fmt.Sprintf("gate=%v", gateVal), func(t *testing.T) {
-					// We only need to test both gate enabled and disabled together, because
-					// 1) the DeclarativeValidationTakeover won't take effect if DeclarativeValidation is disabled.
-					// 2) the validation output, when only DeclarativeValidation is enabled, is the same as when both gates are disabled.
-					featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.DeclarativeValidation, gateVal)
-					featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.DeclarativeValidationTakeover, gateVal)
-					errs := strategy.ValidateUpdate(ctx, &tc.update, &tc.old)
-					if gateVal {
-						declarativeTakeoverErrs = errs
-					} else {
-						imperativeErrs = errs
-					}
-					// The errOutputMatcher is used to verify the output matches the expected errors in test cases.
-					errOutputMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin()
-
-					if len(tc.expectedErrs) > 0 {
-						errOutputMatcher.Test(t, tc.expectedErrs, errs)
-					} else if len(errs) != 0 {
-						t.Errorf("expected no errors, but got: %v", errs)
-					}
-				})
-			}
-			// The equivalenceMatcher is used to verify the output errors from hand-written imperative validation
-			// are equivalent to the output errors when DeclarativeValidationTakeover is enabled.
-			equivalenceMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin()
-			// TODO: remove this once ErrorMatcher has been extended to handle this form of deduplication.
-			dedupedImperativeErrs := field.ErrorList{}
-			for _, err := range imperativeErrs {
-				found := false
-				for _, existingErr := range dedupedImperativeErrs {
-					if equivalenceMatcher.Matches(existingErr, err) {
-						found = true
-						break
-					}
-				}
-				if !found {
-					dedupedImperativeErrs = append(dedupedImperativeErrs, err)
-				}
-			}
-			equivalenceMatcher.Test(t, dedupedImperativeErrs, declarativeTakeoverErrs)
-
-			apitesting.VerifyVersionedValidationEquivalence(t, &tc.update, &tc.old)
+			apitesting.VerifyUpdateValidationEquivalence(t, ctx, &tc.update, &tc.old, strategy.ValidateUpdate, tc.expectedErrs)
 		})
 	}
 }
@@ -273,8 +179,9 @@ func TestValidateStatusUpdateForDeclarative(t *testing.T) {
 func mkValidResourceClaim() resource.ResourceClaim {
 	return resource.ResourceClaim{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "valid-claim",
-			Namespace: "default",
+			Name:            "valid-claim",
+			Namespace:       "default",
+			ResourceVersion: "0",
 		},
 		Spec: resource.ResourceClaimSpec{
 			Devices: resource.DeviceClaim{
@@ -295,8 +202,9 @@ func mkValidResourceClaim() resource.ResourceClaim {
 func mkResourceClaimWithStatus() resource.ResourceClaim {
 	return resource.ResourceClaim{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "valid-claim",
-			Namespace: "default",
+			Name:            "valid-claim",
+			Namespace:       "default",
+			ResourceVersion: "1",
 		},
 		Spec: resource.ResourceClaimSpec{
 			Devices: resource.DeviceClaim{
@@ -331,40 +239,6 @@ func mkResourceClaimWithStatus() resource.ResourceClaim {
 func tweakStatusDeviceRequestAllocationResultPool(obj resource.ResourceClaim, pool string) resource.ResourceClaim {
 	for i := range obj.Status.Allocation.Devices.Results {
 		obj.Status.Allocation.Devices.Results[i].Pool = pool
-	}
-	return obj
-}
-
-func tweakStatusAllocationDevice(obj resource.ResourceClaim, device string) resource.ResourceClaim {
-	if obj.Status.Allocation != nil && len(obj.Status.Allocation.Devices.Results) > 0 {
-		obj.Status.Allocation.Devices.Results[0].Device = device
-	}
-	return obj
-}
-
-func tweakStatusAllocationDriver(obj resource.ResourceClaim, driver string) resource.ResourceClaim {
-	if obj.Status.Allocation != nil && len(obj.Status.Allocation.Devices.Results) > 0 {
-		obj.Status.Allocation.Devices.Results[0].Driver = driver
-	}
-	return obj
-}
-
-func tweakStatusAllocationPool(obj resource.ResourceClaim, pool string) resource.ResourceClaim {
-	if obj.Status.Allocation != nil && len(obj.Status.Allocation.Devices.Results) > 0 {
-		obj.Status.Allocation.Devices.Results[0].Pool = pool
-	}
-	return obj
-}
-
-func addStatusAllocationResult(obj resource.ResourceClaim) resource.ResourceClaim {
-	if obj.Status.Allocation != nil {
-		obj.Status.Allocation.Devices.Results = append(obj.Status.Allocation.Devices.Results,
-			resource.DeviceRequestAllocationResult{
-				Request: "req-0",
-				Driver:  "another.example.com",
-				Pool:    "pool-1",
-				Device:  "device-1",
-			})
 	}
 	return obj
 }

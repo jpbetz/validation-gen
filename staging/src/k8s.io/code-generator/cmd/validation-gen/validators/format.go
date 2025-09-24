@@ -130,9 +130,6 @@ func (ftv formatTagValidator) Docs() TagDoc {
 			Description: "k8s-long-name-caseless",
 			Docs:        "This field holds a case-insensitive Kubernetes \"long name\", aka a \"DNS subdomain\" value.",
 		}, {
-			Description: "k8s-long-name-caseless",
-			Docs:        "This field holds a case-insensitive Kubernetes \"long name\", aka a \"DNS subdomain\" value.",
-		}, {
 			Description: "k8s-short-name",
 			Docs:        "This field holds a Kubernetes \"short name\", aka a \"DNS label\" value.",
 		}, {
