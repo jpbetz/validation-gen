@@ -1764,21 +1764,21 @@ func validatePVSecretReference(secretRef *core.SecretReference, fldPath *field.P
 	return allErrs
 }
 
-// ValidateCSRDriverNameOption is an option for ValidateCSIDriverName.
+// ValidateCSIDriverNameOption is an option for ValidateCSIDriverName.
 // These options are for marking if a validation error message is covered
 // by declarative validation
-type ValidateCSRDriverNameOption int
+type ValidateCSIDriverNameOption int
 
 const (
-	// The validation of each item is covered by declarative validation.
-	RequiredCovered ValidateCSRDriverNameOption = iota
+	// The required check is covered by declarative validation
+	RequiredCovered ValidateCSIDriverNameOption = iota
 	// The list size check is covered by declarative validation.
 	SizeCovered
 	// The format check is covered by declarative validation.
 	FormatCovered
 )
 
-func ValidateCSIDriverName(driverName string, fldPath *field.Path, opts ...ValidateCSRDriverNameOption) field.ErrorList {
+func ValidateCSIDriverName(driverName string, fldPath *field.Path, opts ...ValidateCSIDriverNameOption) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(driverName) == 0 {
