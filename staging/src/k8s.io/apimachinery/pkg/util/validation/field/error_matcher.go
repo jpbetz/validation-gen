@@ -23,6 +23,12 @@ import (
 	"strings"
 )
 
+// pathTranslation holds a pre-compiled regular expression and its replacement string.
+type pathTranslation struct {
+	regex       *regexp.Regexp
+	replacement string
+}
+
 // ErrorMatcher is a helper for comparing Error objects.
 type ErrorMatcher struct {
 	// TODO(thockin): consider whether type is ever NOT required, maybe just
@@ -38,6 +44,8 @@ type ErrorMatcher struct {
 	matchDetail              func(want, got string) bool
 	requireOriginWhenInvalid bool
 	matchDeclarativeOnly     bool
+	// compiledTranslations holds the pre-compiled regex patterns for path normalization.
+	compiledTranslations []pathTranslation
 }
 
 // Matches returns true if the two Error objects match according to the
@@ -46,9 +54,22 @@ func (m ErrorMatcher) Matches(want, got *Error) bool {
 	if m.matchType && want.Type != got.Type {
 		return false
 	}
-	if m.matchField && want.Field != got.Field {
-		return false
+	if m.matchField {
+		// Try direct match first (common case, no regex compilation)
+		if want.Field != got.Field {
+			// Fields don't match, try translation if available
+			if len(m.compiledTranslations) > 0 {
+				wantField := m.translatePath(want.Field)
+				gotField := m.translatePath(got.Field)
+				if wantField != gotField {
+					return false
+				}
+			} else {
+				return false
+			}
+		}
 	}
+
 	if m.matchValue && !reflect.DeepEqual(want.BadValue, got.BadValue) {
 		return false
 	}
@@ -72,6 +93,21 @@ func (m ErrorMatcher) Matches(want, got *Error) bool {
 	return true
 }
 
+// translatePath applies configured path translations to normalize field paths
+func (m ErrorMatcher) translatePath(path string) string {
+	if len(m.compiledTranslations) == 0 || path == "" {
+		return path
+	}
+
+	for _, translation := range m.compiledTranslations {
+		if translation.regex.MatchString(path) {
+			// Only apply first matching translation
+			return translation.regex.ReplaceAllString(path, translation.replacement)
+		}
+	}
+	return path
+}
+
 // Render returns a string representation of the specified Error object,
 // according to the criteria configured in the ErrorMatcher.
 func (m ErrorMatcher) Render(e *Error) string {
@@ -89,7 +125,17 @@ func (m ErrorMatcher) Render(e *Error) string {
 	}
 	if m.matchField {
 		comma()
-		buf.WriteString(fmt.Sprintf("Field=%q", e.Field))
+		field := e.Field
+		if len(m.compiledTranslations) > 0 {
+			translated := m.translatePath(field)
+			if translated != field {
+				buf.WriteString(fmt.Sprintf("Field=%q (translated from %q)", translated, field))
+			} else {
+				buf.WriteString(fmt.Sprintf("Field=%q", field))
+			}
+		} else {
+			buf.WriteString(fmt.Sprintf("Field=%q", field))
+		}
 	}
 	if m.matchValue {
 		comma()
@@ -134,8 +180,28 @@ func (m ErrorMatcher) ByType() ErrorMatcher {
 }
 
 // ByField returns a derived ErrorMatcher which also matches by field path.
-func (m ErrorMatcher) ByField() ErrorMatcher {
+// Optionally accepts a map of regex patterns to replacement strings for path translation.
+// This allows matching equivalent field paths across different API versions.
+//
+// Example:
+//
+//	pathTranslations := map[string]string{
+//	  `spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+//	}
+//	matcher := ErrorMatcher{}.ByField(pathTranslations)
+func (m ErrorMatcher) ByField(pathTranslations ...map[string]string) ErrorMatcher {
 	m.matchField = true
+	if len(pathTranslations) > 0 && pathTranslations[0] != nil {
+		// Pre-compile all regex patterns here and store them.
+		translationsMap := pathTranslations[0]
+		m.compiledTranslations = make([]pathTranslation, 0, len(translationsMap))
+		for pattern, replacement := range translationsMap {
+			m.compiledTranslations = append(m.compiledTranslations, pathTranslation{
+				regex:       regexp.MustCompile(pattern),
+				replacement: replacement,
+			})
+		}
+	}
 	return m
 }
 

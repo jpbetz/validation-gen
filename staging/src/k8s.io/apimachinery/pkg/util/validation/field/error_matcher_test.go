@@ -64,6 +64,67 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		actualErr: &Error{Field: "other"},
 		matches:   false,
 	}, {
+		name: "ByField with translations: v1beta1 to v1",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`f\[(\d+)\]\.a`: "f[$1].x.a",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "f[0].a"
+			return e
+		},
+		actualErr: &Error{Field: "f[0].x.a"},
+		matches:   true,
+	}, {
+		name: "ByField with translations: v1 to v1beta1",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`f\[(\d+)\]\.a`: "f[$1].x.a",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "f[0].x.a"
+			return e
+		},
+		actualErr: &Error{Field: "f[0].a"},
+		matches:   true,
+	}, {
+		name: "ByField with translations: different index",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`f\[(\d+)\]\.a`: "f[$1].x.a",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "f[0].a"
+			return e
+		},
+		actualErr: &Error{Field: "f[1].x.a"},
+		matches:   false,
+	}, {
+		name: "ByField with translations: multiple patterns",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`f\[(\d+)\]\.a`: "f[$1].x.a",
+			`f\[(\d+)\]\.b`: "f[$1].x.b",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "f[2].b"
+			return e
+		},
+		actualErr: &Error{Field: "f[2].x.b"},
+		matches:   true,
+	}, {
+		name: "ByField with translations: no translation",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`f\[(\d+)\]\.a`: "f[$1].x.a",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "other.field"
+			return e
+		},
+		actualErr: &Error{Field: "other.field"},
+		matches:   true,
+	}, {
 		name:      "ByValue: match",
 		matcher:   ErrorMatcher{}.ByValue(),
 		wantedErr: baseErr,
@@ -329,6 +390,42 @@ func TestErrorMatcher_Test(t *testing.T) {
 		got:            ErrorList{Invalid(NewPath("f2"), "v", "d")},
 		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
 	}, {
+		name: "with translations: match",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`f\[(\d+)\]\.a`: "f[$1].x.a",
+		}),
+		want: ErrorList{Invalid(NewPath("f").Index(0).Child("a"), nil, "")},
+		got:  ErrorList{Invalid(NewPath("f").Index(0).Child("x", "a"), "v", "d")},
+	}, {
+		name: "with translations: reverse match",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`f\[(\d+)\]\.a`: "f[$1].x.a",
+		}),
+		want: ErrorList{Invalid(NewPath("f").Index(0).Child("x", "a"), nil, "")},
+		got:  ErrorList{Invalid(NewPath("f").Index(0).Child("a"), "v", "d")},
+	}, {
+		name: "with translations: multiple",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`f\[(\d+)\]\.a`: "f[$1].x.a",
+			`f\[(\d+)\]\.b`: "f[$1].x.b",
+		}),
+		want: ErrorList{
+			Invalid(NewPath("f").Index(0).Child("a"), nil, ""),
+			Invalid(NewPath("f").Index(1).Child("b"), nil, ""),
+		},
+		got: ErrorList{
+			Invalid(NewPath("f").Index(0).Child("x", "a"), "v1", "d1"),
+			Invalid(NewPath("f").Index(1).Child("x", "b"), "v2", "d2"),
+		},
+	}, {
+		name: "with translations: no match",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`f\[(\d+)\]\.a`: "f[$1].x.a",
+		}),
+		want:           ErrorList{Invalid(NewPath("f").Index(0).Child("a"), nil, "")},
+		got:            ErrorList{Invalid(NewPath("f").Index(1).Child("x", "a"), "v", "d")},
+		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
+	}, {
 		name:    "declarative only: match",
 		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
 		want:    ErrorList{{DeclarativeOnly: true}},
@@ -440,6 +537,30 @@ func TestErrorMatcher_Render(t *testing.T) {
 			matcher:  ErrorMatcher{}.ByType().ByField().ByValue().ByOrigin().ByDetailExact(),
 			err:      Invalid(NewPath("field"), "value", "detail").WithOrigin("origin"),
 			expected: `{Type="Invalid value", Field="field", Value="value", Origin="origin", Detail="detail"}`,
+		},
+		{
+			name: "with translations: translated",
+			matcher: ErrorMatcher{}.ByField(map[string]string{
+				`f\[(\d+)\]\.a`: "f[$1].x.a",
+			}),
+			err:      Invalid(NewPath("f").Index(0).Child("a"), "value", "detail"),
+			expected: `{Field="f[0].x.a" (translated from "f[0].a")}`,
+		},
+		{
+			name: "with translations: no translation",
+			matcher: ErrorMatcher{}.ByField(map[string]string{
+				`f\[(\d+)\]\.a`: "f[$1].x.a",
+			}),
+			err:      Invalid(NewPath("other", "field"), "value", "detail"),
+			expected: `{Field="other.field"}`,
+		},
+		{
+			name: "with translations: already normalized",
+			matcher: ErrorMatcher{}.ByField(map[string]string{
+				`f\[(\d+)\]\.a`: "f[$1].x.a",
+			}),
+			err:      Invalid(NewPath("f").Index(0).Child("x", "a"), "value", "detail"),
+			expected: `{Field="f[0].x.a"}`,
 		},
 		{
 			name:    "with covered by declarative",
