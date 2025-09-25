@@ -64,6 +64,67 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		actualErr: &Error{Field: "other"},
 		matches:   false,
 	}, {
+		name: "ByField with translations: match same path",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "spec.devices.requests[0].allocationMode"
+			return e
+		},
+		actualErr: &Error{Field: "spec.devices.requests[0].exactly.allocationMode"},
+		matches:   true,
+	}, {
+		name: "ByField with translations: match translated path",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "spec.devices.requests[0].exactly.allocationMode"
+			return e
+		},
+		actualErr: &Error{Field: "spec.devices.requests[0].allocationMode"},
+		matches:   true,
+	}, {
+		name: "ByField with translations: no match different index",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "spec.devices.requests[0].allocationMode"
+			return e
+		},
+		actualErr: &Error{Field: "spec.devices.requests[1].exactly.allocationMode"},
+		matches:   false,
+	}, {
+		name: "ByField with translations: multiple translations",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`spec\.devices\.requests\[(\d+)\]\.deviceClassName`: "spec.devices.requests[$1].exactly.deviceClassName",
+			`spec\.devices\.requests\[(\d+)\]\.count`:           "spec.devices.requests[$1].exactly.count",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "spec.devices.requests[2].count"
+			return e
+		},
+		actualErr: &Error{Field: "spec.devices.requests[2].exactly.count"},
+		matches:   true,
+	}, {
+		name: "ByField with translations: no translation needed",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "spec.other.field"
+			return e
+		},
+		actualErr: &Error{Field: "spec.other.field"},
+		matches:   true,
+	}, {
 		name:      "ByValue: match",
 		matcher:   ErrorMatcher{}.ByValue(),
 		wantedErr: baseErr,
@@ -242,6 +303,26 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		actualErr: &Error{Type: ErrorTypeRequired, Field: "field", BadValue: "value", Detail: "detail", Origin: "origin"},
 		matches:   false,
 	}, {
+		name:    "ByDeclarativeOnly: match",
+		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.DeclarativeOnly = true
+			return e
+		},
+		actualErr: &Error{DeclarativeOnly: true},
+		matches:   true,
+	}, {
+		name:    "ByDeclarativeOnly: no match",
+		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.DeclarativeOnly = true
+			return e
+		},
+		actualErr: &Error{DeclarativeOnly: false},
+		matches:   false,
+	}, {
 		name:      "RequireOriginWhenInvalid: match",
 		matcher:   ErrorMatcher{}.ByOrigin().RequireOriginWhenInvalid(),
 		wantedErr: baseErr,
@@ -267,6 +348,7 @@ func TestErrorMatcher_Matches(t *testing.T) {
 // fakeTestIntf is used to test the testing support.
 type fakeTestIntf struct {
 	errs []string
+	logs []string
 }
 
 var _ TestIntf = &fakeTestIntf{}
@@ -275,6 +357,10 @@ func (*fakeTestIntf) Helper() {}
 
 func (ft *fakeTestIntf) Errorf(format string, args ...any) {
 	ft.errs = append(ft.errs, fmt.Sprintf(format, args...))
+}
+
+func (ft *fakeTestIntf) Logf(format string, args ...any) {
+	ft.logs = append(ft.logs, fmt.Sprintf(format, args...))
 }
 
 func TestErrorMatcher_Test(t *testing.T) {
@@ -309,6 +395,56 @@ func TestErrorMatcher_Test(t *testing.T) {
 		got:            ErrorList{Invalid(NewPath("f2"), "v", "d")},
 		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
 	}, {
+		name: "path translations: match v1beta1 to v1",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+		}),
+		want: ErrorList{Invalid(NewPath("spec", "devices", "requests").Index(0).Child("allocationMode"), nil, "")},
+		got:  ErrorList{Invalid(NewPath("spec", "devices", "requests").Index(0).Child("exactly", "allocationMode"), "InvalidMode", "unsupported value")},
+	}, {
+		name: "path translations: match v1 to v1beta1",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+		}),
+		want: ErrorList{Invalid(NewPath("spec", "devices", "requests").Index(0).Child("exactly", "allocationMode"), nil, "")},
+		got:  ErrorList{Invalid(NewPath("spec", "devices", "requests").Index(0).Child("allocationMode"), "InvalidMode", "unsupported value")},
+	}, {
+		name: "path translations: multiple fields",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`spec\.devices\.requests\[(\d+)\]\.allocationMode`:  "spec.devices.requests[$1].exactly.allocationMode",
+			`spec\.devices\.requests\[(\d+)\]\.deviceClassName`: "spec.devices.requests[$1].exactly.deviceClassName",
+			`spec\.devices\.requests\[(\d+)\]\.count`:           "spec.devices.requests[$1].exactly.count",
+		}),
+		want: ErrorList{
+			Invalid(NewPath("spec", "devices", "requests").Index(0).Child("allocationMode"), nil, ""),
+			Invalid(NewPath("spec", "devices", "requests").Index(1).Child("deviceClassName"), nil, ""),
+			Invalid(NewPath("spec", "devices", "requests").Index(2).Child("count"), nil, ""),
+		},
+		got: ErrorList{
+			Invalid(NewPath("spec", "devices", "requests").Index(0).Child("exactly", "allocationMode"), "InvalidMode", "unsupported value"),
+			Invalid(NewPath("spec", "devices", "requests").Index(1).Child("exactly", "deviceClassName"), "", "required"),
+			Invalid(NewPath("spec", "devices", "requests").Index(2).Child("exactly", "count"), 0, "must be greater than zero"),
+		},
+	}, {
+		name: "path translations: no match for different indices",
+		matcher: ErrorMatcher{}.ByField(map[string]string{
+			`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+		}),
+		want:           ErrorList{Invalid(NewPath("spec", "devices", "requests").Index(0).Child("allocationMode"), nil, "")},
+		got:            ErrorList{Invalid(NewPath("spec", "devices", "requests").Index(1).Child("exactly", "allocationMode"), "InvalidMode", "unsupported value")},
+		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
+	}, {
+		name:    "declarative only: match",
+		matcher: ErrorMatcher{}.ByDeclarativeOnly(),
+		want:    ErrorList{{DeclarativeOnly: true}},
+		got:     ErrorList{{DeclarativeOnly: true}},
+	}, {
+		name:           "declarative only: no match",
+		matcher:        ErrorMatcher{}.ByDeclarativeOnly(),
+		want:           ErrorList{{DeclarativeOnly: true}},
+		got:            ErrorList{{DeclarativeOnly: false}},
+		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
+	}, {
 		name:    "with origin: single match",
 		matcher: ErrorMatcher{}.ByField().ByOrigin(),
 		want:    ErrorList{Invalid(NewPath("f"), nil, "").WithOrigin("o")},
@@ -326,6 +462,7 @@ func TestErrorMatcher_Test(t *testing.T) {
 			Invalid(NewPath("f1"), "v", "d2").WithOrigin("o"),
 			Invalid(NewPath("f2"), "v", "d2").WithOrigin("o"),
 		},
+		expectedLogs: []string{"multiple errors matched:", "multiple errors matched:"},
 	}, {
 		name:    "with origin: multiple matches, same exact error",
 		matcher: ErrorMatcher{}.ByField().ByOrigin(),
@@ -339,7 +476,7 @@ func TestErrorMatcher_Test(t *testing.T) {
 			Invalid(NewPath("f2"), "v", "d").WithOrigin("o"),
 			Invalid(NewPath("f2"), "v", "d").WithOrigin("o"),
 		},
-		expectedErrors: []string{"exact duplicate error:", "exact duplicate error:"},
+		expectedLogs: []string{"multiple errors matched:", "multiple errors matched:"},
 	}}
 
 	for _, tc := range testCases {
@@ -360,6 +497,23 @@ func TestErrorMatcher_Test(t *testing.T) {
 				for i := range tc.expectedErrors {
 					if !strings.HasPrefix(fakeT.errs[i], tc.expectedErrors[i]) {
 						t.Errorf("error %d: expected prefix %q, got %q", i, tc.expectedErrors[i], fakeT.errs[i])
+					}
+				}
+			}
+			if want, got := len(tc.expectedLogs), len(fakeT.logs); got != want {
+				if got == 0 && want > 0 {
+					t.Errorf("expected %d logs, got %d", want, got)
+				} else if got > 0 {
+					q := make([]string, len(fakeT.logs))
+					for i, log := range fakeT.logs {
+						q[i] = fmt.Sprintf("%q", log)
+					}
+					t.Errorf("expected %d logs, got %d:\n%s", want, got, strings.Join(q, "\n"))
+				}
+			} else {
+				for i := range tc.expectedLogs {
+					if !strings.HasPrefix(fakeT.logs[i], tc.expectedLogs[i]) {
+						t.Errorf("log %d: expected prefix %q, got %q", i, tc.expectedLogs[i], fakeT.logs[i])
 					}
 				}
 			}
@@ -409,6 +563,50 @@ func TestErrorMatcher_Render(t *testing.T) {
 			matcher:  ErrorMatcher{}.ByType().ByField().ByValue().ByOrigin().ByDetailExact(),
 			err:      Invalid(NewPath("field"), "value", "detail").WithOrigin("origin"),
 			expected: `{Type="Invalid value", Field="field", Value="value", Origin="origin", Detail="detail"}`,
+		},
+		{
+			name: "with path translation - translated",
+			matcher: ErrorMatcher{}.ByField(map[string]string{
+				`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+			}),
+			err:      Invalid(NewPath("spec", "devices", "requests").Index(0).Child("allocationMode"), "value", "detail"),
+			expected: `{Field="spec.devices.requests[0].exactly.allocationMode" (translated from "spec.devices.requests[0].allocationMode")}`,
+		},
+		{
+			name: "with path translation - no translation needed",
+			matcher: ErrorMatcher{}.ByField(map[string]string{
+				`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+			}),
+			err:      Invalid(NewPath("spec", "other", "field"), "value", "detail"),
+			expected: `{Field="spec.other.field"}`,
+		},
+		{
+			name: "with path translation - already canonical",
+			matcher: ErrorMatcher{}.ByField(map[string]string{
+				`spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+			}),
+			err:      Invalid(NewPath("spec", "devices", "requests").Index(0).Child("exactly", "allocationMode"), "value", "detail"),
+			expected: `{Field="spec.devices.requests[0].exactly.allocationMode"}`,
+		},
+		{
+			name:    "with covered by declarative",
+			matcher: ErrorMatcher{}.ByDeclarativeOnly(),
+			err: func() *Error {
+				e := Invalid(NewPath("field"), "value", "detail")
+				e.DeclarativeOnly = true
+				return e
+			}(),
+			expected: `{DeclarativeOnly=true}`,
+		},
+		{
+			name:    "all fields with covered by declarative",
+			matcher: ErrorMatcher{}.ByType().ByField().ByValue().ByOrigin().ByDetailExact().ByDeclarativeOnly(),
+			err: func() *Error {
+				e := Invalid(NewPath("field"), "value", "detail").WithOrigin("origin")
+				e.DeclarativeOnly = true
+				return e
+			}(),
+			expected: `{Type="Invalid value", Field="field", Value="value", Origin="origin", Detail="detail", DeclarativeOnly=true}`,
 		},
 		{
 			name:     "requireOriginWhenInvalid with origin",

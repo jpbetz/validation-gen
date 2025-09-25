@@ -55,6 +55,11 @@ type Error struct {
 	// validation. This field is to identify errors from imperative validation
 	// that should also be caught by declarative validation.
 	CoveredByDeclarative bool
+
+	// DeclarativeOnly is true when this error is coming from the native
+	// declarative validations. This field is used to filer out the
+	// errors coming from declarative only validations.
+	DeclarativeOnly bool
 }
 
 var _ error = &Error{}

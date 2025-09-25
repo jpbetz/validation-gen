@@ -201,6 +201,7 @@ func testUpdateDeclarativeValidation(t *testing.T, apiVersion string) {
 				tc.old.ResourceVersion = "1"
 				tc.update.ResourceVersion = "1"
 				apitesting.VerifyUpdateValidationEquivalence(t, ctx, &tc.update, &tc.old, strategy.ValidateUpdate, tc.expectedErrs)
+				apitesting.VerifyUpdateValidationEquivalence(t, ctx, &tc.update, &tc.old, strategy.ValidateUpdate, tc.expectedErrs, nil)
 			})
 		}
 	}

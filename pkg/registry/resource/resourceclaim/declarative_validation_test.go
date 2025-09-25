@@ -38,12 +38,15 @@ var apiVersions = []string{"v1beta1", "v1beta2", "v1"}
 // v1beta1PathTranslations maps field paths from the flat v1beta1 API structure
 // to the nested 'exactly' structure of the internal and v1/v1beta2 APIs. This
 // allows the ErrorMatcher to correctly compare validation errors across versions.
+// These use regex patterns to capture indices and replace them in the canonical path.
 var v1beta1PathTranslations = map[string]string{
-	"spec.devices.requests[0].allocationMode": "spec.devices.requests[0].exactly.allocationMode",
-	"spec.devices.requests[0].count":          "spec.devices.requests[0].exactly.count",
-	"spec.devices.requests[0].adminAccess":    "spec.devices.requests[0].exactly.adminAccess",
-	"spec.devices.requests[0].tolerations":    "spec.devices.requests[0].exactly.tolerations",
-	"spec.devices.requests[0].selectors":      "spec.devices.requests[0].exactly.selectors",
+	`spec\.devices\.requests\[(\d+)\]\.allocationMode`:  "spec.devices.requests[$1].exactly.allocationMode",
+	`spec\.devices\.requests\[(\d+)\]\.count`:           "spec.devices.requests[$1].exactly.count",
+	`spec\.devices\.requests\[(\d+)\]\.adminAccess`:     "spec.devices.requests[$1].exactly.adminAccess",
+	`spec\.devices\.requests\[(\d+)\]\.tolerations`:     "spec.devices.requests[$1].exactly.tolerations",
+	`spec\.devices\.requests\[(\d+)\]\.selectors`:       "spec.devices.requests[$1].exactly.selectors",
+	`spec\.devices\.requests\[(\d+)\]\.deviceClassName`: "spec.devices.requests[$1].exactly.deviceClassName",
+	`spec\.devices\.requests\[(\d+)\]\.capacity`:        "spec.devices.requests[$1].exactly.capacity",
 }
 
 func TestDeclarativeValidate(t *testing.T) {
@@ -166,7 +169,11 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 			}
 
 			// Create a matcher that is aware of the path differences between API versions.
-			equivalenceMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin().WithPathTranslations(v1beta1PathTranslations)
+			// Use the new syntax: pass path translations to ByField()
+			equivalenceMatcher := field.ErrorMatcher{}.
+				ByType().
+				ByField(v1beta1PathTranslations).
+				ByOrigin()
 			equivalenceMatcher.Test(t, imperativeErrs, declarativeTakeoverErrs)
 
 			// Now that the imperative validation logic is correct, all tests should pass versioned validation.
@@ -316,7 +323,8 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 					t.Errorf("expected declarative validation errors but got none")
 				}
 			} else {
-				equivalenceMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin().WithPathTranslations(v1beta1PathTranslations)
+				// Use the new syntax: pass path translations to ByField()
+				equivalenceMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin()
 				equivalenceMatcher.Test(t, imperativeErrs, declarativeTakeoverErrs)
 
 				if !tc.skipEquivalenceCheck {

@@ -39,9 +39,50 @@ type ValidateFunc func(ctx context.Context, obj runtime.Object) field.ErrorList
 // ValidateUpdateFunc is a function that runs update validation.
 type ValidateUpdateFunc func(ctx context.Context, obj, old runtime.Object) field.ErrorList
 
+// ValidationOptions contains options for validation testing.
+type ValidationOptions struct {
+	// SubResources specifies which subresources to validate.
+	SubResources []string
+	// PathTranslations maps field paths for cross-version validation.
+	// This is used when different API versions have different field structures.
+	// Key is a regex pattern, value is the replacement string.
+	PathTranslations map[string]string
+}
+
+// mergeOptions combines multiple ValidationOptions into a single one.
+// Later options override earlier ones for non-slice fields.
+func mergeOptions(opts ...*ValidationOptions) *ValidationOptions {
+	merged := &ValidationOptions{}
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+
+		// Merge SubResources (append all)
+		if len(opt.SubResources) > 0 {
+			merged.SubResources = append(merged.SubResources, opt.SubResources...)
+		}
+
+		// Merge PathTranslations (later overrides earlier for same keys)
+		if len(opt.PathTranslations) > 0 {
+			if merged.PathTranslations == nil {
+				merged.PathTranslations = make(map[string]string)
+			}
+			for k, v := range opt.PathTranslations {
+				merged.PathTranslations[k] = v
+			}
+		}
+	}
+
+	return merged
+}
+
 // VerifyVersionedValidationEquivalence tests that all versions of an API return equivalent validation errors.
-func VerifyVersionedValidationEquivalence(t *testing.T, obj, old runtime.Object, subResources ...string) {
+func VerifyVersionedValidationEquivalence(t *testing.T, obj, old runtime.Object, opts ...*ValidationOptions) {
 	t.Helper()
+
+	mergedOpts := mergeOptions(opts...)
 
 	// Accumulate errors from all versioned validation, per version.
 	all := map[string]field.ErrorList{}
@@ -58,7 +99,7 @@ func VerifyVersionedValidationEquivalence(t *testing.T, obj, old runtime.Object,
 		return
 	}
 	if old == nil {
-		runtimetest.RunValidationForEachVersion(t, legacyscheme.Scheme, []string{}, internalObj, accumulate, subResources...)
+		runtimetest.RunValidationForEachVersion(t, legacyscheme.Scheme, []string{}, internalObj, accumulate, mergedOpts.SubResources...)
 	} else {
 		// Convert old versioned object to internal format before validation.
 		// runtimetest.RunUpdateValidationForEachVersion requires unversioned (internal) objects as input.
@@ -69,7 +110,7 @@ func VerifyVersionedValidationEquivalence(t *testing.T, obj, old runtime.Object,
 		if internalOld == nil {
 			return
 		}
-		runtimetest.RunUpdateValidationForEachVersion(t, legacyscheme.Scheme, []string{}, internalObj, internalOld, accumulate, subResources...)
+		runtimetest.RunUpdateValidationForEachVersion(t, legacyscheme.Scheme, []string{}, internalObj, internalOld, accumulate, mergedOpts.SubResources...)
 	}
 
 	// Make a copy so we can modify it.
@@ -169,12 +210,13 @@ func convertToInternal(t *testing.T, scheme *runtime.Scheme, obj runtime.Object)
 // guaranteeing a safe migration. It also checks the errors against an expected set.
 // It compares errors by field, origin and type; all three should match to be called equivalent.
 // It also make sure all versions of the given API returns equivalent errors.
-func VerifyValidationEquivalence(t *testing.T, ctx context.Context, obj runtime.Object, validateFn ValidateFunc, expectedErrs field.ErrorList, subResources ...string) {
+func VerifyValidationEquivalence(t *testing.T, ctx context.Context, obj runtime.Object, validateFn ValidateFunc, expectedErrs field.ErrorList, opts ...*ValidationOptions) {
 	t.Helper()
+	mergedOpts := mergeOptions(opts...)
 	verifyValidationEquivalence(t, expectedErrs, func() field.ErrorList {
 		return validateFn(ctx, obj)
-	})
-	VerifyVersionedValidationEquivalence(t, obj, nil, subResources...)
+	}, mergedOpts)
+	VerifyVersionedValidationEquivalence(t, obj, nil, mergedOpts)
 }
 
 // VerifyUpdateValidationEquivalence provides a helper for testing the migration from
@@ -190,22 +232,33 @@ func VerifyValidationEquivalence(t *testing.T, ctx context.Context, obj runtime.
 // guaranteeing a safe migration. It also checks the errors against an expected set.
 // It compares errors by field, origin and type; all three should match to be called equivalent.
 // It also make sure all versions of the given API returns equivalent errors.
-func VerifyUpdateValidationEquivalence(t *testing.T, ctx context.Context, obj, old runtime.Object, validateUpdateFn ValidateUpdateFunc, expectedErrs field.ErrorList, subResources ...string) {
+func VerifyUpdateValidationEquivalence(t *testing.T, ctx context.Context, obj, old runtime.Object, validateUpdateFn ValidateUpdateFunc, expectedErrs field.ErrorList, opts ...*ValidationOptions) {
 	t.Helper()
+	mergedOpts := mergeOptions(opts...)
 	verifyValidationEquivalence(t, expectedErrs, func() field.ErrorList {
 		return validateUpdateFn(ctx, obj, old)
-	})
-	VerifyVersionedValidationEquivalence(t, obj, old, subResources...)
+	}, mergedOpts)
+	VerifyVersionedValidationEquivalence(t, obj, old, mergedOpts)
 }
 
 // verifyValidationEquivalence is a generic helper that verifies validation equivalence with and without declarative validation.
-func verifyValidationEquivalence(t *testing.T, expectedErrs field.ErrorList, runValidations func() field.ErrorList) {
+func verifyValidationEquivalence(t *testing.T, expectedErrs field.ErrorList, runValidations func() field.ErrorList, opts *ValidationOptions) {
 	t.Helper()
+	if opts == nil {
+		opts = &ValidationOptions{}
+	}
+
 	var declarativeTakeoverErrs field.ErrorList
 	var imperativeErrs field.ErrorList
 
 	// The errOutputMatcher is used to verify the output matches the expected errors in test cases.
-	errOutputMatcher := field.ErrorMatcher{}.ByType().ByField().CheckFieldPathSuffix().ByOrigin()
+	// Apply path translations if provided in options.
+	errOutputMatcher := field.ErrorMatcher{}.ByType().ByOrigin()
+	if opts.PathTranslations != nil {
+		errOutputMatcher = errOutputMatcher.ByField(opts.PathTranslations)
+	} else {
+		errOutputMatcher = errOutputMatcher.ByField()
+	}
 
 	// We only need to test both gate enabled and disabled together, because
 	// 1) the DeclarativeValidationTakeover won't take effect if DeclarativeValidation is disabled.
@@ -236,7 +289,13 @@ func verifyValidationEquivalence(t *testing.T, expectedErrs field.ErrorList, run
 
 	// The equivalenceMatcher is used to verify the output errors from hand-written imperative validation
 	// are equivalent to the output errors when DeclarativeValidationTakeover is enabled.
-	equivalenceMatcher := field.ErrorMatcher{}.ByType().ByField().ByOrigin()
+	// Apply path translations if provided in options.
+	equivalenceMatcher := field.ErrorMatcher{}.ByType().ByOrigin()
+	if opts.PathTranslations != nil {
+		equivalenceMatcher = equivalenceMatcher.ByField(opts.PathTranslations)
+	} else {
+		equivalenceMatcher = equivalenceMatcher.ByField()
+	}
 
 	// The imperative validation may produce duplicate errors, which is not supported by the ErrorMatcher.
 	// TODO: remove this once ErrorMatcher has been extended to handle this form of deduplication.
