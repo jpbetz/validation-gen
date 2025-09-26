@@ -23,10 +23,11 @@ import (
 	"strings"
 )
 
-// pathTranslation holds a pre-compiled regular expression and its replacement string.
-type pathTranslation struct {
-	regex       *regexp.Regexp
-	replacement string
+// NormalizationRule holds a pre-compiled regular expression and its replacement string
+// for normalizing field paths.
+type NormalizationRule struct {
+	Regexp      *regexp.Regexp
+	Replacement string
 }
 
 // ErrorMatcher is a helper for comparing Error objects.
@@ -44,8 +45,8 @@ type ErrorMatcher struct {
 	matchDetail              func(want, got string) bool
 	requireOriginWhenInvalid bool
 	matchDeclarativeOnly     bool
-	// compiledTranslations holds the pre-compiled regex patterns for path normalization.
-	compiledTranslations []pathTranslation
+	// normalizationRules holds the pre-compiled regex patterns for path normalization.
+	normalizationRules []NormalizationRule
 }
 
 // Matches returns true if the two Error objects match according to the
@@ -55,16 +56,12 @@ func (m ErrorMatcher) Matches(want, got *Error) bool {
 		return false
 	}
 	if m.matchField {
-		// Try direct match first (common case, no regex compilation)
+		// Try direct match first (common case)
 		if want.Field != got.Field {
-			// Fields don't match, try translation if available
-			if len(m.compiledTranslations) > 0 {
-				wantField := m.translatePath(want.Field)
-				gotField := m.translatePath(got.Field)
-				if wantField != gotField {
-					return false
-				}
-			} else {
+			// Fields don't match, try normalization if rules are configured.
+			wantField := m.normalizePath(want.Field)
+			gotField := m.normalizePath(got.Field)
+			if wantField != gotField {
 				return false
 			}
 		}
@@ -93,16 +90,13 @@ func (m ErrorMatcher) Matches(want, got *Error) bool {
 	return true
 }
 
-// translatePath applies configured path translations to normalize field paths
-func (m ErrorMatcher) translatePath(path string) string {
-	if len(m.compiledTranslations) == 0 || path == "" {
-		return path
-	}
-
-	for _, translation := range m.compiledTranslations {
-		if translation.regex.MatchString(path) {
-			// Only apply first matching translation
-			return translation.regex.ReplaceAllString(path, translation.replacement)
+// normalizePath applies configured path normalization rules.
+func (m ErrorMatcher) normalizePath(path string) string {
+	for _, rule := range m.normalizationRules {
+		normalized := rule.Regexp.ReplaceAllString(path, rule.Replacement)
+		if normalized != path {
+			// Only apply the first matching rule.
+			return normalized
 		}
 	}
 	return path
@@ -125,16 +119,10 @@ func (m ErrorMatcher) Render(e *Error) string {
 	}
 	if m.matchField {
 		comma()
-		field := e.Field
-		if len(m.compiledTranslations) > 0 {
-			translated := m.translatePath(field)
-			if translated != field {
-				buf.WriteString(fmt.Sprintf("Field=%q (translated from %q)", translated, field))
-			} else {
-				buf.WriteString(fmt.Sprintf("Field=%q", field))
-			}
+		if normalized := m.normalizePath(e.Field); normalized != e.Field {
+			buf.WriteString(fmt.Sprintf("Field=%q (aka %q)", normalized, e.Field))
 		} else {
-			buf.WriteString(fmt.Sprintf("Field=%q", field))
+			buf.WriteString(fmt.Sprintf("Field=%q", e.Field))
 		}
 	}
 	if m.matchValue {
@@ -180,28 +168,30 @@ func (m ErrorMatcher) ByType() ErrorMatcher {
 }
 
 // ByField returns a derived ErrorMatcher which also matches by field path.
-// Optionally accepts a map of regex patterns to replacement strings for path translation.
+// If you need to mutate the field path (e.g. to normalize across versions),
+// see ByFieldNormalized.
+func (m ErrorMatcher) ByField() ErrorMatcher {
+	m.matchField = true
+	return m
+}
+
+// ByFieldNormalized returns a derived ErrorMatcher which also matches by field path
+// after applying a set of normalization rules.
 // This allows matching equivalent field paths across different API versions.
+// The rules slice holds pre-compiled regular expressions and their replacement strings.
 //
 // Example:
 //
-//	pathTranslations := map[string]string{
-//	  `spec\.devices\.requests\[(\d+)\]\.allocationMode`: "spec.devices.requests[$1].exactly.allocationMode",
+//	rules := []NormalizationRule{
+//	  {
+//	    Regexp:      regexp.MustCompile(`spec\.devices\.requests\[(\d+)\]\.allocationMode`),
+//	    Replacement: "spec.devices.requests[$1].exactly.allocationMode",
+//	  },
 //	}
-//	matcher := ErrorMatcher{}.ByField(pathTranslations)
-func (m ErrorMatcher) ByField(pathTranslations ...map[string]string) ErrorMatcher {
+//	matcher := ErrorMatcher{}.ByFieldNormalized(rules)
+func (m ErrorMatcher) ByFieldNormalized(rules []NormalizationRule) ErrorMatcher {
 	m.matchField = true
-	if len(pathTranslations) > 0 && pathTranslations[0] != nil {
-		// Pre-compile all regex patterns here and store them.
-		translationsMap := pathTranslations[0]
-		m.compiledTranslations = make([]pathTranslation, 0, len(translationsMap))
-		for pattern, replacement := range translationsMap {
-			m.compiledTranslations = append(m.compiledTranslations, pathTranslation{
-				regex:       regexp.MustCompile(pattern),
-				replacement: replacement,
-			})
-		}
-	}
+	m.normalizationRules = rules
 	return m
 }
 
