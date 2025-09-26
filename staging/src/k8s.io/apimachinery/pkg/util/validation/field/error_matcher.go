@@ -184,17 +184,6 @@ var pathTranslations []map[string]string
 // see ByFieldNormalized.
 func (m ErrorMatcher) ByField() ErrorMatcher {
 	m.matchField = true
-	if len(pathTranslations) > 0 && pathTranslations[0] != nil {
-		// Pre-compile all regex patterns here and store them.
-		translationsMap := pathTranslations[0]
-		m.compiledTranslations = make([]pathTranslation, 0, len(translationsMap))
-		for pattern, replacement := range translationsMap {
-			m.compiledTranslations = append(m.compiledTranslations, pathTranslation{
-				regex:       regexp.MustCompile(pattern),
-				replacement: replacement,
-			})
-		}
-	}
 	return m
 }
 
