@@ -781,7 +781,7 @@ func Validate_ResourceClaim(ctx context.Context, op operation.Operation, fldPath
 			}
 			// call field-attached validations
 			earlyReturn := false
-			if e := validate.ImmutableReflect(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+			if e := validate.Immutable(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
 			}
