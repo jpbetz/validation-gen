@@ -50,7 +50,10 @@ type ErrorMatcher struct {
 }
 
 // Matches returns true if the two Error objects match according to the
-// configured criteria.
+// configured criteria. When field normalization is configured, only the
+// "got" error's field path is normalized (to bring older API versions up
+// to the internal/latest format), while "want" is assumed to already be
+// in the canonical internal API format.
 func (m ErrorMatcher) Matches(want, got *Error) bool {
 	if m.matchType && want.Type != got.Type {
 		return false
@@ -59,9 +62,10 @@ func (m ErrorMatcher) Matches(want, got *Error) bool {
 		// Try direct match first (common case)
 		if want.Field != got.Field {
 			// Fields don't match, try normalization if rules are configured.
-			wantField := m.normalizePath(want.Field)
-			gotField := m.normalizePath(got.Field)
-			if wantField != gotField {
+			// Only normalize "got" - it may be from an older API version that
+			// needs to be brought up to the internal/latest format that "want"
+			// is already in.
+			if want.Field != m.normalizePath(got.Field) {
 				return false
 			}
 		}
@@ -176,8 +180,14 @@ func (m ErrorMatcher) ByField() ErrorMatcher {
 }
 
 // ByFieldNormalized returns a derived ErrorMatcher which also matches by field path
-// after applying a set of normalization rules.
-// This allows matching equivalent field paths across different API versions.
+// after applying normalization rules to the actual (got) error's field path.
+// This allows matching field paths from older API versions against the canonical
+// internal API format.
+//
+// The normalization rules are applied ONLY to the "got" error's field path, bringing
+// older API version field paths up to the latest/internal format. The "want" error
+// is assumed to always be in the internal API format (latest).
+//
 // The rules slice holds pre-compiled regular expressions and their replacement strings.
 //
 // Example:
@@ -266,11 +276,14 @@ type TestIntf interface {
 }
 
 // Test compares two ErrorLists by the criteria configured in this matcher, and
-// fails the test if they don't match. If matching by origin is enabled and the
-// error has a non-empty origin, a given "want" error can match multiple
-// "got" errors, and they will all be consumed. The only exception to this is
-// if the matcher got multiple identical (in every way, even those not being
-// matched on) errors, which is likely to indicate a bug.
+// fails the test if they don't match. The "want" errors are expected to be in
+// the internal API format (latest), while "got" errors may be from any API version
+// and will be normalized if field normalization rules are configured.
+//
+// If matching by origin is enabled and the error has a non-empty origin, a given
+// "want" error can match multiple "got" errors, and they will all be consumed.
+// The only exception to this is if the matcher got multiple identical (in every way,
+// even those not being matched on) errors, which is likely to indicate a bug.
 func (m ErrorMatcher) Test(tb TestIntf, want, got ErrorList) {
 	tb.Helper()
 
