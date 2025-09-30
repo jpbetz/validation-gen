@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -65,19 +65,7 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		actualErr: &Error{Field: "other"},
 		matches:   false,
 	}, {
-		name: "ByFieldNormalized: v1beta1 to v1",
-		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
-			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.a`), Replacement: "f[$1].x.a"},
-		}),
-		wantedErr: func() *Error {
-			e := baseErr()
-			e.Field = "f[0].a"
-			return e
-		},
-		actualErr: &Error{Field: "f[0].x.a"},
-		matches:   true,
-	}, {
-		name: "ByFieldNormalized: v1 to v1beta1",
+		name: "ByFieldNormalized: older API to latest",
 		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
 			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.a`), Replacement: "f[$1].x.a"},
 		}),
@@ -89,16 +77,28 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		actualErr: &Error{Field: "f[0].a"},
 		matches:   true,
 	}, {
+		name: "ByFieldNormalized: both latest format",
+		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
+			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.a`), Replacement: "f[$1].x.a"},
+		}),
+		wantedErr: func() *Error {
+			e := baseErr()
+			e.Field = "f[0].x.a"
+			return e
+		},
+		actualErr: &Error{Field: "f[0].x.a"},
+		matches:   true,
+	}, {
 		name: "ByFieldNormalized: different index",
 		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
 			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.a`), Replacement: "f[$1].x.a"},
 		}),
 		wantedErr: func() *Error {
 			e := baseErr()
-			e.Field = "f[0].a"
+			e.Field = "f[0].x.a"
 			return e
 		},
-		actualErr: &Error{Field: "f[1].x.a"},
+		actualErr: &Error{Field: "f[1].a"},
 		matches:   false,
 	}, {
 		name: "ByFieldNormalized: multiple patterns",
@@ -108,13 +108,13 @@ func TestErrorMatcher_Matches(t *testing.T) {
 		}),
 		wantedErr: func() *Error {
 			e := baseErr()
-			e.Field = "f[2].b"
+			e.Field = "f[2].x.b"
 			return e
 		},
-		actualErr: &Error{Field: "f[2].x.b"},
+		actualErr: &Error{Field: "f[2].b"},
 		matches:   true,
 	}, {
-		name: "ByFieldNormalized: no normalization",
+		name: "ByFieldNormalized: no normalization needed",
 		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
 			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.a`), Replacement: "f[$1].x.a"},
 		}),
@@ -391,19 +391,19 @@ func TestErrorMatcher_Test(t *testing.T) {
 		got:            ErrorList{Invalid(NewPath("f2"), "v", "d")},
 		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
 	}, {
-		name: "with normalization: match",
-		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
-			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.a`), Replacement: "f[$1].x.a"},
-		}),
-		want: ErrorList{Invalid(NewPath("f").Index(0).Child("a"), nil, "")},
-		got:  ErrorList{Invalid(NewPath("f").Index(0).Child("x", "a"), "v", "d")},
-	}, {
-		name: "with normalization: reverse match",
+		name: "with normalization: older API to latest",
 		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
 			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.a`), Replacement: "f[$1].x.a"},
 		}),
 		want: ErrorList{Invalid(NewPath("f").Index(0).Child("x", "a"), nil, "")},
 		got:  ErrorList{Invalid(NewPath("f").Index(0).Child("a"), "v", "d")},
+	}, {
+		name: "with normalization: both latest",
+		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
+			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.a`), Replacement: "f[$1].x.a"},
+		}),
+		want: ErrorList{Invalid(NewPath("f").Index(0).Child("x", "a"), nil, "")},
+		got:  ErrorList{Invalid(NewPath("f").Index(0).Child("x", "a"), "v", "d")},
 	}, {
 		name: "with normalization: multiple",
 		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
@@ -411,20 +411,20 @@ func TestErrorMatcher_Test(t *testing.T) {
 			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.b`), Replacement: "f[$1].x.b"},
 		}),
 		want: ErrorList{
-			Invalid(NewPath("f").Index(0).Child("a"), nil, ""),
-			Invalid(NewPath("f").Index(1).Child("b"), nil, ""),
+			Invalid(NewPath("f").Index(0).Child("x", "a"), nil, ""),
+			Invalid(NewPath("f").Index(1).Child("x", "b"), nil, ""),
 		},
 		got: ErrorList{
-			Invalid(NewPath("f").Index(0).Child("x", "a"), "v1", "d1"),
-			Invalid(NewPath("f").Index(1).Child("x", "b"), "v2", "d2"),
+			Invalid(NewPath("f").Index(0).Child("a"), "v1", "d1"),
+			Invalid(NewPath("f").Index(1).Child("b"), "v2", "d2"),
 		},
 	}, {
 		name: "with normalization: no match",
 		matcher: ErrorMatcher{}.ByFieldNormalized([]NormalizationRule{
 			{Regexp: regexp.MustCompile(`f\[(\d+)\]\.a`), Replacement: "f[$1].x.a"},
 		}),
-		want:           ErrorList{Invalid(NewPath("f").Index(0).Child("a"), nil, "")},
-		got:            ErrorList{Invalid(NewPath("f").Index(1).Child("x", "a"), "v", "d")},
+		want:           ErrorList{Invalid(NewPath("f").Index(0).Child("x", "a"), nil, "")},
+		got:            ErrorList{Invalid(NewPath("f").Index(1).Child("a"), "v", "d")},
 		expectedErrors: []string{"expected an error matching:", "unmatched error:"},
 	}, {
 		name:    "declarative only: match",
