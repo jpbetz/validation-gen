@@ -49,8 +49,6 @@ func (formatTagValidator) ValidScopes() sets.Set[Scope] {
 
 var (
 	// Keep this list alphabetized.
-	// TODO: uncomment the following when we've done the homework
-	// to be sure it works the current state of IP manual-ratcheting
 	ipSloppyValidator         = types.Name{Package: libValidationPkg, Name: "IPSloppy"}
 	labelKeyValidator         = types.Name{Package: libValidationPkg, Name: "LabelKey"}
 	labelValueValidator       = types.Name{Package: libValidationPkg, Name: "LabelValue"}
@@ -85,8 +83,6 @@ func getFormatValidationFunction(format string) (FunctionGen, error) {
 
 	switch format {
 	// Keep this sequence alphabetized.
-	// TODO: uncomment the following when we've done the homework
-	// to be sure it works the current state of IP manual-ratcheting
 	case "k8s-ip":
 		return Function(formatTagName, DefaultFlags, ipSloppyValidator), nil
 	case "k8s-label-key":
