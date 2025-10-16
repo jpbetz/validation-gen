@@ -22,6 +22,14 @@ limitations under the License.
 package enum
 
 import (
+	context "context"
+	fmt "fmt"
+
+	operation "k8s.io/apimachinery/pkg/api/operation"
+	safe "k8s.io/apimachinery/pkg/api/safe"
+	validate "k8s.io/apimachinery/pkg/api/validate"
+	sets "k8s.io/apimachinery/pkg/util/sets"
+	field "k8s.io/apimachinery/pkg/util/validation/field"
 	testscheme "k8s.io/code-generator/cmd/validation-gen/testscheme"
 )
 
@@ -30,5 +38,217 @@ func init() { localSchemeBuilder.Register(RegisterValidations) }
 // RegisterValidations adds validation functions to the given scheme.
 // Public to allow building arbitrary schemes.
 func RegisterValidations(scheme *testscheme.Scheme) error {
+	// type ConditionalStruct
+	scheme.AddValidationFunc((*ConditionalStruct)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}) field.ErrorList {
+		switch op.Request.SubresourcePath() {
+		case "/":
+			return Validate_ConditionalStruct(ctx, op, nil /* fldPath */, obj.(*ConditionalStruct), safe.Cast[*ConditionalStruct](oldObj))
+		}
+		return field.ErrorList{field.InternalError(nil, fmt.Errorf("no validation found for %T, subresource: %v", obj, op.Request.SubresourcePath()))}
+	})
+	// type Struct
+	scheme.AddValidationFunc((*Struct)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}) field.ErrorList {
+		switch op.Request.SubresourcePath() {
+		case "/":
+			return Validate_Struct(ctx, op, nil /* fldPath */, obj.(*Struct), safe.Cast[*Struct](oldObj))
+		}
+		return field.ErrorList{field.InternalError(nil, fmt.Errorf("no validation found for %T, subresource: %v", obj, op.Request.SubresourcePath()))}
+	})
 	return nil
+}
+
+var exclusionsForConditionalEnum = []validate.EnumExclusion[ConditionalEnum]{
+	{
+		Value:       ConditionalA,
+		Option:      "FeatureA",
+		ExcludeWhen: true,
+	},
+	{
+		Value:       ConditionalB,
+		Option:      "FeatureB",
+		ExcludeWhen: false,
+	},
+	{
+		Value:       ConditionalD,
+		Option:      "FeatureA",
+		ExcludeWhen: true,
+	},
+	{
+		Value:       ConditionalD,
+		Option:      "FeatureB",
+		ExcludeWhen: true,
+	},
+	{
+		Value:       ConditionalE,
+		Option:      "FeatureC",
+		ExcludeWhen: false,
+	},
+	{
+		Value:       ConditionalE,
+		Option:      "FeatureD",
+		ExcludeWhen: false,
+	},
+	{
+		Value:       ConditionalF,
+		Option:      "FeatureC",
+		ExcludeWhen: false,
+	},
+	{
+		Value:       ConditionalF,
+		Option:      "FeatureD",
+		ExcludeWhen: true,
+	},
+}
+var symbolsForConditionalEnum = sets.New(ConditionalA, ConditionalB, ConditionalC, ConditionalD, ConditionalE, ConditionalF)
+
+// Validate_ConditionalEnum validates an instance of ConditionalEnum according
+// to declarative validation rules in the API schema.
+func Validate_ConditionalEnum(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ConditionalEnum) (errs field.ErrorList) {
+	errs = append(errs, validate.Enum(ctx, op, fldPath, obj, oldObj, symbolsForConditionalEnum, exclusionsForConditionalEnum)...)
+
+	return errs
+}
+
+// Validate_ConditionalStruct validates an instance of ConditionalStruct according
+// to declarative validation rules in the API schema.
+func Validate_ConditionalStruct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ConditionalStruct) (errs field.ErrorList) {
+	// field ConditionalStruct.TypeMeta has no validation
+
+	// field ConditionalStruct.ConditionalEnumField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *ConditionalEnum) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_ConditionalEnum(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("conditionalEnumField"), &obj.ConditionalEnumField, safe.Field(oldObj, func(oldObj *ConditionalStruct) *ConditionalEnum { return &oldObj.ConditionalEnumField }))...)
+
+	// field ConditionalStruct.ConditionalEnumPtrField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *ConditionalEnum) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_ConditionalEnum(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("conditionalEnumPtrField"), obj.ConditionalEnumPtrField, safe.Field(oldObj, func(oldObj *ConditionalStruct) *ConditionalEnum { return oldObj.ConditionalEnumPtrField }))...)
+
+	return errs
+}
+
+var symbolsForEnum0 = sets.New[Enum0]()
+
+// Validate_Enum0 validates an instance of Enum0 according
+// to declarative validation rules in the API schema.
+func Validate_Enum0(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Enum0) (errs field.ErrorList) {
+	errs = append(errs, validate.Enum(ctx, op, fldPath, obj, oldObj, symbolsForEnum0, nil)...)
+
+	return errs
+}
+
+var symbolsForEnum1 = sets.New(E1V1)
+
+// Validate_Enum1 validates an instance of Enum1 according
+// to declarative validation rules in the API schema.
+func Validate_Enum1(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Enum1) (errs field.ErrorList) {
+	errs = append(errs, validate.Enum(ctx, op, fldPath, obj, oldObj, symbolsForEnum1, nil)...)
+
+	return errs
+}
+
+var symbolsForEnum2 = sets.New(E2V1, E2V2)
+
+// Validate_Enum2 validates an instance of Enum2 according
+// to declarative validation rules in the API schema.
+func Validate_Enum2(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Enum2) (errs field.ErrorList) {
+	errs = append(errs, validate.Enum(ctx, op, fldPath, obj, oldObj, symbolsForEnum2, nil)...)
+
+	return errs
+}
+
+// Validate_Struct validates an instance of Struct according
+// to declarative validation rules in the API schema.
+func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Struct) (errs field.ErrorList) {
+	// field Struct.TypeMeta has no validation
+
+	// field Struct.Enum0Field
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *Enum0) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_Enum0(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("enum0Field"), &obj.Enum0Field, safe.Field(oldObj, func(oldObj *Struct) *Enum0 { return &oldObj.Enum0Field }))...)
+
+	// field Struct.Enum0PtrField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *Enum0) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_Enum0(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("enum0PtrField"), obj.Enum0PtrField, safe.Field(oldObj, func(oldObj *Struct) *Enum0 { return oldObj.Enum0PtrField }))...)
+
+	// field Struct.Enum1Field
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *Enum1) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_Enum1(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("enum1Field"), &obj.Enum1Field, safe.Field(oldObj, func(oldObj *Struct) *Enum1 { return &oldObj.Enum1Field }))...)
+
+	// field Struct.Enum1PtrField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *Enum1) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_Enum1(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("enum1PtrField"), obj.Enum1PtrField, safe.Field(oldObj, func(oldObj *Struct) *Enum1 { return oldObj.Enum1PtrField }))...)
+
+	// field Struct.Enum2Field
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *Enum2) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_Enum2(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("enum2Field"), &obj.Enum2Field, safe.Field(oldObj, func(oldObj *Struct) *Enum2 { return &oldObj.Enum2Field }))...)
+
+	// field Struct.Enum2PtrField
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *Enum2) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_Enum2(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("enum2PtrField"), obj.Enum2PtrField, safe.Field(oldObj, func(oldObj *Struct) *Enum2 { return oldObj.Enum2PtrField }))...)
+
+	// field Struct.NotEnumField has no validation
+	// field Struct.NotEnumPtrField has no validation
+	return errs
 }

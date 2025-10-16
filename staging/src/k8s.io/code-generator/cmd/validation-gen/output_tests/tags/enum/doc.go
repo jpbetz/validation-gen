@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// +k8s:validation-gen=TypeMeta,ConditionalStruct
+// +k8s:validation-gen=TypeMeta
 // +k8s:validation-gen-scheme-registry=k8s.io/code-generator/cmd/validation-gen/testscheme.Scheme
 
 // This is a test package.
@@ -38,9 +38,6 @@ type Struct struct {
 
 	NotEnumField    NotEnum  `json:"notEnumField"`
 	NotEnumPtrField *NotEnum `json:"notEnumPtrField"`
-
-	EnumWithExcludeField    EnumWithExclude  `json:"enumWithExcludeField"`
-	EnumWithExcludePtrField *EnumWithExclude `json:"enumWithExcludePtrField"`
 }
 
 // +k8s:enum
@@ -65,13 +62,3 @@ const (
 // because go elides intermediate typedefs (this is modelled as "NotEnum" ->
 // "string" in the AST).
 type NotEnum Enum2
-
-// +k8s:enum
-type EnumWithExclude string
-
-const (
-	EnumWithExclude1 EnumWithExclude = "enumWithExclude1"
-
-	// +k8s:enumExclude
-	EnumWithExclude2 EnumWithExclude = "enumWithExclude2"
-)

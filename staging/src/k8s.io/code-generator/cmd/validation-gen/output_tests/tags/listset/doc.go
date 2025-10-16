@@ -72,7 +72,6 @@ type ImmutableStruct struct {
 	SliceSetFalselyComparableField []FalselyComparableStruct `json:"sliceSetFalselyComparableField"`
 }
 
-
 type ComparableStruct struct {
 	StringField string `json:"stringField"`
 }

@@ -30,11 +30,6 @@ type NormalizationRule struct {
 	Replacement string
 }
 
-type pathTranslation struct {
-	regex       *regexp.Regexp
-	replacement string
-}
-
 // ErrorMatcher is a helper for comparing Error objects.
 type ErrorMatcher struct {
 	// TODO(thockin): consider whether type is ever NOT required, maybe just
@@ -52,7 +47,6 @@ type ErrorMatcher struct {
 	matchDeclarativeOnly     bool
 	// normalizationRules holds the pre-compiled regex patterns for path normalization.
 	normalizationRules []NormalizationRule
-	compiledTranslations []pathTranslation
 }
 
 // Matches returns true if the two Error objects match according to the
@@ -176,8 +170,6 @@ func (m ErrorMatcher) ByType() ErrorMatcher {
 	m.matchType = true
 	return m
 }
-
-var pathTranslations []map[string]string
 
 // ByField returns a derived ErrorMatcher which also matches by field path.
 // If you need to mutate the field path (e.g. to normalize across versions),

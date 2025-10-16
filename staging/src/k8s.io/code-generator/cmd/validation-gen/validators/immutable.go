@@ -46,8 +46,6 @@ func (immutableTagValidator) ValidScopes() sets.Set[Scope] {
 
 var (
 	immutableValidator = types.Name{Package: libValidationPkg, Name: "Immutable"}
-	immutableCompareValidator = types.Name{Package: libValidationPkg, Name: "ImmutableComparable"}
-	immutableReflectValidator = types.Name{Package: libValidationPkg, Name: "ImmutableReflect"}
 )
 
 func (immutableTagValidator) GetValidations(context Context, _ codetags.Tag) (Validations, error) {
