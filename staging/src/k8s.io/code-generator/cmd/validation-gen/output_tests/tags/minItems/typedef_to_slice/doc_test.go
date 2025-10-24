@@ -65,17 +65,17 @@ func Test(t *testing.T) {
 	})
 
 	// Test validation ratcheting
-    st.Value(&Struct{
-        UnvalidatedField:  make(UnvalidatedType, 0),
-        Min1Field:         make(Min1Type, 0),
-        Min5Field:         make(Min5Type, 3),
-        Min1TypedefField:  make(Min1TypedefType, 0),
-        Min5TypedefField:  make(Min5TypedefType, 4),
-    }).OldValue(&Struct{
-        UnvalidatedField:  make(UnvalidatedType, 0),
-        Min1Field:         make(Min1Type, 0),
-        Min5Field:         make(Min5Type, 3),
-        Min1TypedefField:  make(Min1TypedefType, 0),
-        Min5TypedefField:  make(Min5TypedefType, 4),
-    }).ExpectValid() 
+	st.Value(&Struct{
+		UnvalidatedField: make(UnvalidatedType, 0),
+		Min1Field:        make(Min1Type, 0),
+		Min5Field:        make(Min5Type, 3),
+		Min1TypedefField: make(Min1TypedefType, 0),
+		Min5TypedefField: make(Min5TypedefType, 4),
+	}).OldValue(&Struct{
+		UnvalidatedField: make(UnvalidatedType, 0),
+		Min1Field:        make(Min1Type, 0),
+		Min5Field:        make(Min5Type, 3),
+		Min1TypedefField: make(Min1TypedefType, 0),
+		Min5TypedefField: make(Min5TypedefType, 4),
+	}).ExpectValid()
 }

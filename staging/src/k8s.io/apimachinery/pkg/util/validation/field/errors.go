@@ -169,7 +169,7 @@ const (
 	// report that a given list has too many items. This is similar to FieldValueTooLong,
 	// but the error indicates quantity instead of length.
 	ErrorTypeTooMany ErrorType = "FieldValueTooMany"
-	// ErrorTypeTooFew is used to report "too few". This is used to 
+	// ErrorTypeTooFew is used to report "too few". This is used to
 	// report that a given list has too few items.This is similar to FieldValueTooMany
 	ErrorTypeTooFew ErrorType = "FieldValueTooFew"
 	// ErrorTypeInternal is used to report other errors that are not related

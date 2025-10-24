@@ -164,7 +164,7 @@ func TestMinItems(t *testing.T) {
 			min := 2
 			return MinItems(context.Background(), op, fp, value, nil, min)
 		},
-		err: "fldpath: Too few.*must have at least 2 items", 
+		err: "fldpath: Too few.*must have at least 2 items",
 	}, {
 		fn: func(op operation.Operation, fp *field.Path) field.ErrorList {
 			value := make([]bool, 0)
