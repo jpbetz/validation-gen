@@ -270,14 +270,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
-			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 5); len(e) != 0 {
-				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
-				return // do not proceed
-			}
+			errs = append(errs, validate.MaxItems(ctx, op, fldPath, obj, oldObj, 5)...)
 			// iterate the list and call the type's validation function
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, nil, nil, Validate_StableType)...)
 			return
@@ -291,14 +284,7 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 				return nil
 			}
 			// call field-attached validations
-			earlyReturn := false
-			if e := validate.MaxItems(ctx, op, fldPath, obj, oldObj, 5); len(e) != 0 {
-				errs = append(errs, e...)
-				earlyReturn = true
-			}
-			if earlyReturn {
-				return // do not proceed
-			}
+			errs = append(errs, validate.MaxItems(ctx, op, fldPath, obj, oldObj, 5)...)
 			// iterate the list and call the type's validation function
 			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, nil, nil, Validate_StableType)...)
 			return
