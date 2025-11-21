@@ -73,6 +73,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.NEQ(ctx, op, fldPath, obj, oldObj, "disallowed-pointer")...)
 			return
 		}(fldPath.Child("stringPtrField"), obj.StringPtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.StringPtrField }), oldObj != nil)...)
@@ -97,6 +104,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.NEQ(ctx, op, fldPath, obj, oldObj, "disallowed-typedef-pointer")...)
 			return
 		}(fldPath.Child("stringTypedefPtrField"), obj.StringTypedefPtrField, safe.Field(oldObj, func(oldObj *Struct) *StringType { return oldObj.StringTypedefPtrField }), oldObj != nil)...)
@@ -119,6 +133,14 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
+			}
+			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
 			}
 			// call the type's validation function
 			errs = append(errs, Validate_ValidatedStringType(ctx, op, fldPath, obj, oldObj)...)

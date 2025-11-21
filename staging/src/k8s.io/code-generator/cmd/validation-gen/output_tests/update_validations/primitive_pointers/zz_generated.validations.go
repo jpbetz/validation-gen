@@ -64,6 +64,9 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				errs = append(errs, e...)
 				earlyReturn = true
 			}
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if earlyReturn {
 				return // do not proceed
 			}
@@ -81,6 +84,9 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			earlyReturn := false
 			if e := validate.Immutable(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				earlyReturn = true
 			}
 			if earlyReturn {
@@ -102,6 +108,9 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				errs = append(errs, e...)
 				earlyReturn = true
 			}
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if earlyReturn {
 				return // do not proceed
 			}
@@ -119,6 +128,9 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			earlyReturn := false
 			if e := validate.Immutable(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
 				earlyReturn = true
 			}
 			if earlyReturn {

@@ -35,18 +35,22 @@ type T1 struct {
 	TypeMeta int
 
 	// +k8s:validateFalse(typeArg: "k8s.io/code-generator/cmd/validation-gen/output_tests/primitives.T1")="T1.S1"
+	// +k8s:optional
 	S1 *primitives.T1 `json:"s1"`
 	// +k8s:validateFalse(typeArg: "k8s.io/code-generator/cmd/validation-gen/output_tests/primitives.T1")="PT1.PS1"
+	// +k8s:optional
 	PS1 *primitives.T1 `json:"ps1"`
 
 	// +k8s:validateFalse(typeArg: "k8s.io/code-generator/cmd/validation-gen/output_tests/type_args.E1")="T1.E1"
 	E1 E1 `json:"e1"`
 	// +k8s:validateTrue(typeArg: "k8s.io/code-generator/cmd/validation-gen/output_tests/type_args.E1")="T1.PE1"
+	// +k8s:optional
 	PE1 *E1 `json:"pe1"`
 
 	// +k8s:validateFalse(typeArg: "int")="T1.I1"
 	I1 int `json:"i1"`
 	// +k8s:validateTrue(typeArg: "int")="T1.PI1"
+	// +k8s:optional
 	PI1 *int `json:"pi1"`
 }
 

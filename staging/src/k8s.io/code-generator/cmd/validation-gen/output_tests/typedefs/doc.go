@@ -44,26 +44,31 @@ type T1 struct {
 	// +k8s:validateFalse="field T1.E1"
 	E1 E1 `json:"e1"`
 	// +k8s:validateFalse="field T1.PE1"
+	// +k8s:optional
 	PE1 *E1 `json:"pe1"`
 
 	// +k8s:validateFalse="field T1.E2"
 	E2 E2 `json:"e2"`
 	// +k8s:validateFalse="field T1.PE2"
+	// +k8s:optional
 	PE2 *E2 `json:"pe2"`
 
 	// +k8s:validateFalse="field T1.E3"
 	E3 E3 `json:"e3"`
 	// +k8s:validateFalse="field T1.PE3"
+	// +k8s:optional
 	PE3 *E3 `json:"pe3"`
 
 	// +k8s:validateFalse="field T1.E4"
 	E4 E4 `json:"e4"`
 	// +k8s:validateFalse="field T1.PE4"
+	// +k8s:optional
 	PE4 *E4 `json:"pe4"`
 
 	// +k8s:validateFalse="field T1.T2"
 	T2 T2 `json:"t2"`
 	// +k8s:validateFalse="field T1.PT2"
+	// +k8s:optional
 	PT2 *T2 `json:"pt2"`
 }
 

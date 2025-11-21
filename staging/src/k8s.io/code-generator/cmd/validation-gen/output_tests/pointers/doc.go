@@ -29,15 +29,20 @@ type T1 struct {
 	TypeMeta int
 
 	// +k8s:validateFalse="field T1.PS"
+	// +k8s:optional
 	PS *string `json:"ps"`
 	// +k8s:validateFalse="field T1.PI"
+	// +k8s:optional
 	PI *int `json:"pi"`
 	// +k8s:validateFalse="field T1.PB"
+	// +k8s:optional
 	PB *bool `json:"pb"`
 	// +k8s:validateFalse="field T1.PF"
+	// +k8s:optional
 	PF *float64 `json:"pf"`
 
 	// +k8s:validateFalse="field T1.PT2"
+	// +k8s:optional
 	PT2 *T2 `json:"pt2"`
 
 	// Duplicate types with no validation.
@@ -50,11 +55,15 @@ type T1 struct {
 // Note: This has validations and is linked into the type-graph of T1.
 type T2 struct {
 	// +k8s:validateFalse="field T2.PS"
+	// +k8s:optional
 	PS *string `json:"ps"`
 	// +k8s:validateFalse="field T2.PI"
+	// +k8s:optional
 	PI *int `json:"pi"`
 	// +k8s:validateFalse="field T2.PB"
+	// +k8s:optional
 	PB *bool `json:"pb"`
 	// +k8s:validateFalse="field T2.PF"
+	// +k8s:optional
 	PF *float64 `json:"pf"`
 }

@@ -32,6 +32,7 @@ type Struct struct {
 	LabelKeyField string `json:"labelKeyField"`
 
 	// +k8s:format=k8s-label-key
+	// +k8s:optional
 	LabelKeyPtrField *string `json:"labelKeyPtrField"`
 
 	// Note: no validation here

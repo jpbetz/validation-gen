@@ -31,6 +31,7 @@ type Struct struct {
 	LongNameField string `json:"longNameField"`
 
 	// +k8s:format=k8s-long-name-caseless
+	// +k8s:optional
 	LongNamePtrField *string `json:"longNamePtrField"`
 
 	// Note: no validation here

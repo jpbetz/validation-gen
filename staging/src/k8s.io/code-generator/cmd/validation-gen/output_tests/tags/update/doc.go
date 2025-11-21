@@ -78,26 +78,33 @@ type UpdateTestStruct struct {
 	// Pointer field tests
 
 	// +k8s:update=NoSet
+	// +k8s:optional
 	PointerNoSet *string `json:"pointerNoSet"`
 
 	// +k8s:update=NoUnset
+	// +k8s:optional
 	PointerNoUnset *string `json:"pointerNoUnset"`
 
 	// +k8s:update=NoModify
+	// +k8s:optional
 	PointerNoModify *string `json:"pointerNoModify"`
 
 	// +k8s:update=NoSet
 	// +k8s:update=NoModify
 	// +k8s:update=NoUnset
+	// +k8s:optional
 	PointerFullyRestricted *string `json:"pointerFullyRestricted"`
 
 	// +k8s:update=NoModify
+	// +k8s:optional
 	IntPointerNoModify *int `json:"intPointerNoModify"`
 
 	// +k8s:update=NoModify
+	// +k8s:optional
 	BoolPointerNoModify *bool `json:"boolPointerNoModify"`
 
 	// +k8s:update=NoModify
+	// +k8s:optional
 	StructPointerNoModify *TestStruct `json:"structPointerNoModify"`
 
 	// Type alias tests

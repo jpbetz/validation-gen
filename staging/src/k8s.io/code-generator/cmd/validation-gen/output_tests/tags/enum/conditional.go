@@ -19,7 +19,8 @@ package enum
 type ConditionalStruct struct {
 	TypeMeta int
 
-	ConditionalEnumField    ConditionalEnum  `json:"conditionalEnumField"`
+	ConditionalEnumField ConditionalEnum `json:"conditionalEnumField"`
+	// +k8s:optional
 	ConditionalEnumPtrField *ConditionalEnum `json:"conditionalEnumPtrField"`
 }
 

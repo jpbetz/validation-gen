@@ -89,6 +89,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.MaxLength(ctx, op, fldPath, obj, oldObj, 0)...)
 			return
 		}(fldPath.Child("max0PtrField"), obj.Max0PtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.Max0PtrField }), oldObj != nil)...)
@@ -113,6 +120,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.MaxLength(ctx, op, fldPath, obj, oldObj, 10)...)
 			return
 		}(fldPath.Child("max10PtrField"), obj.Max10PtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.Max10PtrField }), oldObj != nil)...)
@@ -137,6 +151,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.MaxLength(ctx, op, fldPath, obj, oldObj, 0)...)
 			return
 		}(fldPath.Child("max0UnvalidatedTypedefPtrField"), obj.Max0UnvalidatedTypedefPtrField, safe.Field(oldObj, func(oldObj *Struct) *UnvalidatedStringType { return oldObj.Max0UnvalidatedTypedefPtrField }), oldObj != nil)...)
@@ -161,6 +182,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.MaxLength(ctx, op, fldPath, obj, oldObj, 10)...)
 			return
 		}(fldPath.Child("max10UnvalidatedTypedefPtrField"), obj.Max10UnvalidatedTypedefPtrField, safe.Field(oldObj, func(oldObj *Struct) *UnvalidatedStringType { return oldObj.Max10UnvalidatedTypedefPtrField }), oldObj != nil)...)
@@ -183,6 +211,14 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
+			}
+			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
 			}
 			// call the type's validation function
 			errs = append(errs, Validate_Max0Type(ctx, op, fldPath, obj, oldObj)...)
@@ -207,6 +243,14 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
+			}
+			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
 			}
 			// call the type's validation function
 			errs = append(errs, Validate_Max10Type(ctx, op, fldPath, obj, oldObj)...)

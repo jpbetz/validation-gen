@@ -31,6 +31,7 @@ type Struct struct {
 	ResourcePoolNameField string `json:"resourcePoolNameField"`
 
 	// +k8s:format=k8s-resource-pool-name
+	// +k8s:optional
 	ResourcePoolNamePtrField *string `json:"resourcePoolNamePtrField"`
 
 	// Note: no validation here

@@ -81,6 +81,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.Minimum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
 		}(fldPath.Child("intPtrField"), obj.IntPtrField, safe.Field(oldObj, func(oldObj *Struct) *int { return oldObj.IntPtrField }), oldObj != nil)...)
@@ -141,6 +148,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.Minimum(ctx, op, fldPath, obj, oldObj, 1)...)
 			return
 		}(fldPath.Child("uintPtrField"), obj.UintPtrField, safe.Field(oldObj, func(oldObj *Struct) *uint { return oldObj.UintPtrField }), oldObj != nil)...)
@@ -199,6 +213,14 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
+			}
+			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
 			}
 			// call the type's validation function
 			errs = append(errs, Validate_IntType(ctx, op, fldPath, obj, oldObj)...)

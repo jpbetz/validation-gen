@@ -70,6 +70,13 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult[*primitives.T1](ctx, op, fldPath, obj, oldObj, false, "T1.S1")...)
 			// call the type's validation function
 			errs = append(errs, primitives.Validate_T1(ctx, op, fldPath, obj, oldObj)...)
@@ -84,6 +91,13 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult[*primitives.T1](ctx, op, fldPath, obj, oldObj, false, "PT1.PS1")...)
 			// call the type's validation function
 			errs = append(errs, primitives.Validate_T1(ctx, op, fldPath, obj, oldObj)...)
@@ -112,6 +126,13 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult[*E1](ctx, op, fldPath, obj, oldObj, true, "T1.PE1")...)
 			// call the type's validation function
 			errs = append(errs, Validate_E1(ctx, op, fldPath, obj, oldObj)...)
@@ -138,6 +159,13 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult[*int](ctx, op, fldPath, obj, oldObj, true, "T1.PI1")...)
 			return
 		}(fldPath.Child("pi1"), obj.PI1, safe.Field(oldObj, func(oldObj *T1) *int { return oldObj.PI1 }), oldObj != nil)...)

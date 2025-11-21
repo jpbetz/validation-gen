@@ -38,14 +38,17 @@ type T1 struct {
 	// +k8s:validateTrue="field T1.PrimitivesT1"
 	PrimitivesT1 primitives.T1 `json:"primitivest1"`
 	// +k8s:validateTrue="field T1.PrimitivesT1Ptr"
+	// +k8s:required
 	PrimitivesT1Ptr *primitives.T1 `json:"primitivest1Ptr"`
 	// +k8s:validateTrue="field T1.PrimitivesT2"
 	PrimitivesT2 primitives.T2 `json:"primitivest2"`
 	// +k8s:validateTrue="field T1.PrimitivesT2Ptr"
+	// +k8s:required
 	PrimitivesT2Ptr *primitives.T1 `json:"primitivest2Ptr"`
 	// +k8s:validateTrue="field T1.PrimitivesT3"
 	PrimitivesT3 primitives.T3 `json:"primitivest3"`
 	// +k8s:validateTrue="field T1.PrimitivesT3Ptr"
+	// +k8s:required
 	PrimitivesT3Ptr *primitives.T1 `json:"primitivest3Ptr"`
 	// T4 and T5 are not root types in that pkg and are not linked into any
 	// root type's transitive graph, so they have no functions.
@@ -53,18 +56,22 @@ type T1 struct {
 	// +k8s:validateTrue="field T1.TypedefsE1"
 	TypedefsE1 typedefs.E1 `json:"typedefse1"`
 	// +k8s:validateTrue="field T1.TypedefsE1Ptr"
+	// +k8s:required
 	TypedefsE1Ptr *typedefs.E1 `json:"typedefse1Ptr"`
 	// +k8s:validateTrue="field T1.TypedefsE2"
 	TypedefsE2 typedefs.E2 `json:"typedefse2"`
 	// +k8s:validateTrue="field T1.TypedefsE2Ptr"
+	// +k8s:required
 	TypedefsE2Ptr *typedefs.E2 `json:"typedefse2Ptr"`
 	// +k8s:validateTrue="field T1.TypedefsE3"
 	TypedefsE3 typedefs.E3 `json:"typedefse3"`
 	// +k8s:validateTrue="field T1.TypedefsE3Ptr"
+	// +k8s:required
 	TypedefsE3Ptr *typedefs.E3 `json:"typedefse3Ptr"`
 	// +k8s:validateTrue="field T1.TypedefsE4"
 	TypedefsE4 typedefs.E4 `json:"typedefse4"`
 	// +k8s:validateTrue="field T1.TypedefsE4Ptr"
+	// +k8s:required
 	TypedefsE4Ptr *typedefs.E4 `json:"typedefse4Ptr"`
 
 	// +k8s:validateTrue="field T1.OtherString"
@@ -72,18 +79,21 @@ type T1 struct {
 	OtherString other.StringType `json:"otherString"`
 	// +k8s:validateTrue="field T1.OtherStringPtr"
 	// +k8s:opaqueType
+	// +k8s:optional
 	OtherStringPtr *other.StringType `json:"otherStringPtr"`
 	// +k8s:validateTrue="field T1.OtherInt"
 	// +k8s:opaqueType
 	OtherInt other.IntType `json:"otherInt"`
 	// +k8s:validateTrue="field T1.OtherIntPtr"
 	// +k8s:opaqueType
+	// +k8s:optional
 	OtherIntPtr *other.IntType `json:"otherIntPtr"`
 	// +k8s:validateTrue="field T1.OtherStruct"
 	// +k8s:opaqueType
 	OtherStruct other.StructType `json:"otherStruct"`
 	// +k8s:validateTrue="field T1.OtherStructPtr"
 	// +k8s:opaqueType
+	// +k8s:optional
 	OtherStructPtr *other.StructType `json:"otherStructPtr"`
 
 	// +k8s:validateTrue="field T1.SliceOfOtherStruct"

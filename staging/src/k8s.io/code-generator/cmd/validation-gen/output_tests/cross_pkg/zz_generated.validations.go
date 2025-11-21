@@ -79,6 +79,14 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.RequiredPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.PrimitivesT1Ptr")...)
 			// call the type's validation function
 			errs = append(errs, primitives.Validate_T1(ctx, op, fldPath, obj, oldObj)...)
@@ -107,6 +115,14 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.RequiredPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.PrimitivesT2Ptr")...)
 			// call the type's validation function
 			errs = append(errs, primitives.Validate_T1(ctx, op, fldPath, obj, oldObj)...)
@@ -133,6 +149,14 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.RequiredPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.PrimitivesT3Ptr")...)
 			// call the type's validation function
 			errs = append(errs, primitives.Validate_T1(ctx, op, fldPath, obj, oldObj)...)
@@ -161,6 +185,14 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.RequiredPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.TypedefsE1Ptr")...)
 			// call the type's validation function
 			errs = append(errs, typedefs.Validate_E1(ctx, op, fldPath, obj, oldObj)...)
@@ -189,6 +221,14 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.RequiredPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.TypedefsE2Ptr")...)
 			// call the type's validation function
 			errs = append(errs, typedefs.Validate_E2(ctx, op, fldPath, obj, oldObj)...)
@@ -217,6 +257,14 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.RequiredPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.TypedefsE3Ptr")...)
 			// call the type's validation function
 			errs = append(errs, typedefs.Validate_E3(ctx, op, fldPath, obj, oldObj)...)
@@ -245,6 +293,14 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.RequiredPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.TypedefsE4Ptr")...)
 			// call the type's validation function
 			errs = append(errs, typedefs.Validate_E4(ctx, op, fldPath, obj, oldObj)...)
@@ -271,6 +327,13 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.OtherStringPtr")...)
 			return
 		}(fldPath.Child("otherStringPtr"), obj.OtherStringPtr, safe.Field(oldObj, func(oldObj *T1) *other.StringType { return oldObj.OtherStringPtr }), oldObj != nil)...)
@@ -295,6 +358,13 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.OtherIntPtr")...)
 			return
 		}(fldPath.Child("otherIntPtr"), obj.OtherIntPtr, safe.Field(oldObj, func(oldObj *T1) *other.IntType { return oldObj.OtherIntPtr }), oldObj != nil)...)
@@ -319,6 +389,13 @@ func Validate_T1(ctx context.Context, op operation.Operation, fldPath *field.Pat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, true, "field T1.OtherStructPtr")...)
 			return
 		}(fldPath.Child("otherStructPtr"), obj.OtherStructPtr, safe.Field(oldObj, func(oldObj *T1) *other.StructType { return oldObj.OtherStructPtr }), oldObj != nil)...)

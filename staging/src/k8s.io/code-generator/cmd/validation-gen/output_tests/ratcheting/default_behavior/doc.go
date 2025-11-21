@@ -71,9 +71,11 @@ type StructStruct struct {
 	NonDirectComparableStructField NonDirectComparableStruct `json:"nonDirectComparableStructField"`
 
 	// +k8s:validateFalse="field directComparableStructPtrField"
+	// +k8s:optional
 	DirectComparableStructPtr *DirectComparableStruct `json:"directComparableStructPtrField"`
 
 	// +k8s:validateFalse="field nonDirectComparableStructPtrField"
+	// +k8s:optional
 	NonDirectComparableStructPtr *NonDirectComparableStruct `json:"nonDirectComparableStructPtrField"`
 
 	// +k8s:validateFalse="field DirectComparableStruct"
@@ -128,6 +130,7 @@ type DirectComparableStruct struct {
 // +k8s:validateFalse="type NonDirectComparableStruct"
 type NonDirectComparableStruct struct {
 	// +k8s:validateFalse="field intPtrField"
+	// +k8s:optional
 	IntPtrField *int `json:"intPtrField"`
 }
 

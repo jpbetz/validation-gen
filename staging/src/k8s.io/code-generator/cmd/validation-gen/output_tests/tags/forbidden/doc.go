@@ -34,6 +34,7 @@ type Struct struct {
 
 	// +k8s:forbidden
 	// +k8s:validateFalse="field Struct.StringPtrField"
+	// +k8s:optional
 	StringPtrField *string `json:"stringPtrField"`
 
 	// +k8s:forbidden
@@ -42,6 +43,7 @@ type Struct struct {
 
 	// +k8s:forbidden
 	// +k8s:validateFalse="field Struct.StringTypedefPtrField"
+	// +k8s:optional
 	StringTypedefPtrField *StringType `json:"stringTypedefPtrField"`
 
 	// +k8s:forbidden
@@ -50,6 +52,7 @@ type Struct struct {
 
 	// +k8s:forbidden
 	// +k8s:validateFalse="field Struct.IntPtrField"
+	// +k8s:optional
 	IntPtrField *int `json:"intPtrField"`
 
 	// +k8s:forbidden
@@ -58,12 +61,14 @@ type Struct struct {
 
 	// +k8s:forbidden
 	// +k8s:validateFalse="field Struct.IntTypedefPtrField"
+	// +k8s:optional
 	IntTypedefPtrField *IntType `json:"intTypedefPtrField"`
 
 	// non-pointer struct fields cannot be forbidden
 
 	// +k8s:forbidden
 	// +k8s:validateFalse="field Struct.OtherStructPtrField"
+	// +k8s:optional
 	OtherStructPtrField *OtherStruct `json:"otherStructPtrField"`
 
 	// +k8s:forbidden

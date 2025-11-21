@@ -31,6 +31,7 @@ type Struct struct {
 	IPField string `json:"ipField"`
 
 	// +k8s:format=k8s-ip
+	// +k8s:optional
 	IPPtrField *string `json:"ipPtrField"`
 
 	// Note: no validation here

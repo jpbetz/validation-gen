@@ -85,7 +85,24 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 func Validate_T00(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *T00) (errs field.ErrorList) {
 	// field T00.TypeMeta has no validation
 	// field T00.S has no validation
-	// field T00.PS has no validation
+
+	// field T00.PS
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *string, oldValueCorrelated bool) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
+			return
+		}(fldPath.Child("ps"), obj.PS, safe.Field(oldObj, func(oldObj *T00) *string { return oldObj.PS }), oldObj != nil)...)
 
 	// field T00.T
 	errs = append(errs,
@@ -105,6 +122,14 @@ func Validate_T00(ctx context.Context, op operation.Operation, fldPath *field.Pa
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
+			}
+			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
 			}
 			// call the type's validation function
 			errs = append(errs, Validate_Tother(ctx, op, fldPath, obj, oldObj)...)
@@ -141,6 +166,13 @@ func Validate_T01(ctx context.Context, op operation.Operation, fldPath *field.Pa
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "T01.PS, no flags")...)
 			return
 		}(fldPath.Child("ps"), obj.PS, safe.Field(oldObj, func(oldObj *T01) *string { return oldObj.PS }), oldObj != nil)...)
@@ -167,6 +199,13 @@ func Validate_T01(ctx context.Context, op operation.Operation, fldPath *field.Pa
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "T01.PT, no flags")...)
 			// call the type's validation function
 			errs = append(errs, Validate_Tother(ctx, op, fldPath, obj, oldObj)...)
@@ -218,6 +257,9 @@ func Validate_T02(ctx context.Context, op operation.Operation, fldPath *field.Pa
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "T02.PS, ShortCircuit"); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -258,6 +300,9 @@ func Validate_T02(ctx context.Context, op operation.Operation, fldPath *field.Pa
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "T02.PT, ShortCircuit"); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -317,6 +362,9 @@ func Validate_T03(ctx context.Context, op operation.Operation, fldPath *field.Pa
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "T03.PS, ShortCircuit"); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -359,6 +407,9 @@ func Validate_T03(ctx context.Context, op operation.Operation, fldPath *field.Pa
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "T03.PT, ShortCircuit"); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -431,6 +482,9 @@ func Validate_TMultiple(ctx context.Context, op operation.Operation, fldPath *fi
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "TMultiple.PS, ShortCircuit 1"); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -485,6 +539,9 @@ func Validate_TMultiple(ctx context.Context, op operation.Operation, fldPath *fi
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "TMultiple.PT, ShortCircuit 1"); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true

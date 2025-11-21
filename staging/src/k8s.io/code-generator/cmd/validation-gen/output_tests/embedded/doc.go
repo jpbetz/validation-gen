@@ -29,7 +29,8 @@ type T1 struct {
 	TypeMeta int
 
 	// NOTE: It's weird to have IntField in both, but Go allows it.
-	T2  `json:",inline"`
+	T2 `json:",inline"`
+	// +k8s:optional
 	*T3 `json:",inline"`
 }
 

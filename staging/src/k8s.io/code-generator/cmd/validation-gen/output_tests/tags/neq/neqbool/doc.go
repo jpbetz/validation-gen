@@ -31,6 +31,7 @@ type Struct struct {
 	NeqTrueField bool `json:"neqTrueField"`
 
 	// +k8s:neq=false
+	// +k8s:optional
 	NeqFalsePtrField *bool `json:"neqFalsePtrField"`
 
 	ValidatedTypedefField ValidatedBoolType `json:"validatedTypedefField"`

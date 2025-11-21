@@ -95,6 +95,12 @@ func Test_StructStruct(t *testing.T) {
 			NonDirectComparableStructPtr: &NonDirectComparableStruct{
 				IntPtrField: ptr.To(1),
 			},
+			DirectComparableStruct: DirectComparableStruct{
+				IntField: 1,
+			},
+			NonDirectComparableStruct: NonDirectComparableStruct{
+				IntPtrField: ptr.To(1),
+			},
 		}
 	}
 

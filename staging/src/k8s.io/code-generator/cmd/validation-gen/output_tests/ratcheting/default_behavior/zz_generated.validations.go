@@ -219,6 +219,13 @@ func Validate_NonDirectComparableStruct(ctx context.Context, op operation.Operat
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field intPtrField")...)
 			return
 		}(fldPath.Child("intPtrField"), obj.IntPtrField, safe.Field(oldObj, func(oldObj *NonDirectComparableStruct) *int { return oldObj.IntPtrField }), oldObj != nil)...)
@@ -482,6 +489,13 @@ func Validate_StructStruct(ctx context.Context, op operation.Operation, fldPath 
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field directComparableStructPtrField")...)
 			// call the type's validation function
 			errs = append(errs, Validate_DirectComparableStruct(ctx, op, fldPath, obj, oldObj)...)
@@ -496,6 +510,13 @@ func Validate_StructStruct(ctx context.Context, op operation.Operation, fldPath 
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field nonDirectComparableStructPtrField")...)
 			// call the type's validation function
 			errs = append(errs, Validate_NonDirectComparableStruct(ctx, op, fldPath, obj, oldObj)...)

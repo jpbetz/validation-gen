@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/code-generator/cmd/validation-gen/util"
 	"k8s.io/code-generator/cmd/validation-gen/validators"
+	"k8s.io/gengo/v2"
 	"k8s.io/gengo/v2/codetags"
 	"k8s.io/gengo/v2/generator"
 	"k8s.io/gengo/v2/namer"
@@ -104,7 +105,7 @@ func (g *genValidations) Filter(_ *generator.Context, t *types.Type) bool {
 	// We want to emit for any other type that is transitively part of a root
 	// type and has validations.
 	n := g.discovered.typeNodes[t]
-	return n != nil && g.hasValidations(n)
+	return n != nil && nodeHasValidations(n)
 }
 
 func (g *genValidations) Imports(_ *generator.Context) (imports []string) {
@@ -229,7 +230,7 @@ type childNode struct {
 }
 
 // typeNode represents a node in the type-graph, annotated with information
-// about validations.  Everything in this type, transitively, is assoctiated
+// about validations.  Everything in this type, transitively, is associated
 // with the type, and not any specific instance of that type (e.g. when used as
 // a field in a struct.
 type typeNode struct {
@@ -594,10 +595,12 @@ func (td *typeDiscoverer) verifySupportedType(t *types.Type) error {
 
 // discoverStruct walks a struct type recursively.
 func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path) error {
-	var fields []*childNode
+	fields := make([]*childNode, 0, len(thisNode.valueType.Members))
 	structLowestStability := validators.Stable
 
 	klog.V(5).InfoS("discoverStruct", "type", thisNode.valueType)
+
+	var requiredOrOptionalTags = []string{"k8s:required", "k8s:optional"}
 
 	// Discover into each field of this struct.
 	for _, memb := range thisNode.valueType.Members {
@@ -802,6 +805,20 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 			}
 		}
 
+		// Check for missing required/optional tags on pointers with validations.
+		if childType.Kind == types.Pointer {
+			hasTag := checkTags(memb.CommentLines, requiredOrOptionalTags)
+			if !hasTag {
+				hasVals := !child.fieldValidations.Empty()
+				if !hasVals && child.node != nil {
+					hasVals = nodeHasValidations(child.node)
+				}
+				if hasVals {
+					return fmt.Errorf("field %s is a pointer and has validations (or contains fields with validations) but is missing +k8s:required or +k8s:optional tag", childPath)
+				}
+			}
+		}
+
 		fields = append(fields, child)
 	}
 
@@ -875,16 +892,19 @@ func mkSymbolArgs(c *generator.Context, names []types.Name) generator.Args {
 	return args
 }
 
-// hasValidations checks whether the given typeNode has any
+// nodeHasValidations checks whether the given typeNode has any
 // validations, transitively.
-func (g *genValidations) hasValidations(n *typeNode) bool {
+func nodeHasValidations(n *typeNode) bool {
+	if n == nil {
+		return false
+	}
 	seen := map[*typeNode]bool{}
-	return g.hasValidationsImpl(n, seen)
+	return nodeHasValidationsImpl(n, seen)
 }
 
-// hasValidationsImpl implements hasValidations without risk of infinite
+// nodeHasValidationsImpl implements nodeHasValidations without risk of infinite
 // recursion.
-func (g *genValidations) hasValidationsImpl(n *typeNode, seen map[*typeNode]bool) bool {
+func nodeHasValidationsImpl(n *typeNode, seen map[*typeNode]bool) bool {
 	if n == nil {
 		return false
 	}
@@ -911,7 +931,7 @@ func (g *genValidations) hasValidationsImpl(n *typeNode, seen map[*typeNode]bool
 		if !c.fieldValidations.Empty() {
 			return true
 		}
-		if g.hasValidationsImpl(c.node, seen) {
+		if nodeHasValidationsImpl(c.node, seen) {
 			return true
 		}
 	}
@@ -933,7 +953,7 @@ func (g *genValidations) emitRegisterFunction(c *generator.Context, schemeRegist
 	sw.Do("// Public to allow building arbitrary schemes.\n", nil)
 	sw.Do("func RegisterValidations(scheme $.|raw$) error {\n", schemePtr)
 	for _, rootType := range g.rootTypes {
-		if !g.hasValidations(g.discovered.typeNodes[rootType]) {
+		if !nodeHasValidations(g.discovered.typeNodes[rootType]) {
 			continue
 		}
 
@@ -1008,7 +1028,7 @@ func (g *genValidations) toResourceList(rootType *types.Type) []string {
 
 // emitValidationFunction emits a validation function for the specified type.
 func (g *genValidations) emitValidationFunction(c *generator.Context, t *types.Type, sw *generator.SnippetWriter) {
-	if !g.hasValidations(g.discovered.typeNodes[t]) {
+	if !nodeHasValidations(g.discovered.typeNodes[t]) {
 		return
 	}
 
@@ -1080,20 +1100,20 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 			case types.Slice:
 				// If this field is a list and the value-type has validations,
 				// call its validation function.
-				if validations := thisNode.typeValIterations; g.hasValidations(underlyingNode.elem.node) && !validations.Empty() {
+				if validations := thisNode.typeValIterations; nodeHasValidations(underlyingNode.elem.node) && !validations.Empty() {
 					emitComments(validations.Comments, sw)
 					emitCallsToValidators(c, validations.Functions, sw)
 				}
 			case types.Map:
 				// If this field is a map and the key-type has validations,
 				// call its validation function.
-				if validations := thisNode.typeKeyIterations; g.hasValidations(underlyingNode.key.node) && !validations.Empty() {
+				if validations := thisNode.typeKeyIterations; nodeHasValidations(underlyingNode.key.node) && !validations.Empty() {
 					emitComments(validations.Comments, sw)
 					emitCallsToValidators(c, validations.Functions, sw)
 				}
 				// If this field is a map and the value-type has validations,
 				// call its validation function.
-				if validations := thisNode.typeValIterations; g.hasValidations(underlyingNode.elem.node) && !validations.Empty() {
+				if validations := thisNode.typeValIterations; nodeHasValidations(underlyingNode.elem.node) && !validations.Empty() {
 					emitComments(validations.Comments, sw)
 					emitCallsToValidators(c, validations.Functions, sw)
 				}
@@ -1188,7 +1208,7 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 					// If this field is another type, we may need to call its
 					// validation function. If it has no validations
 					// (transitively) then we don't need to do anything.
-					if g.hasValidations(fld.node) {
+					if nodeHasValidations(fld.node) {
 						if !fldRatchetingChecked {
 							emitRatchetingCheck(c, fld.childType, bufsw)
 							fldRatchetingChecked = true
@@ -1198,7 +1218,7 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 				case types.Slice:
 					// If this field is a list and the value-type has
 					// validations, call its validation function.
-					if validations := fld.fieldValIterations; g.hasValidations(fld.node.elem.node) && !validations.Empty() {
+					if validations := fld.fieldValIterations; nodeHasValidations(fld.node.elem.node) && !validations.Empty() {
 						emitComments(validations.Comments, bufsw)
 						if len(validations.Functions) > 0 {
 							if !fldRatchetingChecked {
@@ -1213,7 +1233,7 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 				case types.Map:
 					// If this field is a map and the key-type has
 					// validations, call its validation function.
-					if validations := fld.fieldKeyIterations; g.hasValidations(fld.node.key.node) && !validations.Empty() {
+					if validations := fld.fieldKeyIterations; nodeHasValidations(fld.node.key.node) && !validations.Empty() {
 						emitComments(validations.Comments, bufsw)
 						if len(validations.Functions) > 0 {
 							if !fldRatchetingChecked {
@@ -1225,7 +1245,7 @@ func (g *genValidations) emitValidationForChild(c *generator.Context, thisChild 
 					}
 					// If this field is a map and the value-type has
 					// validations, call its validation function.
-					if validations := fld.fieldValIterations; g.hasValidations(fld.node.elem.node) && !validations.Empty() {
+					if validations := fld.fieldValIterations; nodeHasValidations(fld.node.elem.node) && !validations.Empty() {
 						emitComments(validations.Comments, bufsw)
 						if len(validations.Functions) > 0 {
 							if !fldRatchetingChecked {
@@ -1850,4 +1870,9 @@ func (g *fixtureTestGen) Init(c *generator.Context, w io.Writer) error {
 		sw.Do("}\n", nil)
 	}
 	return nil
+}
+
+func checkTags(comments []string, tags []string) bool {
+	extracted, _ := gengo.ExtractFunctionStyleCommentTags("+", tags, comments)
+	return len(extracted) > 0
 }

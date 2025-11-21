@@ -348,6 +348,9 @@ func Validate_UpdateTestStruct(ctx context.Context, op operation.Operation, fldP
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.UpdatePointer(ctx, op, fldPath, obj, oldObj, validate.NoSet); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -367,6 +370,9 @@ func Validate_UpdateTestStruct(ctx context.Context, op operation.Operation, fldP
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.UpdatePointer(ctx, op, fldPath, obj, oldObj, validate.NoUnset); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -386,6 +392,9 @@ func Validate_UpdateTestStruct(ctx context.Context, op operation.Operation, fldP
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.UpdatePointer(ctx, op, fldPath, obj, oldObj, validate.NoModify); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -405,6 +414,9 @@ func Validate_UpdateTestStruct(ctx context.Context, op operation.Operation, fldP
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.UpdatePointer(ctx, op, fldPath, obj, oldObj, validate.NoSet, validate.NoUnset, validate.NoModify); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -424,6 +436,9 @@ func Validate_UpdateTestStruct(ctx context.Context, op operation.Operation, fldP
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.UpdatePointer(ctx, op, fldPath, obj, oldObj, validate.NoModify); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -443,6 +458,9 @@ func Validate_UpdateTestStruct(ctx context.Context, op operation.Operation, fldP
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.UpdatePointer(ctx, op, fldPath, obj, oldObj, validate.NoModify); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true
@@ -462,6 +480,9 @@ func Validate_UpdateTestStruct(ctx context.Context, op operation.Operation, fldP
 			}
 			// call field-attached validations
 			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
 			if e := validate.UpdatePointer(ctx, op, fldPath, obj, oldObj, validate.NoModify); len(e) != 0 {
 				errs = append(errs, e...)
 				earlyReturn = true

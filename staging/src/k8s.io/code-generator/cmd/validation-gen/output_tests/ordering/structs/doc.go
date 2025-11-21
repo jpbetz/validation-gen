@@ -37,10 +37,12 @@ type Tother struct {
 // Note: No validations.
 type T00 struct {
 	TypeMeta int
-	S        string  `json:"s"`
-	PS       *string `json:"ps"`
-	T        Tother  `json:"t"`
-	PT       *Tother `json:"pt"`
+	S        string `json:"s"`
+	// +k8s:optional
+	PS *string `json:"ps"`
+	T  Tother  `json:"t"`
+	// +k8s:optional
+	PT *Tother `json:"pt"`
 }
 
 // +k8s:validateFalse="T01, no flags"
@@ -49,10 +51,12 @@ type T01 struct {
 	// +k8s:validateFalse="T01.S, no flags"
 	S string `json:"s"`
 	// +k8s:validateFalse="T01.PS, no flags"
+	// +k8s:optional
 	PS *string `json:"ps"`
 	// +k8s:validateFalse="T01.T, no flags"
 	T Tother `json:"t"`
 	// +k8s:validateFalse="T01.PT, no flags"
+	// +k8s:optional
 	PT *Tother `json:"pt"`
 }
 
@@ -62,10 +66,12 @@ type T02 struct {
 	// +k8s:validateFalse(flags: "ShortCircuit")="T02.S, ShortCircuit"
 	S string `json:"s"`
 	// +k8s:validateFalse(flags: "ShortCircuit")="T02.PS, ShortCircuit"
+	// +k8s:optional
 	PS *string `json:"ps"`
 	// +k8s:validateFalse(flags: "ShortCircuit")="T02.T, ShortCircuit"
 	T Tother `json:"t"`
 	// +k8s:validateFalse(flags: "ShortCircuit")="T02.PT, ShortCircuit"
+	// +k8s:optional
 	PT *Tother `json:"pt"`
 }
 
@@ -78,12 +84,14 @@ type T03 struct {
 	S string `json:"s"`
 	// +k8s:validateFalse="T03.PS, no flags"
 	// +k8s:validateFalse(flags: "ShortCircuit")="T03.PS, ShortCircuit"
+	// +k8s:optional
 	PS *string `json:"ps"`
 	// +k8s:validateFalse="T03.T, no flags"
 	// +k8s:validateFalse(flags: "ShortCircuit")="T03.T, ShortCircuit"
 	T Tother `json:"t"`
 	// +k8s:validateFalse="T03.PT, no flags"
 	// +k8s:validateFalse(flags: "ShortCircuit")="T03.PT, ShortCircuit"
+	// +k8s:optional
 	PT *Tother `json:"pt"`
 }
 
@@ -106,6 +114,7 @@ type TMultiple struct {
 	// +k8s:validateFalse="T0, string payload"
 	// +k8s:validateFalse="TMultiple.PS, no flags 2"
 	// +k8s:validateFalse(flags: "ShortCircuit")="TMultiple.PS, ShortCircuit 2"
+	// +k8s:optional
 	PS *string `json:"ps"`
 	// +k8s:validateFalse="TMultiple.T, no flags 1"
 	// +k8s:validateFalse(flags: "ShortCircuit")="TMultiple.T, ShortCircuit 1"
@@ -118,5 +127,6 @@ type TMultiple struct {
 	// +k8s:validateFalse="T0, string payload"
 	// +k8s:validateFalse="TMultiple.PT, no flags 2"
 	// +k8s:validateFalse(flags: "ShortCircuit")="TMultiple.PT, ShortCircuit 2"
+	// +k8s:optional
 	PT *Tother `json:"pt"`
 }

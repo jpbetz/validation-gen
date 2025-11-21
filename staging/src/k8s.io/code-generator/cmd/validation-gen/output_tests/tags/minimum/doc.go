@@ -30,6 +30,7 @@ type Struct struct {
 	// +k8s:minimum=1
 	IntField int `json:"intField"`
 	// +k8s:minimum=1
+	// +k8s:optional
 	IntPtrField *int `json:"intPtrField"`
 
 	// "int8" becomes "byte" somewhere in gengo.  We don't need it so just skip it.
@@ -44,6 +45,7 @@ type Struct struct {
 	// +k8s:minimum=1
 	UintField uint `json:"uintField"`
 	// +k8s:minimum=1
+	// +k8s:optional
 	UintPtrField *uint `json:"uintPtrField"`
 
 	// +k8s:minimum=1
@@ -53,7 +55,8 @@ type Struct struct {
 	// +k8s:minimum=1
 	Uint64Field uint64 `json:"uint64Field"`
 
-	TypedefField    IntType  `json:"typedefField"`
+	TypedefField IntType `json:"typedefField"`
+	// +k8s:optional
 	TypedefPtrField *IntType `json:"typedefPtrField"`
 }
 

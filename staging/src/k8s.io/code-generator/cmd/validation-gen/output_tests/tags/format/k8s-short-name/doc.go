@@ -31,6 +31,7 @@ type Struct struct {
 	ShortNameField string `json:"shortNameField"`
 
 	// +k8s:format=k8s-short-name
+	// +k8s:optional
 	ShortNamePtrField *string `json:"shortNamePtrField"`
 
 	// Note: no validation here

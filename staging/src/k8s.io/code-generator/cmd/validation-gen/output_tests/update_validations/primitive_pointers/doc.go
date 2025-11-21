@@ -28,11 +28,15 @@ var localSchemeBuilder = testscheme.New()
 
 type Struct struct {
 	// +k8s:immutable
+	// +k8s:optional
 	SP *string `json:"sp"`
 	// +k8s:immutable
+	// +k8s:optional
 	IP *int `json:"ip"`
 	// +k8s:immutable
+	// +k8s:optional
 	BP *bool `json:"bp"`
 	// +k8s:immutable
+	// +k8s:optional
 	FP *float64 `json:"fp"`
 }

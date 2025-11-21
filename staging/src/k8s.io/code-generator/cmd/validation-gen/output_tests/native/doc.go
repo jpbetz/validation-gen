@@ -70,8 +70,10 @@ type MyObject struct {
 	StableTypeFieldWithoutDV StableType `json:"stableTypeFieldWithoutDV"`
 
 	// +k8s:declarativeValidationNative
+	// +k8s:optional
 	StableTypeFieldPointer *StableType `json:"stableTypeFieldPointer"`
 
+	// +k8s:optional
 	StableTypeFieldPointerWithoutDV *StableType `json:"stableTypeFieldPointerWithoutDV"`
 
 	// +k8s:declarativeValidationNative

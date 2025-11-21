@@ -31,18 +31,21 @@ type Struct struct {
 	StringField string `json:"stringField"`
 
 	// +k8s:immutable
+	// +k8s:optional
 	StringPtrField *string `json:"stringPtrField"`
 
 	// +k8s:immutable
 	StructField ComparableStruct `json:"structField"`
 
 	// +k8s:immutable
+	// +k8s:optional
 	StructPtrField *ComparableStruct `json:"structPtrField"`
 
 	// +k8s:immutable
 	NonComparableStructField NonComparableStruct `json:"noncomparableStructField"`
 
 	// +k8s:immutable
+	// +k8s:optional
 	NonComparableStructPtrField *NonComparableStruct `json:"noncomparableStructPtrField"`
 
 	// +k8s:immutable
@@ -53,6 +56,7 @@ type Struct struct {
 
 	ImmutableField ImmutableType `json:"immutableField"`
 
+	// +k8s:optional
 	ImmutablePtrField *ImmutableType `json:"immutablePtrField"`
 }
 

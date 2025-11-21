@@ -101,6 +101,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			func() { // cohort stringField
 				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *OtherStruct) *string { return &o.StringField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.StringField 1")

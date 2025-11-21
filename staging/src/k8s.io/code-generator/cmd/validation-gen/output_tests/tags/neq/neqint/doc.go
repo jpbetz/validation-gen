@@ -31,6 +31,7 @@ type Struct struct {
 	IntField int `json:"intField"`
 
 	// +k8s:neq=-1
+	// +k8s:optional
 	IntPtrField *int `json:"intPtrField"`
 
 	// +k8s:neq=42

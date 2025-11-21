@@ -81,6 +81,13 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			earlyReturn := false
+			if e := validate.OptionalPointer(ctx, op, fldPath, obj, oldObj); len(e) != 0 {
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 			errs = append(errs, validate.LongNameCaseless(ctx, op, fldPath, obj, oldObj)...)
 			return
 		}(fldPath.Child("longNamePtrField"), obj.LongNamePtrField, safe.Field(oldObj, func(oldObj *Struct) *string { return oldObj.LongNamePtrField }), oldObj != nil)...)
