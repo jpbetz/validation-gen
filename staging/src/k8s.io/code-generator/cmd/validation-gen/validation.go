@@ -600,8 +600,6 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 
 	klog.V(5).InfoS("discoverStruct", "type", thisNode.valueType)
 
-	var requiredOrOptionalTags = []string{"k8s:required", "k8s:optional"}
-
 	// Discover into each field of this struct.
 	for _, memb := range thisNode.valueType.Members {
 		name := memb.Name
@@ -806,17 +804,8 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 		}
 
 		// Check for missing required/optional tags on pointers with validations.
-		if childType.Kind == types.Pointer {
-			hasTag := checkTags(memb.CommentLines, requiredOrOptionalTags)
-			if !hasTag {
-				hasVals := !child.fieldValidations.Empty()
-				if !hasVals && child.node != nil {
-					hasVals = nodeHasValidations(child.node)
-				}
-				if hasVals {
-					return fmt.Errorf("field %s is a pointer and has validations (or contains fields with validations) but is missing +k8s:required or +k8s:optional tag", childPath)
-				}
-			}
+		if err := td.checkPointerOptionality(child, memb.CommentLines, childPath); err != nil {
+			return err
 		}
 
 		fields = append(fields, child)
@@ -1868,6 +1857,30 @@ func (g *fixtureTestGen) Init(c *generator.Context, w io.Writer) error {
 		sw.Do("func TestValidation(t *testing.T) {\n", nil)
 		sw.Do("  localSchemeBuilder.Test(t).ValidateFixtures()\n", nil)
 		sw.Do("}\n", nil)
+	}
+	return nil
+}
+
+// checkPointerOptionality enforces that pointer fields with validations are
+// explicitly marked as `+k8s:required` or `+k8s:optional`. This is critical
+// for unambiguous validation behavior with nil pointers. For instance, it
+// clarifies whether validations on sub-fields should be enforced when the pointer is nil.
+// Without explicit optionality, validations could be silently skipped.
+func (td *typeDiscoverer) checkPointerOptionality(child *childNode, commentLines []string, fldPath *field.Path) error {
+	if child.childType.Kind != types.Pointer {
+		return nil
+	}
+
+	var requiredOrOptionalTags = []string{"k8s:required", "k8s:optional"}
+	hasTag := checkTags(commentLines, requiredOrOptionalTags)
+	if !hasTag {
+		hasVals := !child.fieldValidations.Empty()
+		if !hasVals && child.node != nil {
+			hasVals = nodeHasValidations(child.node)
+		}
+		if hasVals {
+			return fmt.Errorf("field %s is a pointer and has validations (or contains fields with validations) but is missing +k8s:required or +k8s:optional tag", fldPath)
+		}
 	}
 	return nil
 }
