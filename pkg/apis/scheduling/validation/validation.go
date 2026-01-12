@@ -92,13 +92,6 @@ func validateWorkloadSpec(spec *scheduling.WorkloadSpec, fldPath *field.Path) fi
 
 func validateControllerRef(ref *scheduling.TypedLocalObjectReference, fldPath *field.Path) field.ErrorList {
 	var allErrs = field.ErrorList{}
-	if ref.Kind == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("kind"), "").MarkCoveredByDeclarative())
-	} else {
-		for _, msg := range pathvalidation.IsValidPathSegmentName(ref.Kind) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("kind"), ref.Kind, msg).WithOrigin("format=k8s-path-segment-name").MarkCoveredByDeclarative())
-		}
-	}
 	if ref.Name == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("name"), "").MarkCoveredByDeclarative())
 	} else {

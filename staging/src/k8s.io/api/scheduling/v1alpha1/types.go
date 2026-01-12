@@ -152,6 +152,7 @@ type TypedLocalObjectReference struct {
 	// +required
 	// +k8s:required
 	// +k8s:format=k8s-path-segment-name
+	// +k8s:declarativeValidationNative
 	Kind string `json:"kind" protobuf:"bytes,2,opt,name=kind"`
 	// Name is the name of resource being referenced.
 	// It must be a path segment name.

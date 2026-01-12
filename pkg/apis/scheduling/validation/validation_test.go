@@ -286,22 +286,6 @@ func TestValidateWorkload(t *testing.T) {
 				field.Duplicate(field.NewPath("spec", "podGroups").Index(1), scheduling.PodGroup{Name: "group1", Policy: scheduling.PodGroupPolicy{Gang: &scheduling.GangSchedulingPolicy{MinCount: 1}}}).MarkCoveredByDeclarative(),
 			},
 		},
-		"no controllerRef kind": {
-			workload: mkWorkload(func(w *scheduling.Workload) {
-				w.Spec.ControllerRef.Kind = ""
-			}),
-			expectedErrs: field.ErrorList{
-				field.Required(field.NewPath("spec", "controllerRef", "kind"), "").MarkCoveredByDeclarative(),
-			},
-		},
-		"invalid controllerRef kind": {
-			workload: mkWorkload(func(w *scheduling.Workload) {
-				w.Spec.ControllerRef.Kind = "/foo"
-			}),
-			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "controllerRef", "kind"), "/foo", "must not contain '/'").MarkCoveredByDeclarative(),
-			},
-		},
 		"no controllerRef name": {
 			workload: mkWorkload(func(w *scheduling.Workload) {
 				w.Spec.ControllerRef.Name = ""

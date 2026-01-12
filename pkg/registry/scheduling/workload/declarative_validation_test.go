@@ -176,7 +176,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				}
 			}),
 			expectedErrs: field.ErrorList{
-				field.Required(field.NewPath("spec", "controllerRef", "kind"), ""),
+				field.Required(field.NewPath("spec", "controllerRef", "kind"), "").MarkDeclarativeNative(),
 			},
 		},
 		"controllerRef invalid kind with slash": {
@@ -188,7 +188,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				}
 			}),
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "controllerRef", "kind"), "Deploy/ment", "may not contain '/'").WithOrigin("format=k8s-path-segment-name"),
+				field.Invalid(field.NewPath("spec", "controllerRef", "kind"), "Deploy/ment", "may not contain '/'").WithOrigin("format=k8s-path-segment-name").MarkDeclarativeNative(),
 			},
 		},
 		"controllerRef missing name": {
@@ -224,7 +224,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				}
 			}),
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "controllerRef", "kind"), "Deploy%ment", "may not contain '%'").WithOrigin("format=k8s-path-segment-name"),
+				field.Invalid(field.NewPath("spec", "controllerRef", "kind"), "Deploy%ment", "may not contain '%'").WithOrigin("format=k8s-path-segment-name").MarkDeclarativeNative(),
 			},
 		},
 		"controllerRef invalid name with percent": {
