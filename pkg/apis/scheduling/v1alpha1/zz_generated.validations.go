@@ -186,6 +186,10 @@ func Validate_TypedLocalObjectReference(ctx context.Context, op operation.Operat
 	// field schedulingv1alpha1.TypedLocalObjectReference.APIGroup
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *string, oldValueCorrelated bool) (errs field.ErrorList) {
+			// this field validations are marked declarative native
+			defer func() {
+				errs = errs.MarkDeclarativeNative()
+			}()
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil

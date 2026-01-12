@@ -23,7 +23,6 @@ import (
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	pathvalidation "k8s.io/apimachinery/pkg/api/validation/path"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	apivalidation "k8s.io/kubernetes/pkg/apis/core/validation"
 	"k8s.io/kubernetes/pkg/apis/scheduling"
@@ -93,11 +92,6 @@ func validateWorkloadSpec(spec *scheduling.WorkloadSpec, fldPath *field.Path) fi
 
 func validateControllerRef(ref *scheduling.TypedLocalObjectReference, fldPath *field.Path) field.ErrorList {
 	var allErrs = field.ErrorList{}
-	if ref.APIGroup != "" {
-		for _, msg := range validation.IsDNS1123Subdomain(ref.APIGroup) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("apiGroup"), ref.APIGroup, msg).WithOrigin("format=k8s-long-name").MarkCoveredByDeclarative())
-		}
-	}
 	if ref.Kind == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("kind"), "").MarkCoveredByDeclarative())
 	} else {

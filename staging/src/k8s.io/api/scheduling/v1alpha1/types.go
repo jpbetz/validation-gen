@@ -144,6 +144,7 @@ type TypedLocalObjectReference struct {
 	// +optional
 	// +k8s:optional
 	// +k8s:format=k8s-long-name
+	// +k8s:declarativeValidationNative
 	APIGroup string `json:"apiGroup,omitempty" protobuf:"bytes,1,opt,name=apiGroup"`
 	// Kind is the type of resource being referenced.
 	// It must be a path segment name.

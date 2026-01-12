@@ -164,7 +164,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				}
 			}),
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "controllerRef", "apiGroup"), "invalid_api_group", "").WithOrigin("format=k8s-long-name"),
+				field.Invalid(field.NewPath("spec", "controllerRef", "apiGroup"), "invalid_api_group", "").WithOrigin("format=k8s-long-name").MarkDeclarativeNative(),
 			},
 		},
 		"controllerRef missing kind": {
