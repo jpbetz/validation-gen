@@ -126,7 +126,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				obj.Spec.PodGroups[0].Policy.Gang.MinCount = 0
 			}),
 			expectedErrs: field.ErrorList{
-				field.Required(field.NewPath("spec", "podGroups").Index(0).Child("policy", "gang", "minCount"), ""),
+				field.Required(field.NewPath("spec", "podGroups").Index(0).Child("policy", "gang", "minCount"), "").MarkDeclarativeNative(),
 			},
 		},
 		"gang minCount negative": {
@@ -134,7 +134,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				obj.Spec.PodGroups[0].Policy.Gang.MinCount = -1
 			}),
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy", "gang", "minCount"), int64(-1), "must be greater than zero").WithOrigin("minimum"),
+				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy", "gang", "minCount"), int64(-1), "must be greater than zero").WithOrigin("minimum").MarkDeclarativeNative(),
 			},
 		},
 		"valid with controllerRef": {
