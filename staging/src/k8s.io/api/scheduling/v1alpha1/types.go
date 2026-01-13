@@ -160,6 +160,7 @@ type TypedLocalObjectReference struct {
 	// +required
 	// +k8s:required
 	// +k8s:format=k8s-path-segment-name
+	// +k8s:declarativeValidationNative
 	Name string `json:"name" protobuf:"bytes,3,opt,name=name"`
 }
 
