@@ -128,29 +128,7 @@ func validatePodGroup(podGroup *scheduling.PodGroup, fldPath *field.Path, existi
 }
 
 func validatePodGroupPolicy(policy *scheduling.PodGroupPolicy, fldPath *field.Path) field.ErrorList {
-	var allErrs field.ErrorList
-	var setFields []string
-
-	if policy.Basic != nil {
-		setFields = append(setFields, "`basic`")
-	}
-	if policy.Gang != nil {
-		setFields = append(setFields, "`gang`")
-	}
-
-	switch {
-	case len(setFields) == 0:
-		allErrs = append(allErrs, field.Invalid(fldPath, "", "must specify one of: `basic`, `gang`").MarkCoveredByDeclarative().WithOrigin("union"))
-	case len(setFields) > 1:
-		allErrs = append(allErrs, field.Invalid(fldPath, fmt.Sprintf("{%s}", strings.Join(setFields, ", ")),
-			"exactly one of `basic`, `gang` is required, but multiple fields are set").MarkCoveredByDeclarative().WithOrigin("union"))
-	case policy.Basic != nil:
-		allErrs = append(allErrs, validatBasicSchedulingPolicy(policy.Basic, fldPath.Child("basic"))...)
-	case policy.Gang != nil:
-		allErrs = append(allErrs, validateGangSchedulingPolicy(policy.Gang, fldPath.Child("gang"))...)
-	}
-
-	return allErrs
+	return nil
 }
 
 func validatBasicSchedulingPolicy(policy *scheduling.BasicSchedulingPolicy, fldPath *field.Path) field.ErrorList {

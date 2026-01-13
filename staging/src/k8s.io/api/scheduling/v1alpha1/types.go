@@ -187,6 +187,7 @@ type PodGroupPolicy struct {
 	// +k8s:optional
 	// +oneOf=PolicySelection
 	// +k8s:unionMember
+	// +k8s:declarativeValidationNative
 	Basic *BasicSchedulingPolicy `json:"basic,omitempty" protobuf:"bytes,2,opt,name=basic"`
 
 	// Gang specifies that the pods in this group should be scheduled using
@@ -196,6 +197,7 @@ type PodGroupPolicy struct {
 	// +k8s:optional
 	// +oneOf=PolicySelection
 	// +k8s:unionMember
+	// +k8s:declarativeValidationNative
 	Gang *GangSchedulingPolicy `json:"gang,omitempty" protobuf:"bytes,3,opt,name=gang"`
 }
 

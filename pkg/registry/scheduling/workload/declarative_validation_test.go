@@ -244,7 +244,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				obj.Spec.PodGroups[0].Policy = scheduling.PodGroupPolicy{}
 			}),
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy"), "", "must specify one of: `basic`, `gang`").WithOrigin("union"),
+				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy"), "", "must specify one of: `basic`, `gang`").WithOrigin("union").MarkDeclarativeNative(),
 			},
 		},
 		"policy with both basic and gang": {
@@ -257,7 +257,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				}
 			}),
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy"), "{`basic`, `gang`}", "exactly one of `basic`, `gang` is required, but multiple fields are set").WithOrigin("union"),
+				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy"), "{`basic`, `gang`}", "exactly one of `basic`, `gang` is required, but multiple fields are set").WithOrigin("union").MarkDeclarativeNative(),
 			},
 		},
 		"valid with basic policy": {
@@ -389,7 +389,7 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 				obj.Spec.PodGroups[0].Policy = scheduling.PodGroupPolicy{}
 			}),
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy"), "", "must specify one of: `basic`, `gang`").WithOrigin("union"),
+				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy"), "", "must specify one of: `basic`, `gang`").WithOrigin("union").MarkDeclarativeNative(),
 				field.Invalid(field.NewPath("spec", "podGroups"), nil, "field is immutable"),
 			},
 		},
@@ -405,7 +405,7 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 				}
 			}),
 			expectedErrs: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy"), "{`basic`, `gang`}", "exactly one of `basic`, `gang` is required, but multiple fields are set").WithOrigin("union"),
+				field.Invalid(field.NewPath("spec", "podGroups").Index(0).Child("policy"), "{`basic`, `gang`}", "exactly one of `basic`, `gang` is required, but multiple fields are set").WithOrigin("union").MarkDeclarativeNative(),
 				field.Invalid(field.NewPath("spec", "podGroups"), nil, "field is immutable"),
 			},
 		},
