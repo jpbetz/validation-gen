@@ -22,7 +22,6 @@ import (
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	pathvalidation "k8s.io/apimachinery/pkg/api/validation/path"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	apivalidation "k8s.io/kubernetes/pkg/apis/core/validation"
@@ -77,17 +76,7 @@ func validateWorkloadSpec(spec *scheduling.WorkloadSpec, fldPath *field.Path) fi
 	if spec.ControllerRef != nil {
 		allErrs = append(allErrs, validateControllerRef(spec.ControllerRef, fldPath.Child("controllerRef"))...)
 	}
-	existingPodGroups := sets.New[string]()
-	podGroupsPath := fldPath.Child("podGroups")
-	if len(spec.PodGroups) == 0 {
-		allErrs = append(allErrs, field.Required(podGroupsPath, "must have at least one item").MarkCoveredByDeclarative())
-	} else if len(spec.PodGroups) > scheduling.WorkloadMaxPodGroups {
-		allErrs = append(allErrs, field.TooMany(podGroupsPath, len(spec.PodGroups), scheduling.WorkloadMaxPodGroups).WithOrigin("maxItems").MarkCoveredByDeclarative())
-	} else {
-		for i := range spec.PodGroups {
-			allErrs = append(allErrs, validatePodGroup(&spec.PodGroups[i], podGroupsPath.Index(i), existingPodGroups)...)
-		}
-	}
+	// Validation for podGroups is handled declaratively.
 	return allErrs
 }
 
@@ -113,31 +102,6 @@ func validateControllerRef(ref *scheduling.TypedLocalObjectReference, fldPath *f
 		}
 	}
 	return allErrs
-}
-
-func validatePodGroup(podGroup *scheduling.PodGroup, fldPath *field.Path, existingPodGroups sets.Set[string]) field.ErrorList {
-	var allErrs field.ErrorList
-	if existingPodGroups.Has(podGroup.Name) {
-		// MarkCoveredByDeclarative is not needed here because the duplicate check is done.
-		allErrs = append(allErrs, field.Duplicate(fldPath, podGroup).MarkCoveredByDeclarative())
-	} else {
-		existingPodGroups.Insert(podGroup.Name)
-	}
-	allErrs = append(allErrs, validatePodGroupPolicy(&podGroup.Policy, fldPath.Child("policy"))...)
-	return allErrs
-}
-
-func validatePodGroupPolicy(policy *scheduling.PodGroupPolicy, fldPath *field.Path) field.ErrorList {
-	return nil
-}
-
-func validatBasicSchedulingPolicy(policy *scheduling.BasicSchedulingPolicy, fldPath *field.Path) field.ErrorList {
-	// BasicSchedulingPolicy has no fields.
-	return nil
-}
-
-func validateGangSchedulingPolicy(policy *scheduling.GangSchedulingPolicy, fldPath *field.Path) field.ErrorList {
-	return nil
 }
 
 // ValidateWorkloadUpdate tests if an update to Workload is valid.

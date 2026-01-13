@@ -60,7 +60,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				obj.Spec.PodGroups = nil
 			}),
 			expectedErrs: field.ErrorList{
-				field.Required(field.NewPath("spec", "podGroups"), "must have at least one item"),
+				field.Required(field.NewPath("spec", "podGroups"), "must have at least one item").MarkDeclarativeNative(),
 			},
 		},
 		"too many podGroups": {
@@ -78,7 +78,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 				}
 			}),
 			expectedErrs: field.ErrorList{
-				field.TooMany(field.NewPath("spec", "podGroups"), scheduling.WorkloadMaxPodGroups+1, scheduling.WorkloadMaxPodGroups).WithOrigin("maxItems"),
+				field.TooMany(field.NewPath("spec", "podGroups"), scheduling.WorkloadMaxPodGroups+1, scheduling.WorkloadMaxPodGroups).WithOrigin("maxItems").MarkDeclarativeNative(),
 			},
 		},
 		"empty podGroup name": {
@@ -116,7 +116,7 @@ func testDeclarativeValidate(t *testing.T, apiVersion string) {
 							MinCount: 1,
 						},
 					},
-				}),
+				}).MarkDeclarativeNative(),
 			},
 		},
 		// Declarative validation treats 0 as "missing" and returns Required error
@@ -319,7 +319,7 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 				obj.Spec.PodGroups = []scheduling.PodGroup{}
 			}),
 			expectedErrs: field.ErrorList{
-				field.Required(field.NewPath("spec", "podGroups"), "must have at least one item"),
+				field.Required(field.NewPath("spec", "podGroups"), "must have at least one item").MarkDeclarativeNative(),
 				field.Invalid(field.NewPath("spec", "podGroups"), []scheduling.PodGroup{}, "field is immutable"),
 			},
 		},
@@ -340,7 +340,7 @@ func testDeclarativeValidateUpdate(t *testing.T, apiVersion string) {
 				}
 			}),
 			expectedErrs: field.ErrorList{
-				field.TooMany(field.NewPath("spec", "podGroups"), scheduling.WorkloadMaxPodGroups+1, scheduling.WorkloadMaxPodGroups).WithOrigin("maxItems"),
+				field.TooMany(field.NewPath("spec", "podGroups"), scheduling.WorkloadMaxPodGroups+1, scheduling.WorkloadMaxPodGroups).WithOrigin("maxItems").MarkDeclarativeNative(),
 				field.Invalid(field.NewPath("spec", "podGroups"), nil, "field is immutable"),
 			},
 		},

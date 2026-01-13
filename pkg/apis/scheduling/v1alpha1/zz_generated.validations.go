@@ -56,10 +56,6 @@ func Validate_GangSchedulingPolicy(ctx context.Context, op operation.Operation, 
 	// field schedulingv1alpha1.GangSchedulingPolicy.MinCount
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *int32, oldValueCorrelated bool) (errs field.ErrorList) {
-			// this field validations are marked declarative native
-			defer func() {
-				errs = errs.MarkDeclarativeNative()
-			}()
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -86,10 +82,6 @@ func Validate_PodGroup(ctx context.Context, op operation.Operation, fldPath *fie
 	// field schedulingv1alpha1.PodGroup.Name
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *string, oldValueCorrelated bool) (errs field.ErrorList) {
-			// this field validations are marked declarative native
-			defer func() {
-				errs = errs.MarkDeclarativeNative()
-			}()
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -137,15 +129,11 @@ func Validate_PodGroupPolicy(ctx context.Context, op operation.Operation, fldPat
 			return false
 		}
 		return obj.Gang != nil
-	}).MarkDeclarativeNative()...)
+	})...)
 
 	// field schedulingv1alpha1.PodGroupPolicy.Basic
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *schedulingv1alpha1.BasicSchedulingPolicy, oldValueCorrelated bool) (errs field.ErrorList) {
-			// this field validations are marked declarative native
-			defer func() {
-				errs = errs.MarkDeclarativeNative()
-			}()
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -166,10 +154,6 @@ func Validate_PodGroupPolicy(ctx context.Context, op operation.Operation, fldPat
 	// field schedulingv1alpha1.PodGroupPolicy.Gang
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *schedulingv1alpha1.GangSchedulingPolicy, oldValueCorrelated bool) (errs field.ErrorList) {
-			// this field validations are marked declarative native
-			defer func() {
-				errs = errs.MarkDeclarativeNative()
-			}()
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -306,6 +290,10 @@ func Validate_WorkloadSpec(ctx context.Context, op operation.Operation, fldPath 
 	// field schedulingv1alpha1.WorkloadSpec.PodGroups
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []schedulingv1alpha1.PodGroup, oldValueCorrelated bool) (errs field.ErrorList) {
+			// this field validations are marked declarative native
+			defer func() {
+				errs = errs.MarkDeclarativeNative()
+			}()
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil

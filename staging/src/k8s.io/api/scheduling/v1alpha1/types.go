@@ -131,6 +131,7 @@ type WorkloadSpec struct {
 	// +k8s:listType=map
 	// +k8s:listMapKey=name
 	// +k8s:maxItems=8
+	// +k8s:declarativeValidationNative
 	PodGroups []PodGroup `json:"podGroups" protobuf:"bytes,2,rep,name=podGroups"`
 }
 
@@ -169,7 +170,6 @@ type PodGroup struct {
 	// +required
 	// +k8s:required
 	// +k8s:format=k8s-short-name
-	// +k8s:declarativeValidationNative
 	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
 
 	// Policy defines the scheduling policy for this PodGroup.
@@ -187,7 +187,6 @@ type PodGroupPolicy struct {
 	// +k8s:optional
 	// +oneOf=PolicySelection
 	// +k8s:unionMember
-	// +k8s:declarativeValidationNative
 	Basic *BasicSchedulingPolicy `json:"basic,omitempty" protobuf:"bytes,2,opt,name=basic"`
 
 	// Gang specifies that the pods in this group should be scheduled using
@@ -197,7 +196,6 @@ type PodGroupPolicy struct {
 	// +k8s:optional
 	// +oneOf=PolicySelection
 	// +k8s:unionMember
-	// +k8s:declarativeValidationNative
 	Gang *GangSchedulingPolicy `json:"gang,omitempty" protobuf:"bytes,3,opt,name=gang"`
 }
 
@@ -219,6 +217,5 @@ type GangSchedulingPolicy struct {
 	// +required
 	// +k8s:required
 	// +k8s:minimum=0
-	// +k8s:declarativeValidationNative
 	MinCount int32 `json:"minCount" protobuf:"varint,1,opt,name=minCount"`
 }
