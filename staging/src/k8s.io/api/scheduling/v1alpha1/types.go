@@ -119,6 +119,7 @@ type WorkloadSpec struct {
 	//
 	// +optional
 	// +k8s:optional
+	// +k8s:declarativeValidationNative
 	ControllerRef *TypedLocalObjectReference `json:"controllerRef,omitempty" protobuf:"bytes,1,opt,name=controllerRef"`
 
 	// PodGroups is the list of pod groups that make up the Workload.
@@ -144,7 +145,6 @@ type TypedLocalObjectReference struct {
 	// +optional
 	// +k8s:optional
 	// +k8s:format=k8s-long-name
-	// +k8s:declarativeValidationNative
 	APIGroup string `json:"apiGroup,omitempty" protobuf:"bytes,1,opt,name=apiGroup"`
 	// Kind is the type of resource being referenced.
 	// It must be a path segment name.
@@ -152,7 +152,6 @@ type TypedLocalObjectReference struct {
 	// +required
 	// +k8s:required
 	// +k8s:format=k8s-path-segment-name
-	// +k8s:declarativeValidationNative
 	Kind string `json:"kind" protobuf:"bytes,2,opt,name=kind"`
 	// Name is the name of resource being referenced.
 	// It must be a path segment name.
@@ -160,7 +159,6 @@ type TypedLocalObjectReference struct {
 	// +required
 	// +k8s:required
 	// +k8s:format=k8s-path-segment-name
-	// +k8s:declarativeValidationNative
 	Name string `json:"name" protobuf:"bytes,3,opt,name=name"`
 }
 
