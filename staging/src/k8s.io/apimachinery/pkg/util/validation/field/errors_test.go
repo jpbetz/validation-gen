@@ -54,6 +54,10 @@ func TestMakeFuncs(t *testing.T) {
 			func() *Error { return InternalError(NewPath("f"), fmt.Errorf("e")) },
 			ErrorTypeInternal,
 		},
+		{
+			func() *Error { return TooFew(NewPath("f"), 1, 2) },
+			ErrorTypeTooFew,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -335,6 +339,33 @@ func TestErrorFormatting(t *testing.T) {
 		name:   "too many func(-1, 1)",
 		input:  TooMany(NewPath("path.to.field"), -1, 1),
 		expect: `path.to.field: Too many: must have at most 1 item`,
+	}, {
+		name: "too few",
+		input: &Error{
+			Type:                 ErrorTypeTooFew,
+			Field:                "path.to.field",
+			BadValue:             "the value",
+			Detail:               "the details",
+			Origin:               "theOrigin",
+			CoveredByDeclarative: true,
+		},
+		expect: `path.to.field: Too few: "the value": the details`,
+	}, {
+		name:   "too few func(1, 2)",
+		input:  TooFew(NewPath("path.to.field"), 1, 2),
+		expect: `path.to.field: Too few: 1: must have at least 2 items`,
+	}, {
+		name:   "too few func(0, 1)",
+		input:  TooFew(NewPath("path.to.field"), 0, 1),
+		expect: `path.to.field: Too few: 0: must have at least 1 item`,
+	}, {
+		name:   "too few func(1, -1)",
+		input:  TooFew(NewPath("path.to.field"), 1, -1),
+		expect: `path.to.field: Too few: 1: too few items`,
+	}, {
+		name:   "too few func(-1, 1)",
+		input:  TooFew(NewPath("path.to.field"), -1, 1),
+		expect: `path.to.field: Too few: must have at least 1 item`,
 	}, {
 		name: "internal error",
 		input: &Error{
