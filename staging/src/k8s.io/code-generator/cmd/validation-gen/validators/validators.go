@@ -384,18 +384,18 @@ type Validations struct {
 	// Comments holds comments to emit (without the leading "//").
 	Comments []string
 
-	// OpaqueType indicates that the type being validated is opaque, and that
+	// Opaque indicates that the type being validated is opaque, and that
 	// any validations defined on it should not be emitted.
-	OpaqueType bool
+	Opaque bool
 
-	// OpaqueKeyType indicates that the key type of a map being validated is
+	// OpaqueKey indicates that the key type of a map being validated is
 	// opaque, and that any validations defined on it should not be emitted.
-	OpaqueKeyType bool
+	OpaqueKey bool
 
-	// OpaqueValType indicates that the key type of a map or slice being
+	// OpaqueVal indicates that the key type of a map or slice being
 	// validated is opaque, and that any validations defined on it should not
 	// be emitted.
-	OpaqueValType bool
+	OpaqueVal bool
 }
 
 func (v *Validations) Empty() bool {
@@ -422,9 +422,9 @@ func (v *Validations) Add(o Validations) {
 	v.Functions = append(v.Functions, o.Functions...)
 	v.Variables = append(v.Variables, o.Variables...)
 	v.Comments = append(v.Comments, o.Comments...)
-	v.OpaqueType = v.OpaqueType || o.OpaqueType
-	v.OpaqueKeyType = v.OpaqueKeyType || o.OpaqueKeyType
-	v.OpaqueValType = v.OpaqueValType || o.OpaqueValType
+	v.Opaque = v.Opaque || o.Opaque
+	v.OpaqueKey = v.OpaqueKey || o.OpaqueKey
+	v.OpaqueVal = v.OpaqueVal || o.OpaqueVal
 }
 
 // FunctionFlags define optional properties of a validator.  Most validators

@@ -20,7 +20,7 @@ This document lists the supported validation tags and their related information.
 | [`k8s:maxItems`](#k8smaxitems) | k8s:maxItems=\<non-negative integer\> | N/A | Indicates that a list field has a limit on its size. | list values, map values, struct fields, type definitions |
 | [`k8s:maxLength`](#k8smaxlength) | k8s:maxLength=\<non-negative integer\> | N/A | Indicates that a string field has a limit on its length. | anywhere |
 | [`k8s:minimum`](#k8sminimum) | k8s:minimum=\<integer\> | N/A | Indicates that a numeric field has a minimum value. | anywhere |
-| [`k8s:opaqueType`](#k8sopaquetype) | k8s:opaqueType | N/A | Indicates that any validations declared on the referenced type will be ignored. If a referenced type's package is not included in the generator's current flags, this tag must be set, or code generation will fail (preventing silent mistakes). If the validations should not be ignored, add the type's package to the generator using the --readonly-pkg flag. | struct fields |
+| [`k8s:opaque`](#k8sopaquetype) | k8s:opaque | N/A | Indicates that any validations declared on the referenced type will be ignored. If a referenced type's package is not included in the generator's current flags, this tag must be set, or code generation will fail (preventing silent mistakes). If the validations should not be ignored, add the type's package to the generator using the --readonly-pkg flag. | struct fields |
 | [`k8s:optional`](#k8soptional) | k8s:optional | N/A | Indicates that a field is optional to clients. | struct fields |
 | [`k8s:required`](#k8srequired) | k8s:required | N/A | Indicates that a field must be specified by clients. | struct fields |
 | [`k8s:subfield`](#k8ssubfield) | k8s:subfield(\<field-json-name\>)=\<validation-tag\> | <field-json-name> | Declares a validation for a subfield of a struct. | anywhere |
@@ -137,7 +137,7 @@ null
 |-------------|------|---------|
 | **\<integer\>** | This field must be greater than or equal to x. | None |
 
-### k8s:opaqueType
+### k8s:opaque
 
 #### Payloads
 

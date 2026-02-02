@@ -37,12 +37,12 @@ type Struct struct {
 	StructPtrField *OtherStruct `json:"structPtrField"`
 
 	// +k8s:validateFalse="field Struct.OpaqueStructField"
-	// +k8s:opaqueType
+	// +k8s:opaque
 	OpaqueStructField OtherStruct `json:"opaqueStructField"`
 
 	// +k8s:validateFalse="field Struct.OpaqueStructPtrField"
 	// +k8s:required
-	// +k8s:opaqueType
+	// +k8s:opaque
 	OpaqueStructPtrField *OtherStruct `json:"opaqueStructPtrField"`
 
 	// +k8s:validateFalse="field Struct.SliceOfStructField"
@@ -51,7 +51,7 @@ type Struct struct {
 
 	// +k8s:validateFalse="field Struct.SliceOfOpaqueStructField"
 	// +k8s:eachVal=+k8s:validateFalse="field Struct.SliceOfOpaqueStructField vals"
-	// +k8s:eachVal=+k8s:opaqueType
+	// +k8s:eachVal=+k8s:opaque
 	SliceOfOpaqueStructField []OtherStruct `json:"sliceOfOpaqueStructField"`
 
 	// +k8s:validateFalse="field Struct.ListMapOfStructField"
@@ -64,7 +64,7 @@ type Struct struct {
 	// +k8s:eachVal=+k8s:validateFalse="field Struct.ListMapOfOpaqueStructField vals"
 	// +k8s:listType=map
 	// +k8s:listMapKey=stringField
-	// +k8s:eachVal=+k8s:opaqueType
+	// +k8s:eachVal=+k8s:opaque
 	ListMapOfOpaqueStructField []OtherStruct `json:"listMapOfOpaqueStructField"`
 
 	// +k8s:validateFalse="field Struct.MapOfStringToStructField"
@@ -75,8 +75,8 @@ type Struct struct {
 	// +k8s:validateFalse="field Struct.MapOfStringToOpaqueStructField"
 	// +k8s:eachKey=+k8s:validateFalse="field Struct.MapOfStringToOpaqueStructField keys"
 	// +k8s:eachVal=+k8s:validateFalse="field Struct.MapOfStringToOpaqueStructField vals"
-	// +k8s:eachKey=+k8s:opaqueType
-	// +k8s:eachVal=+k8s:opaqueType
+	// +k8s:eachKey=+k8s:opaque
+	// +k8s:eachVal=+k8s:opaque
 	MapOfStringToOpaqueStructField map[OtherString]OtherStruct `json:"mapOfStringToOpaqueStructField"`
 }
 
@@ -92,13 +92,13 @@ type OtherString string
 // TODO: the validateFalse test fixture doesn't handle map and slice types, and
 // fixing it requires fixing randfill.  That is a tomorrow problem.  For now, the
 // following types have been tested to generate correct code with
-// +k8s:opaqueType.
+// +k8s:opaque.
 
 // +k8s:validateTrue="type TypedefSliceOther"
-// +k8s:eachVal=+k8s:opaqueType
+// +k8s:eachVal=+k8s:opaque
 type TypedefSliceOther []OtherStruct
 
 // +k8s:validateTrue="type TypedefMapOther"
-// +k8s:eachKey=+k8s:opaqueType
-// +k8s:eachVal=+k8s:opaqueType
+// +k8s:eachKey=+k8s:opaque
+// +k8s:eachVal=+k8s:opaque
 type TypedefMapOther map[OtherString]OtherStruct

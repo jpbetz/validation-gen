@@ -29,6 +29,6 @@ var localSchemeBuilder = testscheme.New()
 
 type Struct struct {
 	// +k8s:subfield(stringField)=+k8s:validateFalse="subfield Struct.(other.StructType).StringField"
-	// +k8s:opaqueType
+	// +k8s:opaque
 	other.StructType
 }
