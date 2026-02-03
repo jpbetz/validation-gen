@@ -53,17 +53,20 @@ var unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tag
 // Validate_Struct validates an instance of Struct according
 // to declarative validation rules in the API schema.
 func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Struct) (errs field.ErrorList) {
-	errs = append(errs, validate.DiscriminatedUnion(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tags_union_discriminated_sparse_Struct_, func(obj *Struct) string {
-		if obj == nil {
-			return ""
+	{
+		var match = func(obj *Struct) string {
+			if obj == nil {
+				return ""
+			}
+			return string(obj.D)
 		}
-		return string(obj.D)
-	}, func(obj *Struct) bool {
-		if obj == nil {
-			return false
-		}
-		return obj.M1 != nil
-	})...)
+		errs = append(errs, validate.DiscriminatedUnion(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tags_union_discriminated_sparse_Struct_, match, func(obj *Struct) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.M1 != nil
+		})...)
+	}
 
 	// field Struct.TypeMeta has no validation
 	// field Struct.D has no validation

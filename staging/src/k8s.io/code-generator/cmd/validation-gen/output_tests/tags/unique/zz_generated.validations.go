@@ -76,7 +76,10 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a ItemWithMultipleKeys, b ItemWithMultipleKeys) bool { return a.Key1 == b.Key1 && a.Key2 == b.Key2 })...)
+			{
+				var match = func(a ItemWithMultipleKeys, b ItemWithMultipleKeys) bool { return a.Key1 == b.Key1 && a.Key2 == b.Key2 }
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			return
 		}(fldPath.Child("sliceMapFieldWithMultipleKeys"), obj.SliceMapFieldWithMultipleKeys, safe.Field(oldObj, func(oldObj *Struct) []ItemWithMultipleKeys { return oldObj.SliceMapFieldWithMultipleKeys }), oldObj != nil)...)
 
@@ -102,7 +105,10 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
+			{
+				var match = func(a Item, b Item) bool { return a.Key == b.Key }
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			return
 		}(fldPath.Child("atomicListUniqueMap"), obj.AtomicListUniqueMap, safe.Field(oldObj, func(oldObj *Struct) []Item { return oldObj.AtomicListUniqueMap }), oldObj != nil)...)
 
@@ -129,9 +135,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a PtrKeyStruct, b PtrKeyStruct) bool {
-				return ((a.Key == nil && b.Key == nil) || (a.Key != nil && b.Key != nil && *a.Key == *b.Key))
-			})...)
+			{
+				var match = func(a PtrKeyStruct, b PtrKeyStruct) bool {
+					return ((a.Key == nil && b.Key == nil) || (a.Key != nil && b.Key != nil && *a.Key == *b.Key))
+				}
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			return
 		}(fldPath.Child("sliceMapFieldWithPtrKey"), obj.SliceMapFieldWithPtrKey, safe.Field(oldObj, func(oldObj *Struct) []PtrKeyStruct { return oldObj.SliceMapFieldWithPtrKey }), oldObj != nil)...)
 
@@ -144,9 +153,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a ItemWithMixedKeys, b ItemWithMixedKeys) bool {
-				return ((a.Key1 == nil && b.Key1 == nil) || (a.Key1 != nil && b.Key1 != nil && *a.Key1 == *b.Key1)) && a.Key2 == b.Key2
-			})...)
+			{
+				var match = func(a ItemWithMixedKeys, b ItemWithMixedKeys) bool {
+					return ((a.Key1 == nil && b.Key1 == nil) || (a.Key1 != nil && b.Key1 != nil && *a.Key1 == *b.Key1)) && a.Key2 == b.Key2
+				}
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			return
 		}(fldPath.Child("sliceMapFieldWithMixedKeys"), obj.SliceMapFieldWithMixedKeys, safe.Field(oldObj, func(oldObj *Struct) []ItemWithMixedKeys { return oldObj.SliceMapFieldWithMixedKeys }), oldObj != nil)...)
 
@@ -159,9 +171,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a ItemWithMultiplePtrKeys, b ItemWithMultiplePtrKeys) bool {
-				return ((a.Key1 == nil && b.Key1 == nil) || (a.Key1 != nil && b.Key1 != nil && *a.Key1 == *b.Key1)) && ((a.Key2 == nil && b.Key2 == nil) || (a.Key2 != nil && b.Key2 != nil && *a.Key2 == *b.Key2))
-			})...)
+			{
+				var match = func(a ItemWithMultiplePtrKeys, b ItemWithMultiplePtrKeys) bool {
+					return ((a.Key1 == nil && b.Key1 == nil) || (a.Key1 != nil && b.Key1 != nil && *a.Key1 == *b.Key1)) && ((a.Key2 == nil && b.Key2 == nil) || (a.Key2 != nil && b.Key2 != nil && *a.Key2 == *b.Key2))
+				}
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			return
 		}(fldPath.Child("sliceMapFieldWithMultiplePtrKeys"), obj.SliceMapFieldWithMultiplePtrKeys, safe.Field(oldObj, func(oldObj *Struct) []ItemWithMultiplePtrKeys { return oldObj.SliceMapFieldWithMultiplePtrKeys }), oldObj != nil)...)
 

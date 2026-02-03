@@ -75,22 +75,28 @@ var unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tag
 // to declarative validation rules in the API schema.
 func Validate_TaskList(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj TaskList) (errs field.ErrorList) {
 	// lists with map semantics require unique keys
-	errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Task, b Task) bool { return a.Name == b.Name })...)
-	errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tags_item_union_typedef_TaskList_, func(list TaskList) bool {
-		for i := range list {
-			if list[i].Name == "failed" {
-				return true
+	{
+		var match = func(a Task, b Task) bool { return a.Name == b.Name }
+		errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+	}
+	{
+		var match = func(list TaskList) bool {
+			for i := range list {
+				if list[i].Name == "failed" {
+					return true
+				}
 			}
+			return false
 		}
-		return false
-	}, func(list TaskList) bool {
-		for i := range list {
-			if list[i].Name == "succeeded" {
-				return true
+		errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tags_item_union_typedef_TaskList_, match, func(list TaskList) bool {
+			for i := range list {
+				if list[i].Name == "succeeded" {
+					return true
+				}
 			}
-		}
-		return false
-	})...)
+			return false
+		})...)
+	}
 
 	return errs
 }

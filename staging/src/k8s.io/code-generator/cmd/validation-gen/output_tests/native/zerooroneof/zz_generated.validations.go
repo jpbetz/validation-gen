@@ -77,22 +77,28 @@ func Validate_ZeroOrOneOfListStruct(ctx context.Context, op operation.Operation,
 			}
 			// call field-attached validations
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a UnionItem, b UnionItem) bool { return a.Type == b.Type })...)
-			errs = append(errs, validate.ZeroOrOneOfUnion(ctx, op, fldPath, obj, oldObj, zeroOrOneOfMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_native_zerooroneof_ZeroOrOneOfListStruct_items_, func(list []UnionItem) bool {
-				for i := range list {
-					if list[i].Type == "a" {
-						return true
+			{
+				var match = func(a UnionItem, b UnionItem) bool { return a.Type == b.Type }
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
+			{
+				var match = func(list []UnionItem) bool {
+					for i := range list {
+						if list[i].Type == "a" {
+							return true
+						}
 					}
+					return false
 				}
-				return false
-			}, func(list []UnionItem) bool {
-				for i := range list {
-					if list[i].Type == "b" {
-						return true
+				errs = append(errs, validate.ZeroOrOneOfUnion(ctx, op, fldPath, obj, oldObj, zeroOrOneOfMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_native_zerooroneof_ZeroOrOneOfListStruct_items_, match, func(list []UnionItem) bool {
+					for i := range list {
+						if list[i].Type == "b" {
+							return true
+						}
 					}
-				}
-				return false
-			})...)
+					return false
+				})...)
+			}
 			return
 		}(fldPath.Child("items"), obj.Items, safe.Field(oldObj, func(oldObj *ZeroOrOneOfListStruct) []UnionItem { return oldObj.Items }), oldObj != nil)...)
 
@@ -104,17 +110,20 @@ var zeroOrOneOfMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tes
 // Validate_ZeroOrOneOfStruct validates an instance of ZeroOrOneOfStruct according
 // to declarative validation rules in the API schema.
 func Validate_ZeroOrOneOfStruct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ZeroOrOneOfStruct) (errs field.ErrorList) {
-	errs = append(errs, validate.ZeroOrOneOfUnion(ctx, op, fldPath, obj, oldObj, zeroOrOneOfMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_native_zerooroneof_ZeroOrOneOfStruct_, func(obj *ZeroOrOneOfStruct) bool {
-		if obj == nil {
-			return false
+	{
+		var match = func(obj *ZeroOrOneOfStruct) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.Field1 != nil
 		}
-		return obj.Field1 != nil
-	}, func(obj *ZeroOrOneOfStruct) bool {
-		if obj == nil {
-			return false
-		}
-		return obj.Field2 != nil
-	}).MarkDeclarativeNative()...)
+		errs = append(errs, validate.ZeroOrOneOfUnion(ctx, op, fldPath, obj, oldObj, zeroOrOneOfMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_native_zerooroneof_ZeroOrOneOfStruct_, match, func(obj *ZeroOrOneOfStruct) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.Field2 != nil
+		}).MarkDeclarativeNative()...)
+	}
 
 	// field ZeroOrOneOfStruct.TypeMeta has no validation
 

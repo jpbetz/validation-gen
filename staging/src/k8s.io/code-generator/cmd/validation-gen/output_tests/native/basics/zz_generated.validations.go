@@ -376,9 +376,12 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 			}
 			// call field-attached validations
 			func() { // cohort innerField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "innerField", func(o *StableType) *string { return &o.InnerField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-					return validate.MaxLength(ctx, op, fldPath, obj, oldObj, 5)
-				})...)
+				{
+					var match = func(o *StableType) *string { return &o.InnerField }
+					errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "innerField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+						return validate.MaxLength(ctx, op, fldPath, obj, oldObj, 5)
+					})...)
+				}
 			}()
 			// call the type's validation function
 			errs = append(errs, Validate_StableType(ctx, op, fldPath, obj, oldObj)...)
@@ -394,9 +397,12 @@ func Validate_MyObject(ctx context.Context, op operation.Operation, fldPath *fie
 			}
 			// call field-attached validations
 			func() { // cohort innerField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "innerField", func(o *StableType) *string { return &o.InnerField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-					return validate.MaxLength(ctx, op, fldPath, obj, oldObj, 5)
-				})...)
+				{
+					var match = func(o *StableType) *string { return &o.InnerField }
+					errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "innerField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+						return validate.MaxLength(ctx, op, fldPath, obj, oldObj, 5)
+					})...)
+				}
 			}()
 			// call the type's validation function
 			errs = append(errs, Validate_StableType(ctx, op, fldPath, obj, oldObj)...)

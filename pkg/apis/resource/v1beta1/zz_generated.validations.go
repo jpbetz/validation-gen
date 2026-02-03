@@ -202,13 +202,19 @@ func Validate_BasicDevice(ctx context.Context, op operation.Operation, fldPath *
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.DeviceCounterConsumption, b resourcev1beta1.DeviceCounterConsumption) bool {
-				return a.CounterSet == b.CounterSet
-			})...)
+			{
+				var match = func(a resourcev1beta1.DeviceCounterConsumption, b resourcev1beta1.DeviceCounterConsumption) bool {
+					return a.CounterSet == b.CounterSet
+				}
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			// iterate the list and call the type's validation function
-			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.DeviceCounterConsumption, b resourcev1beta1.DeviceCounterConsumption) bool {
-				return a.CounterSet == b.CounterSet
-			}, validate.SemanticDeepEqual, Validate_DeviceCounterConsumption)...)
+			{
+				var match = func(a resourcev1beta1.DeviceCounterConsumption, b resourcev1beta1.DeviceCounterConsumption) bool {
+					return a.CounterSet == b.CounterSet
+				}
+				errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, match, validate.SemanticDeepEqual, Validate_DeviceCounterConsumption)...)
+			}
 			return
 		}(fldPath.Child("consumesCounters"), obj.ConsumesCounters, safe.Field(oldObj, func(oldObj *resourcev1beta1.BasicDevice) []resourcev1beta1.DeviceCounterConsumption {
 			return oldObj.ConsumesCounters
@@ -475,27 +481,30 @@ var unionMembershipFor_k8s_io_api_resource_v1beta1_DeviceAttribute_ = validate.N
 // Validate_DeviceAttribute validates an instance of DeviceAttribute according
 // to declarative validation rules in the API schema.
 func Validate_DeviceAttribute(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *resourcev1beta1.DeviceAttribute) (errs field.ErrorList) {
-	errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_api_resource_v1beta1_DeviceAttribute_, func(obj *resourcev1beta1.DeviceAttribute) bool {
-		if obj == nil {
-			return false
+	{
+		var match = func(obj *resourcev1beta1.DeviceAttribute) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.IntValue != nil
 		}
-		return obj.IntValue != nil
-	}, func(obj *resourcev1beta1.DeviceAttribute) bool {
-		if obj == nil {
-			return false
-		}
-		return obj.BoolValue != nil
-	}, func(obj *resourcev1beta1.DeviceAttribute) bool {
-		if obj == nil {
-			return false
-		}
-		return obj.StringValue != nil
-	}, func(obj *resourcev1beta1.DeviceAttribute) bool {
-		if obj == nil {
-			return false
-		}
-		return obj.VersionValue != nil
-	})...)
+		errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_api_resource_v1beta1_DeviceAttribute_, match, func(obj *resourcev1beta1.DeviceAttribute) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.BoolValue != nil
+		}, func(obj *resourcev1beta1.DeviceAttribute) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.StringValue != nil
+		}, func(obj *resourcev1beta1.DeviceAttribute) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.VersionValue != nil
+		})...)
+	}
 
 	// field resourcev1beta1.DeviceAttribute.IntValue
 	errs = append(errs,
@@ -595,9 +604,15 @@ func Validate_DeviceClaim(ctx context.Context, op operation.Operation, fldPath *
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.DeviceRequest, b resourcev1beta1.DeviceRequest) bool { return a.Name == b.Name })...)
+			{
+				var match = func(a resourcev1beta1.DeviceRequest, b resourcev1beta1.DeviceRequest) bool { return a.Name == b.Name }
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			// iterate the list and call the type's validation function
-			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.DeviceRequest, b resourcev1beta1.DeviceRequest) bool { return a.Name == b.Name }, validate.SemanticDeepEqual, Validate_DeviceRequest)...)
+			{
+				var match = func(a resourcev1beta1.DeviceRequest, b resourcev1beta1.DeviceRequest) bool { return a.Name == b.Name }
+				errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, match, validate.SemanticDeepEqual, Validate_DeviceRequest)...)
+			}
 			return
 		}(fldPath.Child("requests"), obj.Requests, safe.Field(oldObj, func(oldObj *resourcev1beta1.DeviceClaim) []resourcev1beta1.DeviceRequest { return oldObj.Requests }), oldObj != nil)...)
 
@@ -715,13 +730,19 @@ func Validate_DeviceClass(ctx context.Context, op operation.Operation, fldPath *
 			// call field-attached validations
 			func() { // cohort name
 				earlyReturn := false
-				if e := validate.Subfield(ctx, op, fldPath, obj, oldObj, "name", func(o *v1.ObjectMeta) *string { return &o.Name }, validate.DirectEqualPtr, validate.OptionalValue); len(e) != 0 {
-					earlyReturn = true
+				{
+					var match = func(o *v1.ObjectMeta) *string { return &o.Name }
+					if e := validate.Subfield(ctx, op, fldPath, obj, oldObj, "name", match, validate.DirectEqualPtr, validate.OptionalValue); len(e) != 0 {
+						earlyReturn = true
+					}
+					if earlyReturn {
+						return // do not proceed
+					}
 				}
-				if earlyReturn {
-					return // do not proceed
+				{
+					var match = func(o *v1.ObjectMeta) *string { return &o.Name }
+					errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "name", match, validate.DirectEqualPtr, validate.LongName)...)
 				}
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "name", func(o *v1.ObjectMeta) *string { return &o.Name }, validate.DirectEqualPtr, validate.LongName)...)
 			}()
 			return
 		}(fldPath.Child("metadata"), &obj.ObjectMeta, safe.Field(oldObj, func(oldObj *resourcev1beta1.DeviceClass) *v1.ObjectMeta { return &oldObj.ObjectMeta }), oldObj != nil)...)
@@ -1016,13 +1037,19 @@ func Validate_DeviceRequest(ctx context.Context, op operation.Operation, fldPath
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.DeviceSubRequest, b resourcev1beta1.DeviceSubRequest) bool {
-				return a.Name == b.Name
-			})...)
+			{
+				var match = func(a resourcev1beta1.DeviceSubRequest, b resourcev1beta1.DeviceSubRequest) bool {
+					return a.Name == b.Name
+				}
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			// iterate the list and call the type's validation function
-			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.DeviceSubRequest, b resourcev1beta1.DeviceSubRequest) bool {
-				return a.Name == b.Name
-			}, validate.SemanticDeepEqual, Validate_DeviceSubRequest)...)
+			{
+				var match = func(a resourcev1beta1.DeviceSubRequest, b resourcev1beta1.DeviceSubRequest) bool {
+					return a.Name == b.Name
+				}
+				errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, match, validate.SemanticDeepEqual, Validate_DeviceSubRequest)...)
+			}
 			return
 		}(fldPath.Child("firstAvailable"), obj.FirstAvailable, safe.Field(oldObj, func(oldObj *resourcev1beta1.DeviceRequest) []resourcev1beta1.DeviceSubRequest {
 			return oldObj.FirstAvailable
@@ -1582,9 +1609,12 @@ func Validate_ResourceClaimStatus(ctx context.Context, op operation.Operation, f
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.ResourceClaimConsumerReference, b resourcev1beta1.ResourceClaimConsumerReference) bool {
-				return a.UID == b.UID
-			})...)
+			{
+				var match = func(a resourcev1beta1.ResourceClaimConsumerReference, b resourcev1beta1.ResourceClaimConsumerReference) bool {
+					return a.UID == b.UID
+				}
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			return
 		}(fldPath.Child("reservedFor"), obj.ReservedFor, safe.Field(oldObj, func(oldObj *resourcev1beta1.ResourceClaimStatus) []resourcev1beta1.ResourceClaimConsumerReference {
 			return oldObj.ReservedFor
@@ -1606,13 +1636,19 @@ func Validate_ResourceClaimStatus(ctx context.Context, op operation.Operation, f
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.AllocatedDeviceStatus, b resourcev1beta1.AllocatedDeviceStatus) bool {
-				return a.Driver == b.Driver && a.Device == b.Device && a.Pool == b.Pool && ((a.ShareID == nil && b.ShareID == nil) || (a.ShareID != nil && b.ShareID != nil && *a.ShareID == *b.ShareID))
-			})...)
+			{
+				var match = func(a resourcev1beta1.AllocatedDeviceStatus, b resourcev1beta1.AllocatedDeviceStatus) bool {
+					return a.Driver == b.Driver && a.Device == b.Device && a.Pool == b.Pool && ((a.ShareID == nil && b.ShareID == nil) || (a.ShareID != nil && b.ShareID != nil && *a.ShareID == *b.ShareID))
+				}
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			// iterate the list and call the type's validation function
-			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.AllocatedDeviceStatus, b resourcev1beta1.AllocatedDeviceStatus) bool {
-				return a.Driver == b.Driver && a.Device == b.Device && a.Pool == b.Pool && ((a.ShareID == nil && b.ShareID == nil) || (a.ShareID != nil && b.ShareID != nil && *a.ShareID == *b.ShareID))
-			}, validate.SemanticDeepEqual, Validate_AllocatedDeviceStatus)...)
+			{
+				var match = func(a resourcev1beta1.AllocatedDeviceStatus, b resourcev1beta1.AllocatedDeviceStatus) bool {
+					return a.Driver == b.Driver && a.Device == b.Device && a.Pool == b.Pool && ((a.ShareID == nil && b.ShareID == nil) || (a.ShareID != nil && b.ShareID != nil && *a.ShareID == *b.ShareID))
+				}
+				errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, match, validate.SemanticDeepEqual, Validate_AllocatedDeviceStatus)...)
+			}
 			return
 		}(fldPath.Child("devices"), obj.Devices, safe.Field(oldObj, func(oldObj *resourcev1beta1.ResourceClaimStatus) []resourcev1beta1.AllocatedDeviceStatus {
 			return oldObj.Devices
@@ -1738,9 +1774,15 @@ func Validate_ResourceSliceSpec(ctx context.Context, op operation.Operation, fld
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.CounterSet, b resourcev1beta1.CounterSet) bool { return a.Name == b.Name })...)
+			{
+				var match = func(a resourcev1beta1.CounterSet, b resourcev1beta1.CounterSet) bool { return a.Name == b.Name }
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			// iterate the list and call the type's validation function
-			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a resourcev1beta1.CounterSet, b resourcev1beta1.CounterSet) bool { return a.Name == b.Name }, validate.SemanticDeepEqual, Validate_CounterSet)...)
+			{
+				var match = func(a resourcev1beta1.CounterSet, b resourcev1beta1.CounterSet) bool { return a.Name == b.Name }
+				errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, match, validate.SemanticDeepEqual, Validate_CounterSet)...)
+			}
 			return
 		}(fldPath.Child("sharedCounters"), obj.SharedCounters, safe.Field(oldObj, func(oldObj *resourcev1beta1.ResourceSliceSpec) []resourcev1beta1.CounterSet {
 			return oldObj.SharedCounters

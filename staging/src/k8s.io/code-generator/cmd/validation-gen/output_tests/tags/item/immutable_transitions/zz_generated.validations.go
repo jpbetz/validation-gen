@@ -63,27 +63,36 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key1 == b.Key1 })...)
+			{
+				var match = func(a Item, b Item) bool { return a.Key1 == b.Key1 }
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			func() { // cohort {"key1": "a"}
 				earlyReturn := false
-				if e := validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key1 == "a" }, validate.DirectEqual, validate.Immutable); len(e) != 0 {
-					errs = append(errs, e...)
-					earlyReturn = true
-				}
-				if earlyReturn {
-					return // do not proceed
+				{
+					var match = func(item *Item) bool { return item.Key1 == "a" }
+					if e := validate.SliceItem(ctx, op, fldPath, obj, oldObj, match, validate.DirectEqual, validate.Immutable); len(e) != 0 {
+						errs = append(errs, e...)
+						earlyReturn = true
+					}
+					if earlyReturn {
+						return // do not proceed
+					}
 				}
 			}()
 			func() { // cohort {"key1": "b"}
 				earlyReturn := false
-				if e := validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key1 == "b" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
-					return validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *Item) *string { return &o.StringField }, validate.DirectEqualPtr, validate.Immutable)
-				}); len(e) != 0 {
-					errs = append(errs, e...)
-					earlyReturn = true
-				}
-				if earlyReturn {
-					return // do not proceed
+				{
+					var match = func(item *Item) bool { return item.Key1 == "b" }
+					if e := validate.SliceItem(ctx, op, fldPath, obj, oldObj, match, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+						return validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *Item) *string { return &o.StringField }, validate.DirectEqualPtr, validate.Immutable)
+					}); len(e) != 0 {
+						errs = append(errs, e...)
+						earlyReturn = true
+					}
+					if earlyReturn {
+						return // do not proceed
+					}
 				}
 			}()
 			return

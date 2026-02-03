@@ -53,28 +53,31 @@ var unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tag
 // Validate_Struct validates an instance of Struct according
 // to declarative validation rules in the API schema.
 func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Struct) (errs field.ErrorList) {
-	errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tags_union_undiscriminated_simple_Struct_, func(obj *Struct) bool {
-		if obj == nil {
-			return false
+	{
+		var match = func(obj *Struct) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.M1 != nil
 		}
-		return obj.M1 != nil
-	}, func(obj *Struct) bool {
-		if obj == nil {
-			return false
-		}
-		return obj.M2 != nil
-	}, func(obj *Struct) bool {
-		if obj == nil {
-			return false
-		}
-		var z string
-		return obj.M3 != z
-	}, func(obj *Struct) bool {
-		if obj == nil {
-			return false
-		}
-		return obj.M4 != nil
-	})...)
+		errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tags_union_undiscriminated_simple_Struct_, match, func(obj *Struct) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.M2 != nil
+		}, func(obj *Struct) bool {
+			if obj == nil {
+				return false
+			}
+			var z string
+			return obj.M3 != z
+		}, func(obj *Struct) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.M4 != nil
+		})...)
+	}
 
 	// field Struct.TypeMeta has no validation
 	// field Struct.NonUnionField has no validation

@@ -66,13 +66,19 @@ func Validate_ReplicationController(ctx context.Context, op operation.Operation,
 			// call field-attached validations
 			func() { // cohort name
 				earlyReturn := false
-				if e := validate.Subfield(ctx, op, fldPath, obj, oldObj, "name", func(o *metav1.ObjectMeta) *string { return &o.Name }, validate.DirectEqualPtr, validate.OptionalValue); len(e) != 0 {
-					earlyReturn = true
+				{
+					var match = func(o *metav1.ObjectMeta) *string { return &o.Name }
+					if e := validate.Subfield(ctx, op, fldPath, obj, oldObj, "name", match, validate.DirectEqualPtr, validate.OptionalValue); len(e) != 0 {
+						earlyReturn = true
+					}
+					if earlyReturn {
+						return // do not proceed
+					}
 				}
-				if earlyReturn {
-					return // do not proceed
+				{
+					var match = func(o *metav1.ObjectMeta) *string { return &o.Name }
+					errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "name", match, validate.DirectEqualPtr, validate.LongName)...)
 				}
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "name", func(o *metav1.ObjectMeta) *string { return &o.Name }, validate.DirectEqualPtr, validate.LongName)...)
 			}()
 			return
 		}(fldPath.Child("metadata"), &obj.ObjectMeta, safe.Field(oldObj, func(oldObj *corev1.ReplicationController) *metav1.ObjectMeta { return &oldObj.ObjectMeta }), oldObj != nil)...)

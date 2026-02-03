@@ -65,22 +65,28 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Task, b Task) bool { return a.Name == b.Name })...)
-			errs = append(errs, validate.ZeroOrOneOfUnion(ctx, op, fldPath, obj, oldObj, zeroOrOneOfMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tags_item_zerorooneof_simple_Struct_tasks_, func(list []Task) bool {
-				for i := range list {
-					if list[i].Name == "failed" {
-						return true
+			{
+				var match = func(a Task, b Task) bool { return a.Name == b.Name }
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
+			{
+				var match = func(list []Task) bool {
+					for i := range list {
+						if list[i].Name == "failed" {
+							return true
+						}
 					}
+					return false
 				}
-				return false
-			}, func(list []Task) bool {
-				for i := range list {
-					if list[i].Name == "succeeded" {
-						return true
+				errs = append(errs, validate.ZeroOrOneOfUnion(ctx, op, fldPath, obj, oldObj, zeroOrOneOfMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_tags_item_zerorooneof_simple_Struct_tasks_, match, func(list []Task) bool {
+					for i := range list {
+						if list[i].Name == "succeeded" {
+							return true
+						}
 					}
-				}
-				return false
-			})...)
+					return false
+				})...)
+			}
 			return
 		}(fldPath.Child("tasks"), obj.Tasks, safe.Field(oldObj, func(oldObj *Struct) []Task { return oldObj.Tasks }), oldObj != nil)...)
 

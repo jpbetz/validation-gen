@@ -123,17 +123,20 @@ var unionMembershipFor_k8s_io_api_scheduling_v1alpha1_PodGroupPolicy_ = validate
 // Validate_PodGroupPolicy validates an instance of PodGroupPolicy according
 // to declarative validation rules in the API schema.
 func Validate_PodGroupPolicy(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *schedulingv1alpha1.PodGroupPolicy) (errs field.ErrorList) {
-	errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_api_scheduling_v1alpha1_PodGroupPolicy_, func(obj *schedulingv1alpha1.PodGroupPolicy) bool {
-		if obj == nil {
-			return false
+	{
+		var match = func(obj *schedulingv1alpha1.PodGroupPolicy) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.Basic != nil
 		}
-		return obj.Basic != nil
-	}, func(obj *schedulingv1alpha1.PodGroupPolicy) bool {
-		if obj == nil {
-			return false
-		}
-		return obj.Gang != nil
-	})...)
+		errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_api_scheduling_v1alpha1_PodGroupPolicy_, match, func(obj *schedulingv1alpha1.PodGroupPolicy) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.Gang != nil
+		})...)
+	}
 
 	// field schedulingv1alpha1.PodGroupPolicy.Basic
 	errs = append(errs,
@@ -312,9 +315,15 @@ func Validate_WorkloadSpec(ctx context.Context, op operation.Operation, fldPath 
 				return // do not proceed
 			}
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a schedulingv1alpha1.PodGroup, b schedulingv1alpha1.PodGroup) bool { return a.Name == b.Name })...)
+			{
+				var match = func(a schedulingv1alpha1.PodGroup, b schedulingv1alpha1.PodGroup) bool { return a.Name == b.Name }
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
 			// iterate the list and call the type's validation function
-			errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, func(a schedulingv1alpha1.PodGroup, b schedulingv1alpha1.PodGroup) bool { return a.Name == b.Name }, validate.SemanticDeepEqual, Validate_PodGroup)...)
+			{
+				var match = func(a schedulingv1alpha1.PodGroup, b schedulingv1alpha1.PodGroup) bool { return a.Name == b.Name }
+				errs = append(errs, validate.EachSliceVal(ctx, op, fldPath, obj, oldObj, match, validate.SemanticDeepEqual, Validate_PodGroup)...)
+			}
 			return
 		}(fldPath.Child("podGroups"), obj.PodGroups, safe.Field(oldObj, func(oldObj *schedulingv1alpha1.WorkloadSpec) []schedulingv1alpha1.PodGroup { return oldObj.PodGroups }), oldObj != nil)...)
 
