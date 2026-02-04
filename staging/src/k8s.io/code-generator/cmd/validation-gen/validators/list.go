@@ -34,18 +34,17 @@ const (
 )
 
 // globalListMeta is shared between list-related validators.
-var globalListMeta = map[string]*listMetadata{} // keyed by the field or type path
 
 func init() {
 	// Accumulate list metadata via tags.
-	RegisterTagValidator(listTypeTagValidator{byPath: globalListMeta})
-	RegisterTagValidator(listMapKeyTagValidator{byPath: globalListMeta})
-	RegisterTagValidator(uniqueTagValidator{byPath: globalListMeta})
-	RegisterTagValidator(customUniqueTagValidator{byPath: globalListMeta})
+	RegisterTagValidator(listTypeTagValidator{})
+	RegisterTagValidator(listMapKeyTagValidator{})
+	RegisterTagValidator(uniqueTagValidator{})
+	RegisterTagValidator(customUniqueTagValidator{})
 
 	// Finish work on the accumulated list metadata.
-	RegisterFieldValidator(listValidator{byPath: globalListMeta})
-	RegisterTypeValidator(listValidator{byPath: globalListMeta})
+	RegisterFieldValidator(listValidator{})
+	RegisterTypeValidator(listValidator{})
 }
 
 // This applies to all tags in this file.
@@ -65,6 +64,9 @@ const (
 	semanticSet    listSemantic = "set"    // uniqueness check
 	semanticMap    listSemantic = "map"    // uniqueness check based on key(s)
 )
+
+// listMetadataKey is used as a typed, collision-free key for the Sandbox.
+type listMetadataKey struct{}
 
 // listMetadata collects information about a single list with map or set semantics.
 type listMetadata struct {
@@ -115,7 +117,6 @@ func (lm *listMetadata) makeListMapMatchFunc(t *types.Type) FunctionLiteral {
 }
 
 type listTypeTagValidator struct {
-	byPath map[string]*listMetadata
 }
 
 func (listTypeTagValidator) Init(Config) {}
@@ -135,10 +136,12 @@ func (lttv listTypeTagValidator) GetValidations(context Context, tag codetags.Ta
 		return Validations{}, fmt.Errorf("can only be used on list types (%s)", t.Kind)
 	}
 
-	lm := lttv.byPath[context.Path.String()]
-	if lm == nil {
+	var lm *listMetadata
+	if val, exists := GetFromSandbox[*listMetadata](context.Sandbox, listMetadataKey{}); exists {
+		lm = val
+	} else {
 		lm = &listMetadata{}
-		lttv.byPath[context.Path.String()] = lm
+		SetInSandbox(context.Sandbox, listMetadataKey{}, lm)
 	}
 	if lm.ownership != "" {
 		return Validations{}, fmt.Errorf("listType cannot be specified more than once")
@@ -196,7 +199,6 @@ func (lttv listTypeTagValidator) Docs() TagDoc {
 }
 
 type listMapKeyTagValidator struct {
-	byPath map[string]*listMetadata
 }
 
 func (listMapKeyTagValidator) Init(Config) {}
@@ -234,10 +236,12 @@ func (lmktv listMapKeyTagValidator) GetValidations(context Context, tag codetags
 		memb = m
 	}
 
-	lm := lmktv.byPath[context.Path.String()]
-	if lm == nil {
+	var lm *listMetadata
+	if val, exists := GetFromSandbox[*listMetadata](context.Sandbox, listMetadataKey{}); exists {
+		lm = val
+	} else {
 		lm = &listMetadata{}
-		lmktv.byPath[context.Path.String()] = lm
+		SetInSandbox(context.Sandbox, listMetadataKey{}, lm)
 	}
 	lm.keyMembers = append(lm.keyMembers, memb)
 	lm.keyNames = append(lm.keyNames, tag.Value)
@@ -264,7 +268,6 @@ func (lmktv listMapKeyTagValidator) Docs() TagDoc {
 }
 
 type uniqueTagValidator struct {
-	byPath map[string]*listMetadata
 }
 
 func (uniqueTagValidator) Init(Config) {}
@@ -284,10 +287,12 @@ func (utv uniqueTagValidator) GetValidations(context Context, tag codetags.Tag) 
 		return Validations{}, fmt.Errorf("can only be used on list types (%s)", t.Kind)
 	}
 
-	lm := utv.byPath[context.Path.String()]
-	if lm == nil {
+	var lm *listMetadata
+	if val, exists := GetFromSandbox[*listMetadata](context.Sandbox, listMetadataKey{}); exists {
+		lm = val
+	} else {
 		lm = &listMetadata{}
-		utv.byPath[context.Path.String()] = lm
+		SetInSandbox(context.Sandbox, listMetadataKey{}, lm)
 	}
 
 	// If listType has already run and set a non-atomic ownership, this is an error.
@@ -333,7 +338,6 @@ func (utv uniqueTagValidator) Docs() TagDoc {
 }
 
 type customUniqueTagValidator struct {
-	byPath map[string]*listMetadata
 }
 
 func (customUniqueTagValidator) Init(Config) {}
@@ -353,10 +357,12 @@ func (cutv customUniqueTagValidator) GetValidations(context Context, tag codetag
 		return Validations{}, fmt.Errorf("can only be used on list types (%s)", t.Kind)
 	}
 
-	lm := cutv.byPath[context.Path.String()]
-	if lm == nil {
+	var lm *listMetadata
+	if val, exists := GetFromSandbox[*listMetadata](context.Sandbox, listMetadataKey{}); exists {
+		lm = val
+	} else {
 		lm = &listMetadata{}
-		cutv.byPath[context.Path.String()] = lm
+		SetInSandbox(context.Sandbox, listMetadataKey{}, lm)
 	}
 
 	lm.customUnique = true
@@ -378,7 +384,6 @@ func (cutv customUniqueTagValidator) Docs() TagDoc {
 }
 
 type listValidator struct {
-	byPath map[string]*listMetadata
 }
 
 func (listValidator) Init(_ Config) {}
@@ -400,7 +405,8 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 	}
 
 	// Look up the list metadata which is defined on this field or type.
-	lm := lv.byPath[context.Path.String()]
+	var lm *listMetadata
+	lm, _ = GetFromSandbox[*listMetadata](context.Sandbox, listMetadataKey{})
 
 	// NOTE: We don't really support list-of-list or map-of-list, so this does
 	// not consider the case of ScopeListVal or ScopeMapVal. If we want to
@@ -409,7 +415,10 @@ func (lv listValidator) GetValidations(context Context) (Validations, error) {
 	if context.Scope == ScopeField {
 		// If this is a field, look up the list metadata for the type.
 		// TypeValidators happen before FieldValidators, so this is safe.
-		tm := lv.byPath[context.Type.String()]
+		var tm *listMetadata
+		if s := context.GetGlobalSandbox(context.Type.String()); s != nil {
+			tm, _ = GetFromSandbox[*listMetadata](s, listMetadataKey{})
+		}
 		if lm != nil && tm != nil {
 			return Validations{}, fmt.Errorf("found list metadata for both a field and its type: %s", context.Path)
 		}

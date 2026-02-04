@@ -53,6 +53,7 @@ func (subfieldTagValidator) ValidScopes() sets.Set[Scope] {
 
 var (
 	validateSubfield = types.Name{Package: libValidationPkg, Name: "Subfield"}
+	validateDirectEqualPtr = types.Name{Package: libValidationPkg, Name: "DirectEqualPtr"}
 )
 
 func (stv subfieldTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {

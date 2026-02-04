@@ -59,6 +59,11 @@ type TagValidator interface {
 	Docs() TagDoc
 }
 
+// GroupedTagValidator is an optional interface for wrapper tags that need to process
+// multiple instances of the same tag (e.g., +k8s:subfield) together in a single batch.
+// This allows wrapper tags to build a unified Sandbox Context for all their payloads
+// before extracting validations, enabling isolated 2-phase tag aggregation.
+
 // LateTagValidator is an optional extension to TagValidator. Any TagValidator
 // which implements this interface will be evaluated after all TagValidators
 // which do not.
@@ -230,6 +235,58 @@ type Context struct {
 	// Constants provides access to all constants of the type being
 	// validated.  Only set when Scope is ScopeType.
 	Constants []*Constant
+
+	// Sandbox provides an isolated namespace for stateful tags (like listType or update)
+	// to accumulate data when they are executed inside a conditional wrapper block
+	// (like +k8s:subfield or +k8s:member). It prevents global state pollution.
+	Sandbox *Sandbox
+}
+
+// GetGlobalSandbox retrieves a global sandbox for the given path.
+// This allows plugins (like listValidator) to inspect global type metadata
+// while validating a field. It should be used exclusively for cross-path read-only lookups.
+func (c *Context) GetGlobalSandbox(path string) *Sandbox {
+	if globalRegistry != nil {
+		return globalRegistry.getOrCreateGlobalSandbox(path)
+	}
+	return nil
+}
+
+// Sandbox is an encapsulated key-value store for isolated state accumulation.
+// It mirrors the design of context.Context, using 'any' for keys to allow
+// plugins to use unexported struct types as collision-free keys.
+type Sandbox struct {
+	store map[any]any
+}
+
+// NewSandbox creates a new, empty Sandbox.
+func NewSandbox() *Sandbox {
+	return &Sandbox{
+		store: make(map[any]any),
+	}
+}
+
+// GetFromSandbox retrieves a strongly-typed value from the sandbox.
+// T is the expected type of the stored value.
+func GetFromSandbox[T any](s *Sandbox, key any) (T, bool) {
+	if s == nil || s.store == nil {
+		var zero T
+		return zero, false
+	}
+	val, exists := s.store[key]
+	if !exists {
+		var zero T
+		return zero, false
+	}
+	return val.(T), true
+}
+
+// SetInSandbox stores a strongly-typed value in the sandbox.
+func SetInSandbox[T any](s *Sandbox, key any, val T) {
+	if s.store == nil {
+		s.store = make(map[any]any)
+	}
+	s.store[key] = val
 }
 
 // Constant represents a constant value.

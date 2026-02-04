@@ -33,7 +33,7 @@ const (
 
 func init() {
 	// Processing item tags requires the list metadata.
-	RegisterTagValidator(&itemTagValidator{listByPath: globalListMeta})
+	RegisterTagValidator(&itemTagValidator{})
 }
 
 type keyValuePair struct {
@@ -43,8 +43,7 @@ type keyValuePair struct {
 }
 
 type itemTagValidator struct {
-	validator  Validator
-	listByPath map[string]*listMetadata
+	validator Validator
 }
 
 func (itv *itemTagValidator) Init(cfg Config) {
@@ -89,11 +88,14 @@ func (itv *itemTagValidator) GetValidations(context Context, tag codetags.Tag) (
 
 	// For fields, list metadata can fall back to the type.
 	// For types, list metadata must be defined on the type itself.
-	listMeta, ok := itv.listByPath[context.Path.String()]
-	if !ok {
-		if context.Scope == ScopeField {
-			typePath := context.Type.String()
-			listMeta, ok = itv.listByPath[typePath]
+	var listMeta *listMetadata
+	ok := false
+	if s := context.GetGlobalSandbox(context.Path.String()); s != nil {
+		listMeta, ok = GetFromSandbox[*listMetadata](s, listMetadataKey{})
+	}
+	if !ok && context.Scope == ScopeField {
+		if s := context.GetGlobalSandbox(context.Type.String()); s != nil {
+			listMeta, ok = GetFromSandbox[*listMetadata](s, listMetadataKey{})
 		}
 	}
 

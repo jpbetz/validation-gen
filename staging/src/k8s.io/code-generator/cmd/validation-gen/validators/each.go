@@ -40,7 +40,7 @@ var globalEachKey *eachKeyTagValidator
 func init() {
 	// Iterating values of lists and maps is a special tag, which can be called
 	// directly by the code-generator logic.
-	globalEachVal = &eachValTagValidator{byPath: globalListMeta, validator: nil}
+	globalEachVal = &eachValTagValidator{validator: nil}
 	RegisterTagValidator(globalEachVal)
 
 	// Iterating keys of maps is a special tag, which can be called directly by
@@ -50,7 +50,6 @@ func init() {
 }
 
 type eachValTagValidator struct {
-	byPath    map[string]*listMetadata
 	validator Validator
 }
 
@@ -71,9 +70,8 @@ func (eachValTagValidator) ValidScopes() sets.Set[Scope] {
 func (eachValTagValidator) LateTagValidator() {}
 
 var (
-	validateEachSliceVal   = types.Name{Package: libValidationPkg, Name: "EachSliceVal"}
-	validateEachMapVal     = types.Name{Package: libValidationPkg, Name: "EachMapVal"}
-	validateDirectEqualPtr = types.Name{Package: libValidationPkg, Name: "DirectEqualPtr"}
+	validateEachSliceVal = types.Name{Package: libValidationPkg, Name: "EachSliceVal"}
+	validateEachMapVal   = types.Name{Package: libValidationPkg, Name: "EachMapVal"}
 )
 
 func (evtv eachValTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
@@ -147,12 +145,18 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 
 	// This type is a "late" validator, so it runs after all the keys are
 	// registered.  See LateTagValidator() above.
-	listMetadata := evtv.byPath[fldPath.String()]
-	if listMetadata == nil {
+	var lm *listMetadata
+	if s := globalRegistry.getOrCreateGlobalSandbox(fldPath.String()); s != nil {
+		lm, _ = GetFromSandbox[*listMetadata](s, listMetadataKey{})
+	}
+	if lm == nil {
 		// If we don't have metadata for this field, we might have it for the
 		// field's type.
-		listMetadata = evtv.byPath[t.String()]
+		if s := globalRegistry.getOrCreateGlobalSandbox(t.String()); s != nil {
+			lm, _ = GetFromSandbox[*listMetadata](s, listMetadataKey{})
+		}
 	}
+	listMetadata := lm
 
 	nt := util.NativeType(t)
 
