@@ -56,3 +56,54 @@ type OtherStruct struct {
 type SmallStruct struct {
 	StringField string `json:"stringField"`
 }
+
+type ListItem struct {
+	Name string `json:"name"`
+	Val  string `json:"val"`
+}
+
+// +k8s:subfield(listTypeMap)=+k8s:listType=map
+// +k8s:subfield(listTypeMap)=+k8s:listMapKey=name
+// +k8s:subfield(listTypeSet)=+k8s:listType=set
+type ListStruct struct {
+	ListTypeMap []ListItem `json:"listTypeMap"`
+	ListTypeSet []string   `json:"listTypeSet"`
+}
+
+type ListInsideSubfield struct {
+	TypeMeta int `json:"typeMeta"`
+
+	Lists ListStruct `json:"lists"`
+}
+
+// +k8s:subfield(stringField)=+k8s:update=NoModify
+type UpdateStruct struct {
+	StringField string `json:"stringField"`
+}
+
+type UpdateInsideSubfield struct {
+	TypeMeta int `json:"typeMeta"`
+
+	Updatable UpdateStruct `json:"updatable"`
+}
+
+// AGGREGATION TEST:
+// The Sandbox architecture allows grouping multiple 'listMapKey' tags inside the same wrapper.
+
+// +k8s:subfield(listTypeMap)=+k8s:listType=map
+// +k8s:subfield(listTypeMap)=+k8s:listMapKey=name
+// +k8s:subfield(listTypeMap)=+k8s:listMapKey=val
+type DuplicateAccumulatorStruct struct {
+	TypeMeta    int        `json:"typeMeta"`
+	ListTypeMap []ListItem `json:"listTypeMap"`
+}
+
+// AGGREGATION TEST:
+// The Sandbox architecture allows grouping multiple 'update' constraints inside the same wrapper.
+
+// +k8s:subfield(stringField)=+k8s:update=NoModify
+// +k8s:subfield(stringField)=+k8s:update=NoUnset
+type AggregatedUpdateStruct struct {
+	TypeMeta    int     `json:"typeMeta"`
+	StringField *string `json:"stringField"`
+}

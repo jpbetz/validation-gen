@@ -18,6 +18,7 @@ package validators
 
 import (
 	"fmt"
+	"sort"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/code-generator/cmd/validation-gen/util"
@@ -41,23 +42,40 @@ func (stv *subfieldTagValidator) Init(cfg Config) {
 	stv.validator = cfg.Validator
 }
 
-func (subfieldTagValidator) TagName() string {
+func (stv *subfieldTagValidator) TagName() string {
 	return subfieldTagName
 }
 
 var subfieldTagValidScopes = sets.New(ScopeType, ScopeField, ScopeListVal, ScopeMapKey, ScopeMapVal)
 
-func (subfieldTagValidator) ValidScopes() sets.Set[Scope] {
+func (stv *subfieldTagValidator) ValidScopes() sets.Set[Scope] {
 	return subfieldTagValidScopes
 }
 
 var (
-	validateSubfield = types.Name{Package: libValidationPkg, Name: "Subfield"}
-	validateDirectEqualPtr = types.Name{Package: libValidationPkg, Name: "DirectEqualPtr"}
+	validateSubfield               = types.Name{Package: libValidationPkg, Name: "Subfield"}
+	validateDirectEqualPtrSubfield = types.Name{Package: libValidationPkg, Name: "DirectEqualPtr"}
 )
 
-func (stv subfieldTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
-	args := tag.Args
+func (stv *subfieldTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
+	return Validations{}, fmt.Errorf("internal error: subfield should be called via GetGroupedValidations")
+}
+
+func (stv *subfieldTagValidator) GetGroupedValidations(context Context, tags []codetags.Tag) (Validations, error) {
+	result := Validations{}
+	payloadsBySubfield := make(map[string][]codetags.Tag)
+
+	for _, tag := range tags {
+		subname, ok := tag.PositionalArg()
+		if !ok {
+			return Validations{}, fmt.Errorf("subfield tag requires a field name as a positional argument")
+		}
+		if tag.ValueTag == nil {
+			return Validations{}, fmt.Errorf("subfield tag requires a payload tag")
+		}
+		payloadsBySubfield[subname.Value] = append(payloadsBySubfield[subname.Value], *tag.ValueTag)
+	}
+
 	// This tag can apply to value and pointer fields, as well as typedefs
 	// (which should never be pointers). We need to check the concrete type.
 	t := context.Type
@@ -65,22 +83,35 @@ func (stv subfieldTagValidator) GetValidations(context Context, tag codetags.Tag
 	if nt.Kind != types.Struct {
 		return Validations{}, fmt.Errorf("can only be used on struct types: %v", nt.Kind)
 	}
-	subname := args[0].Value
-	submemb := util.GetMemberByJSON(nt, subname)
-	if submemb == nil {
-		return Validations{}, fmt.Errorf("no field for json name %q", subname)
+
+	// Sort the subfield names to ensure deterministic code generation output
+	subnames := make([]string, 0, len(payloadsBySubfield))
+	for k := range payloadsBySubfield {
+		subnames = append(subnames, k)
 	}
-	result := Validations{}
-	subContext := Context{
-		Scope:      ScopeField,
-		Type:       submemb.Type,
-		Path:       context.Path.Child(subname),
-		Member:     submemb,
-		ParentPath: context.Path,
-	}
-	if validations, err := stv.validator.ExtractValidations(subContext, *tag.ValueTag); err != nil {
-		return Validations{}, err
-	} else {
+	sort.Strings(subnames)
+
+	for _, subname := range subnames {
+		payloads := payloadsBySubfield[subname]
+		submemb := util.GetMemberByJSON(nt, subname)
+		if submemb == nil {
+			return Validations{}, fmt.Errorf("no field for json name %q", subname)
+		}
+
+		subContext := Context{
+			Scope:      ScopeField,
+			Type:       submemb.Type,
+			Path:       context.Path.Child(subname),
+			Member:     submemb,
+			ParentPath: context.Path,
+			Sandbox:    NewSandbox(),
+		}
+
+		validations, err := stv.validator.ExtractSandboxValidations(subContext, payloads...)
+		if err != nil {
+			return Validations{}, err
+		}
+
 		if len(validations.Variables) > 0 {
 			return Validations{}, fmt.Errorf("variable generation is not supported")
 		}
@@ -118,7 +149,7 @@ func (stv subfieldTagValidator) GetValidations(context Context, tag codetags.Tag
 		if directComparable {
 			// It must be a pointer, since other nilable types are not directly
 			// comparable.
-			equivArg = Identifier(validateDirectEqualPtr)
+			equivArg = Identifier(validateDirectEqualPtrSubfield)
 		} else {
 			equivArg = Identifier(validateSemanticDeepEqual)
 		}
@@ -132,7 +163,7 @@ func (stv subfieldTagValidator) GetValidations(context Context, tag codetags.Tag
 	return result, nil
 }
 
-func (stv subfieldTagValidator) Docs() TagDoc {
+func (stv *subfieldTagValidator) Docs() TagDoc {
 	doc := TagDoc{
 		Tag:            stv.TagName(),
 		StabilityLevel: Stable,

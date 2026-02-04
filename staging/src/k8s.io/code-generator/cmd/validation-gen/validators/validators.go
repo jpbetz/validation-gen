@@ -63,6 +63,10 @@ type TagValidator interface {
 // multiple instances of the same tag (e.g., +k8s:subfield) together in a single batch.
 // This allows wrapper tags to build a unified Sandbox Context for all their payloads
 // before extracting validations, enabling isolated 2-phase tag aggregation.
+type GroupedTagValidator interface {
+	TagValidator
+	GetGroupedValidations(context Context, tags []codetags.Tag) (Validations, error)
+}
 
 // LateTagValidator is an optional extension to TagValidator. Any TagValidator
 // which implements this interface will be evaluated after all TagValidators

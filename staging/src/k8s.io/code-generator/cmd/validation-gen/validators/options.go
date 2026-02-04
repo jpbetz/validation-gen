@@ -66,7 +66,10 @@ func (itv ifTagValidator) GetValidations(context Context, tag codetags.Tag) (Val
 		return Validations{}, fmt.Errorf("missing required option name positional argument")
 	}
 	result := Validations{}
-	if validations, err := itv.validator.ExtractValidations(context, *tag.ValueTag); err != nil {
+	if context.Sandbox == nil {
+		context.Sandbox = NewSandbox()
+	}
+	if validations, err := itv.validator.ExtractSandboxValidations(context, *tag.ValueTag); err != nil {
 		return Validations{}, err
 	} else {
 		for _, fn := range validations.Functions {

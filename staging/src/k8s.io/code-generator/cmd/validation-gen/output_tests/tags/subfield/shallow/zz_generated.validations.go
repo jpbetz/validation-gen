@@ -38,6 +38,30 @@ func init() { localSchemeBuilder.Register(RegisterValidations) }
 // RegisterValidations adds validation functions to the given scheme.
 // Public to allow building arbitrary schemes.
 func RegisterValidations(scheme *testscheme.Scheme) error {
+	// type AggregatedUpdateStruct
+	scheme.AddValidationFunc((*AggregatedUpdateStruct)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}) field.ErrorList {
+		switch op.Request.SubresourcePath() {
+		case "/":
+			return Validate_AggregatedUpdateStruct(ctx, op, nil /* fldPath */, obj.(*AggregatedUpdateStruct), safe.Cast[*AggregatedUpdateStruct](oldObj))
+		}
+		return field.ErrorList{field.InternalError(nil, fmt.Errorf("no validation found for %T, subresource: %v", obj, op.Request.SubresourcePath()))}
+	})
+	// type DuplicateAccumulatorStruct
+	scheme.AddValidationFunc((*DuplicateAccumulatorStruct)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}) field.ErrorList {
+		switch op.Request.SubresourcePath() {
+		case "/":
+			return Validate_DuplicateAccumulatorStruct(ctx, op, nil /* fldPath */, obj.(*DuplicateAccumulatorStruct), safe.Cast[*DuplicateAccumulatorStruct](oldObj))
+		}
+		return field.ErrorList{field.InternalError(nil, fmt.Errorf("no validation found for %T, subresource: %v", obj, op.Request.SubresourcePath()))}
+	})
+	// type ListInsideSubfield
+	scheme.AddValidationFunc((*ListInsideSubfield)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}) field.ErrorList {
+		switch op.Request.SubresourcePath() {
+		case "/":
+			return Validate_ListInsideSubfield(ctx, op, nil /* fldPath */, obj.(*ListInsideSubfield), safe.Cast[*ListInsideSubfield](oldObj))
+		}
+		return field.ErrorList{field.InternalError(nil, fmt.Errorf("no validation found for %T, subresource: %v", obj, op.Request.SubresourcePath()))}
+	})
 	// type Struct
 	scheme.AddValidationFunc((*Struct)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}) field.ErrorList {
 		switch op.Request.SubresourcePath() {
@@ -46,7 +70,89 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 		}
 		return field.ErrorList{field.InternalError(nil, fmt.Errorf("no validation found for %T, subresource: %v", obj, op.Request.SubresourcePath()))}
 	})
+	// type UpdateInsideSubfield
+	scheme.AddValidationFunc((*UpdateInsideSubfield)(nil), func(ctx context.Context, op operation.Operation, obj, oldObj interface{}) field.ErrorList {
+		switch op.Request.SubresourcePath() {
+		case "/":
+			return Validate_UpdateInsideSubfield(ctx, op, nil /* fldPath */, obj.(*UpdateInsideSubfield), safe.Cast[*UpdateInsideSubfield](oldObj))
+		}
+		return field.ErrorList{field.InternalError(nil, fmt.Errorf("no validation found for %T, subresource: %v", obj, op.Request.SubresourcePath()))}
+	})
 	return nil
+}
+
+// Validate_AggregatedUpdateStruct validates an instance of AggregatedUpdateStruct according
+// to declarative validation rules in the API schema.
+func Validate_AggregatedUpdateStruct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *AggregatedUpdateStruct) (errs field.ErrorList) {
+	func() { // cohort stringField
+		earlyReturn := false
+		if e := validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *AggregatedUpdateStruct) *string { return o.StringField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+			return validate.UpdatePointer(ctx, op, fldPath, obj, oldObj, validate.NoUnset, validate.NoModify)
+		}); len(e) != 0 {
+			errs = append(errs, e...)
+			earlyReturn = true
+		}
+		if earlyReturn {
+			return // do not proceed
+		}
+	}()
+
+	// field AggregatedUpdateStruct.TypeMeta has no validation
+	// field AggregatedUpdateStruct.StringField has no validation
+	return errs
+}
+
+// Validate_DuplicateAccumulatorStruct validates an instance of DuplicateAccumulatorStruct according
+// to declarative validation rules in the API schema.
+func Validate_DuplicateAccumulatorStruct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DuplicateAccumulatorStruct) (errs field.ErrorList) {
+	func() { // cohort listTypeMap
+		errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "listTypeMap", func(o *DuplicateAccumulatorStruct) []ListItem { return o.ListTypeMap }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []ListItem) field.ErrorList {
+			return validate.Unique(ctx, op, fldPath, obj, oldObj, func(a ListItem, b ListItem) bool { return a.Name == b.Name && a.Val == b.Val })
+		})...)
+	}()
+
+	// field DuplicateAccumulatorStruct.TypeMeta has no validation
+	// field DuplicateAccumulatorStruct.ListTypeMap has no validation
+	return errs
+}
+
+// Validate_ListInsideSubfield validates an instance of ListInsideSubfield according
+// to declarative validation rules in the API schema.
+func Validate_ListInsideSubfield(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ListInsideSubfield) (errs field.ErrorList) {
+	// field ListInsideSubfield.TypeMeta has no validation
+
+	// field ListInsideSubfield.Lists
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *ListStruct, oldValueCorrelated bool) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if oldValueCorrelated && op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_ListStruct(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("lists"), &obj.Lists, safe.Field(oldObj, func(oldObj *ListInsideSubfield) *ListStruct { return &oldObj.Lists }), oldObj != nil)...)
+
+	return errs
+}
+
+// Validate_ListStruct validates an instance of ListStruct according
+// to declarative validation rules in the API schema.
+func Validate_ListStruct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ListStruct) (errs field.ErrorList) {
+	func() { // cohort listTypeMap
+		errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "listTypeMap", func(o *ListStruct) []ListItem { return o.ListTypeMap }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []ListItem) field.ErrorList {
+			return validate.Unique(ctx, op, fldPath, obj, oldObj, func(a ListItem, b ListItem) bool { return a.Name == b.Name })
+		})...)
+	}()
+	func() { // cohort listTypeSet
+		errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "listTypeSet", func(o *ListStruct) []string { return o.ListTypeSet }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []string) field.ErrorList {
+			return validate.Unique(ctx, op, fldPath, obj, oldObj, validate.DirectEqual)
+		})...)
+	}()
+
+	// field ListStruct.ListTypeMap has no validation
+	// field ListStruct.ListTypeSet has no validation
+	return errs
 }
 
 // Validate_Struct validates an instance of Struct according
@@ -62,6 +168,21 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			func() { // cohort mapField
+				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "mapField", func(o *OtherStruct) map[string]string { return o.MapField }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj map[string]string) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.MapField")
+				})...)
+			}()
+			func() { // cohort pointerField
+				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "pointerField", func(o *OtherStruct) *string { return o.PointerField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.PointerField")
+				})...)
+			}()
+			func() { // cohort sliceField
+				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "sliceField", func(o *OtherStruct) []string { return o.SliceField }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []string) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.SliceField")
+				})...)
+			}()
 			func() { // cohort stringField
 				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *OtherStruct) *string { return &o.StringField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.StringField 1")
@@ -70,24 +191,9 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.StringField 2")
 				})...)
 			}()
-			func() { // cohort pointerField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "pointerField", func(o *OtherStruct) *string { return o.PointerField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.PointerField")
-				})...)
-			}()
 			func() { // cohort structField
 				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "structField", func(o *OtherStruct) *SmallStruct { return &o.StructField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *SmallStruct) field.ErrorList {
 					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.StructField")
-				})...)
-			}()
-			func() { // cohort sliceField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "sliceField", func(o *OtherStruct) []string { return o.SliceField }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []string) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.SliceField")
-				})...)
-			}()
-			func() { // cohort mapField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "mapField", func(o *OtherStruct) map[string]string { return o.MapField }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj map[string]string) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructField.MapField")
 				})...)
 			}()
 			return
@@ -101,6 +207,21 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return nil
 			}
 			// call field-attached validations
+			func() { // cohort mapField
+				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "mapField", func(o *OtherStruct) map[string]string { return o.MapField }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj map[string]string) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.MapField")
+				})...)
+			}()
+			func() { // cohort pointerField
+				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "pointerField", func(o *OtherStruct) *string { return o.PointerField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.PointerField")
+				})...)
+			}()
+			func() { // cohort sliceField
+				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "sliceField", func(o *OtherStruct) []string { return o.SliceField }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []string) field.ErrorList {
+					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.SliceField")
+				})...)
+			}()
 			func() { // cohort stringField
 				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *OtherStruct) *string { return &o.StringField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.StringField 1")
@@ -109,28 +230,53 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.StringField 2")
 				})...)
 			}()
-			func() { // cohort pointerField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "pointerField", func(o *OtherStruct) *string { return o.PointerField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.PointerField")
-				})...)
-			}()
 			func() { // cohort structField
 				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "structField", func(o *OtherStruct) *SmallStruct { return &o.StructField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *SmallStruct) field.ErrorList {
 					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.StructField")
 				})...)
 			}()
-			func() { // cohort sliceField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "sliceField", func(o *OtherStruct) []string { return o.SliceField }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []string) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.SliceField")
-				})...)
-			}()
-			func() { // cohort mapField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "mapField", func(o *OtherStruct) map[string]string { return o.MapField }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj map[string]string) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.StructPtrField.MapField")
-				})...)
-			}()
 			return
 		}(fldPath.Child("structPtrField"), obj.StructPtrField, safe.Field(oldObj, func(oldObj *Struct) *OtherStruct { return oldObj.StructPtrField }), oldObj != nil)...)
 
+	return errs
+}
+
+// Validate_UpdateInsideSubfield validates an instance of UpdateInsideSubfield according
+// to declarative validation rules in the API schema.
+func Validate_UpdateInsideSubfield(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *UpdateInsideSubfield) (errs field.ErrorList) {
+	// field UpdateInsideSubfield.TypeMeta has no validation
+
+	// field UpdateInsideSubfield.Updatable
+	errs = append(errs,
+		func(fldPath *field.Path, obj, oldObj *UpdateStruct, oldValueCorrelated bool) (errs field.ErrorList) {
+			// don't revalidate unchanged data
+			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
+				return nil
+			}
+			// call the type's validation function
+			errs = append(errs, Validate_UpdateStruct(ctx, op, fldPath, obj, oldObj)...)
+			return
+		}(fldPath.Child("updatable"), &obj.Updatable, safe.Field(oldObj, func(oldObj *UpdateInsideSubfield) *UpdateStruct { return &oldObj.Updatable }), oldObj != nil)...)
+
+	return errs
+}
+
+// Validate_UpdateStruct validates an instance of UpdateStruct according
+// to declarative validation rules in the API schema.
+func Validate_UpdateStruct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *UpdateStruct) (errs field.ErrorList) {
+	func() { // cohort stringField
+		earlyReturn := false
+		if e := validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *UpdateStruct) *string { return &o.StringField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+			return validate.UpdateValueByCompare(ctx, op, fldPath, obj, oldObj, validate.NoModify)
+		}); len(e) != 0 {
+			errs = append(errs, e...)
+			earlyReturn = true
+		}
+		if earlyReturn {
+			return // do not proceed
+		}
+	}()
+
+	// field UpdateStruct.StringField has no validation
 	return errs
 }

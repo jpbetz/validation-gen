@@ -90,6 +90,7 @@ func (evtv eachValTagValidator) GetValidations(context Context, tag codetags.Tag
 		Path:       context.Path.Key("(vals)"),
 		Member:     nil, // NA for list/map values
 		ParentPath: context.Path,
+		Sandbox:    NewSandbox(),
 	}
 	switch nt.Kind {
 	case types.Slice, types.Array:
@@ -102,7 +103,7 @@ func (evtv eachValTagValidator) GetValidations(context Context, tag codetags.Tag
 	if tag.ValueTag == nil {
 		return Validations{}, fmt.Errorf("missing validation tag")
 	}
-	if validations, err := evtv.validator.ExtractValidations(elemContext, *tag.ValueTag); err != nil {
+	if validations, err := evtv.validator.ExtractSandboxValidations(elemContext, *tag.ValueTag); err != nil {
 		return Validations{}, err
 	} else {
 		if validations.Empty() && !validations.OpaqueKeyType && !validations.OpaqueValType && !validations.OpaqueType {
@@ -277,9 +278,10 @@ func (ektv eachKeyTagValidator) GetValidations(context Context, tag codetags.Tag
 		Path:       context.Path.Key("(keys)"),
 		Member:     nil, // NA for map keys
 		ParentPath: context.Path,
+		Sandbox:    NewSandbox(),
 	}
 
-	if validations, err := ektv.validator.ExtractValidations(elemContext, *tag.ValueTag); err != nil {
+	if validations, err := ektv.validator.ExtractSandboxValidations(elemContext, *tag.ValueTag); err != nil {
 		return Validations{}, err
 	} else {
 		if len(validations.Variables) > 0 {
