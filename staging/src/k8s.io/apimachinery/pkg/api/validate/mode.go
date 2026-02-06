@@ -36,15 +36,16 @@ type ModalRule[T any] struct {
 //
 // It performs ratcheting: if the operation is an Update, and neither the discriminator
 // nor the value (checked via equiv) have changed, validation is skipped.
-func Modal[T any, D comparable, P any](ctx context.Context, op operation.Operation, _ *field.Path, obj, oldObj *P, fldPath *field.Path,
-	getValue func(*P) T, getDiscriminator func(*P) D, equiv MatchFunc[T], defaultValidation ValidateFunc[T], rules []ModalRule[T],
+func Modal[T any, D comparable, P any](ctx context.Context, op operation.Operation, structPath *field.Path,
+	obj, oldObj *P, fieldName string, getMemberValue func(*P) T, getDiscriminator func(*P) D,
+	equiv MatchFunc[T], defaultValidation ValidateFunc[T], rules []ModalRule[T],
 ) field.ErrorList {
-	value := getValue(obj)
+	value := getMemberValue(obj)
 	var oldValue T
 	var oldDiscriminator D
 
 	if oldObj != nil {
-		oldValue = getValue(oldObj)
+		oldValue = getMemberValue(oldObj)
 		oldDiscriminator = getDiscriminator(oldObj)
 	}
 
@@ -54,6 +55,7 @@ func Modal[T any, D comparable, P any](ctx context.Context, op operation.Operati
 		return nil
 	}
 
+	fldPath := structPath.Child(fieldName)
 	dStr := fmt.Sprintf("%v", discriminator)
 	for _, rule := range rules {
 		if rule.Value == dStr {
@@ -63,8 +65,11 @@ func Modal[T any, D comparable, P any](ctx context.Context, op operation.Operati
 			return rule.Validation(ctx, op, fldPath, value, oldValue)
 		}
 	}
+
 	if defaultValidation != nil {
 		return defaultValidation(ctx, op, fldPath, value, oldValue)
 	}
+
 	return nil
+
 }

@@ -387,7 +387,7 @@ func (mtfv *modeTypeOrFieldValidator) generateModeFieldValidation(context Contex
 	}
 
 	fn := Function(discriminatorTagName, DefaultFlags, modalValidator,
-		Literal(fmt.Sprintf("fldPath.Child(%q)", jsonName)),
+		Literal(fmt.Sprintf("%q", jsonName)),
 		getValue,
 		getDiscriminator,
 		equivArg,

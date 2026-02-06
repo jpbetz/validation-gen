@@ -99,7 +99,7 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 // Validate_ChainedValidation validates an instance of ChainedValidation according
 // to declarative validation rules in the API schema.
 func Validate_ChainedValidation(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ChainedValidation) (errs field.ErrorList) {
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("fieldA"), func(obj *ChainedValidation) *string { return obj.FieldA }, func(obj *ChainedValidation) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "fieldA", func(obj *ChainedValidation) *string { return obj.FieldA }, func(obj *ChainedValidation) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenPointer(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -131,7 +131,7 @@ func Validate_ChainedValidation(ctx context.Context, op operation.Operation, fld
 // Validate_Collections validates an instance of Collections according
 // to declarative validation rules in the API schema.
 func Validate_Collections(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Collections) (errs field.ErrorList) {
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("listField"), func(obj *Collections) []string { return obj.ListField }, func(obj *Collections) string { return obj.D1 }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "listField", func(obj *Collections) []string { return obj.ListField }, func(obj *Collections) string { return obj.D1 }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj []string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenSlice(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -151,7 +151,7 @@ func Validate_Collections(ctx context.Context, op operation.Operation, fldPath *
 			},
 		},
 	})...)
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("mapField"), func(obj *Collections) map[string]string { return obj.MapField }, func(obj *Collections) string { return obj.D1 }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj map[string]string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "mapField", func(obj *Collections) map[string]string { return obj.MapField }, func(obj *Collections) string { return obj.D1 }, validate.SemanticDeepEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj map[string]string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenMap(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -182,7 +182,7 @@ func Validate_Collections(ctx context.Context, op operation.Operation, fldPath *
 // Validate_ImplicitForbidden validates an instance of ImplicitForbidden according
 // to declarative validation rules in the API schema.
 func Validate_ImplicitForbidden(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ImplicitForbidden) (errs field.ErrorList) {
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("fieldA"), func(obj *ImplicitForbidden) *string { return obj.FieldA }, func(obj *ImplicitForbidden) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "fieldA", func(obj *ImplicitForbidden) *string { return obj.FieldA }, func(obj *ImplicitForbidden) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenPointer(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -212,7 +212,7 @@ func Validate_ImplicitForbidden(ctx context.Context, op operation.Operation, fld
 // Validate_MultipleDiscriminators validates an instance of MultipleDiscriminators according
 // to declarative validation rules in the API schema.
 func Validate_MultipleDiscriminators(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *MultipleDiscriminators) (errs field.ErrorList) {
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("fieldA"), func(obj *MultipleDiscriminators) *string { return obj.FieldA }, func(obj *MultipleDiscriminators) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "fieldA", func(obj *MultipleDiscriminators) *string { return obj.FieldA }, func(obj *MultipleDiscriminators) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenPointer(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -233,7 +233,7 @@ func Validate_MultipleDiscriminators(ctx context.Context, op operation.Operation
 			},
 		},
 	})...)
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("fieldB"), func(obj *MultipleDiscriminators) *string { return obj.FieldB }, func(obj *MultipleDiscriminators) string { return obj.D2 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "fieldB", func(obj *MultipleDiscriminators) *string { return obj.FieldB }, func(obj *MultipleDiscriminators) string { return obj.D2 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenPointer(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -266,7 +266,7 @@ func Validate_MultipleDiscriminators(ctx context.Context, op operation.Operation
 // Validate_NonStringDiscriminator validates an instance of NonStringDiscriminator according
 // to declarative validation rules in the API schema.
 func Validate_NonStringDiscriminator(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *NonStringDiscriminator) (errs field.ErrorList) {
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("fieldA"), func(obj *NonStringDiscriminator) *string { return obj.FieldA }, func(obj *NonStringDiscriminator) bool { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "fieldA", func(obj *NonStringDiscriminator) *string { return obj.FieldA }, func(obj *NonStringDiscriminator) bool { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenPointer(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -287,7 +287,7 @@ func Validate_NonStringDiscriminator(ctx context.Context, op operation.Operation
 			},
 		},
 	})...)
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("fieldB"), func(obj *NonStringDiscriminator) *string { return obj.FieldB }, func(obj *NonStringDiscriminator) int { return obj.D2 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "fieldB", func(obj *NonStringDiscriminator) *string { return obj.FieldB }, func(obj *NonStringDiscriminator) int { return obj.D2 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenPointer(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -320,7 +320,7 @@ func Validate_NonStringDiscriminator(ctx context.Context, op operation.Operation
 // Validate_SharedField validates an instance of SharedField according
 // to declarative validation rules in the API schema.
 func Validate_SharedField(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *SharedField) (errs field.ErrorList) {
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("fieldA"), func(obj *SharedField) *string { return obj.FieldA }, func(obj *SharedField) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "fieldA", func(obj *SharedField) *string { return obj.FieldA }, func(obj *SharedField) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenPointer(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -364,7 +364,7 @@ func Validate_SharedField(ctx context.Context, op operation.Operation, fldPath *
 // Validate_StrictUnion validates an instance of StrictUnion according
 // to declarative validation rules in the API schema.
 func Validate_StrictUnion(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *StrictUnion) (errs field.ErrorList) {
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("fieldA"), func(obj *StrictUnion) *string { return obj.FieldA }, func(obj *StrictUnion) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "fieldA", func(obj *StrictUnion) *string { return obj.FieldA }, func(obj *StrictUnion) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenPointer(ctx, op, fldPath, obj, oldObj)...)
 		return errs
@@ -385,7 +385,7 @@ func Validate_StrictUnion(ctx context.Context, op operation.Operation, fldPath *
 			},
 		},
 	})...)
-	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, fldPath.Child("fieldB"), func(obj *StrictUnion) *string { return obj.FieldB }, func(obj *StrictUnion) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+	errs = append(errs, validate.Modal(ctx, op, fldPath, obj, oldObj, "fieldB", func(obj *StrictUnion) *string { return obj.FieldB }, func(obj *StrictUnion) string { return obj.D1 }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
 		errs := field.ErrorList{}
 		errs = append(errs, validate.ForbiddenPointer(ctx, op, fldPath, obj, oldObj)...)
 		return errs

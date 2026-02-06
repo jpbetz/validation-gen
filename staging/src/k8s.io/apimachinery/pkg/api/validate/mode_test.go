@@ -183,7 +183,7 @@ func TestModal(t *testing.T) {
 				getVal := func(p *IntP) *string { return p.Val }
 				getDisc := func(p *IntP) int { return p.Disc }
 
-				got = Modal[*string, int, IntP](context.Background(), operation.Operation{Type: tc.opType}, nil, newObj, oldObj, nil, getVal, getDisc, mockEqual, tc.defaultValidation, tc.rules)
+				got = Modal[*string, int, IntP](context.Background(), operation.Operation{Type: tc.opType}, field.NewPath("root"), newObj, oldObj, "field", getVal, getDisc, mockEqual, tc.defaultValidation, tc.rules)
 
 			case bool:
 				od, _ := oldDisc.(bool)
@@ -198,7 +198,7 @@ func TestModal(t *testing.T) {
 				}
 				getVal := func(p *BoolP) *string { return p.Val }
 				getDisc := func(p *BoolP) bool { return p.Disc }
-				got = Modal[*string, bool, BoolP](context.Background(), operation.Operation{Type: tc.opType}, nil, newObj, oldObj, nil, getVal, getDisc, mockEqual, tc.defaultValidation, tc.rules)
+				got = Modal[*string, bool, BoolP](context.Background(), operation.Operation{Type: tc.opType}, field.NewPath("root"), newObj, oldObj, "field", getVal, getDisc, mockEqual, tc.defaultValidation, tc.rules)
 
 			case string:
 				od, _ := oldDisc.(string)
@@ -213,7 +213,7 @@ func TestModal(t *testing.T) {
 				}
 				getVal := func(p *StringP) *string { return p.Val }
 				getDisc := func(p *StringP) string { return p.Disc }
-				got = Modal[*string, string, StringP](context.Background(), operation.Operation{Type: tc.opType}, nil, newObj, oldObj, nil, getVal, getDisc, mockEqual, tc.defaultValidation, tc.rules)
+				got = Modal[*string, string, StringP](context.Background(), operation.Operation{Type: tc.opType}, field.NewPath("root"), newObj, oldObj, "field", getVal, getDisc, mockEqual, tc.defaultValidation, tc.rules)
 			}
 
 			if !reflect.DeepEqual(got, tc.expected) {
