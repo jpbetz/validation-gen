@@ -82,10 +82,6 @@ func Validate_PodGroup(ctx context.Context, op operation.Operation, fldPath *fie
 	// field schedulingv1alpha1.PodGroup.Name
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj *string, oldValueCorrelated bool) (errs field.ErrorList) {
-			// this field validations are marked declarative native
-			defer func() {
-				errs = errs.MarkDeclarativeNative()
-			}()
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && (obj == oldObj || (obj != nil && oldObj != nil && *obj == *oldObj)) {
 				return nil
@@ -294,6 +290,10 @@ func Validate_WorkloadSpec(ctx context.Context, op operation.Operation, fldPath 
 	// field schedulingv1alpha1.WorkloadSpec.PodGroups
 	errs = append(errs,
 		func(fldPath *field.Path, obj, oldObj []schedulingv1alpha1.PodGroup, oldValueCorrelated bool) (errs field.ErrorList) {
+			// this field validations are marked declarative native
+			defer func() {
+				errs = errs.MarkDeclarativeNative()
+			}()
 			// don't revalidate unchanged data
 			if oldValueCorrelated && op.Type == operation.Update && equality.Semantic.DeepEqual(obj, oldObj) {
 				return nil
