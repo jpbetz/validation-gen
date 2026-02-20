@@ -119,6 +119,7 @@ type WorkloadSpec struct {
 	//
 	// +optional
 	// +k8s:optional
+	// +k8s:declarativeValidationNative
 	ControllerRef *TypedLocalObjectReference `json:"controllerRef,omitempty" protobuf:"bytes,1,opt,name=controllerRef"`
 
 	// PodGroups is the list of pod groups that make up the Workload.

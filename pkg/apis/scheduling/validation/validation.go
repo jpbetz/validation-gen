@@ -21,9 +21,7 @@ import (
 	"strings"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
-	pathvalidation "k8s.io/apimachinery/pkg/api/validation/path"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	apivalidation "k8s.io/kubernetes/pkg/apis/core/validation"
 	"k8s.io/kubernetes/pkg/apis/scheduling"
@@ -74,9 +72,7 @@ func ValidateWorkload(workload *scheduling.Workload) field.ErrorList {
 
 func validateWorkloadSpec(spec *scheduling.WorkloadSpec, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
-	if spec.ControllerRef != nil {
-		allErrs = append(allErrs, validateControllerRef(spec.ControllerRef, fldPath.Child("controllerRef"))...)
-	}
+	// Validation for controllerRef is handled declaratively.
 	existingPodGroups := sets.New[string]()
 	podGroupsPath := fldPath.Child("podGroups")
 	if len(spec.PodGroups) == 0 {
@@ -91,32 +87,9 @@ func validateWorkloadSpec(spec *scheduling.WorkloadSpec, fldPath *field.Path) fi
 	return allErrs
 }
 
-func validateControllerRef(ref *scheduling.TypedLocalObjectReference, fldPath *field.Path) field.ErrorList {
-	var allErrs = field.ErrorList{}
-	if ref.APIGroup != "" {
-		for _, msg := range validation.IsDNS1123Subdomain(ref.APIGroup) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("apiGroup"), ref.APIGroup, msg).WithOrigin("format=k8s-long-name").MarkCoveredByDeclarative())
-		}
-	}
-	if ref.Kind == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("kind"), "").MarkCoveredByDeclarative())
-	} else {
-		for _, msg := range pathvalidation.IsValidPathSegmentName(ref.Kind) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("kind"), ref.Kind, msg).WithOrigin("format=k8s-path-segment-name").MarkCoveredByDeclarative())
-		}
-	}
-	if ref.Name == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("name"), "").MarkCoveredByDeclarative())
-	} else {
-		for _, msg := range pathvalidation.IsValidPathSegmentName(ref.Name) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("name"), ref.Name, msg).WithOrigin("format=k8s-path-segment-name").MarkCoveredByDeclarative())
-		}
-	}
-	return allErrs
-}
-
 func validatePodGroup(podGroup *scheduling.PodGroup, fldPath *field.Path, existingPodGroups sets.Set[string]) field.ErrorList {
 	var allErrs field.ErrorList
+	// Validation for podGroup names is handled declaratively.
 	if existingPodGroups.Has(podGroup.Name) {
 		// MarkCoveredByDeclarative is not needed here because the duplicate check is done.
 		allErrs = append(allErrs, field.Duplicate(fldPath, podGroup).MarkCoveredByDeclarative())
