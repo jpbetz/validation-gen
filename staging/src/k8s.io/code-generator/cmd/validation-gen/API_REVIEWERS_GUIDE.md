@@ -23,12 +23,29 @@ Before reviewing the logic, familiarize yourself with the
 This is your reference for what tags exist, what they do, and their stability
 level.
 
+### Step 0: `doc.go` (Enabling Code Generation)
+Before tags can be used, the developer must ensure code generation is enabled for the API package.
+
+```go
+// +k8s:validation-gen=TypeMeta
+// +k8s:validation-gen-input=k8s.io/api/<group>/<version>
+package v1
+```
+
 ### Step 1: `types.go` (The Single Source of Truth)
 
 The developer adds standard DV tags directly to the new field. Verify these tags
 make logical sense for the field's purpose and come from the official catalog.
 
+If the API includes a `/status` subresource and validation is needed for it, the root type definition must include the `supportsSubresource` tag.
+
 ```go
+// +k8s:supportsSubresource="/status"
+type MyFeature struct {
+    metav1.TypeMeta `json:",inline"`
+    // ...
+}
+
 type MyNewFeatureSpec struct {
     // +required
     // +k8s:required
@@ -59,7 +76,7 @@ type MyNewFeatureSpec struct {
 
 - **Tags are applied across all API versions.** If the resource has both `v1`
   and `v1beta1` definitions, the tags must appear on both. Missing tags on one
-  version means that version is unvalidated.
+  version means that version is unvalidated. *(Note: There are tests to ensure that this doesn't happen, but be cautious and manually verify as a best practice).*
 
 - **No handwritten `Validate*` functions for the same constraints.** For a new
   DV-only API, the tags are authoritative. The only handwritten validation that
@@ -120,8 +137,8 @@ enforced).
 
 **What to look for:**
 
-- **`.MarkNonShadowed()` is used on expected errors.** This marks the error as
-  coming from declarative validation in enforcement mode. If this is missing, the
+- **`.MarkNonShadowed()` is used on expected errors for standard tags.** This marks the error as
+  coming from declarative validation in enforcement mode. If the PR involves an alpha or beta validation rule (`+k8s:alpha` or `+k8s:beta`), the tests should use `.MarkAlpha()` or `.MarkBeta()` respectively. If this is missing, the
   test framework may not correctly attribute the error source.
 
 - **Tests verify wiring, not framework logic.** The test should confirm that the
@@ -217,14 +234,12 @@ sources of truth that can drift and doubles the maintenance burden.
 invalid character combination for a DNS label.
 
 **Why it's bad:** We trust the `validation-gen` framework to implement
-`k8s-short-name` correctly (it has its own exhaustive tests). Reviewing 50
-redundant test cases wastes time.
+`k8s-short-name` correctly (it has its own exhaustive tests). Reviewing an exhaustive matrix of tests on the resource itself isn't strictly necessary, though reviewers are free to ask for specific corner cases they care about.
 
 **Your Review Comment:**
 > *"Since we are using the standard `+k8s:format=k8s-short-name` tag, we don't
-> need to exhaustively test the format itself here — the framework guarantees
-> that. Let's reduce these test cases to just one or two basic valid/invalid
-> examples to prove the tag is wired up to this specific field correctly."*
+> necessarily need an exhaustive matrix to test the format itself here — the framework guarantees
+> the base cases. Let's ensure we have a few basic valid/invalid examples, plus any specific corner cases you think are important for this specific field."*
 
 ---
 
