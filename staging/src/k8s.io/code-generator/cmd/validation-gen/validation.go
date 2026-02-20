@@ -1401,6 +1401,16 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 				"field":    mkSymbolArgs(c, fieldPkgSymbols),
 			}
 
+			var funcLitArg *validators.FunctionLiteral
+			var funcLitIndex int
+			for i, arg := range v.Args {
+				if l, ok := arg.(validators.FunctionLiteral); ok {
+					funcLitArg = &l
+					funcLitIndex = i
+					break
+				}
+			}
+
 			emitCall := func() {
 				sw.Do("$.funcName|raw$", targs)
 				if typeArgs := v.TypeArgs; len(typeArgs) > 0 {
@@ -1414,9 +1424,13 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 					sw.Do("]", nil)
 				}
 				sw.Do("(ctx, op, fldPath, obj, oldObj", targs)
-				for _, arg := range v.Args {
+				for i, arg := range v.Args {
 					sw.Do(", ", nil)
-					toGolangSourceDataLiteral(sw, c, arg)
+					if funcLitArg != nil && i == funcLitIndex {
+						sw.Do("match", nil)
+					} else {
+						toGolangSourceDataLiteral(sw, c, arg)
+					}
 				}
 				sw.Do(")", targs)
 			}
@@ -1452,6 +1466,14 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 			for _, comment := range v.Comments {
 				sw.Do("// $.$\n", comment)
 			}
+
+			if funcLitArg != nil {
+				sw.Do("{\n", nil)
+				sw.Do("var match = ", nil)
+				toGolangSourceDataLiteral(sw, c, *funcLitArg)
+				sw.Do("\n", nil)
+			}
+
 			if isShortCircuit {
 				sw.Do("if e := ", nil)
 				emitCall()
@@ -1479,6 +1501,10 @@ func emitCallsToValidators(c *generator.Context, validations []validators.Functi
 					}
 					sw.Do("...)\n", nil)
 				}
+			}
+
+			if funcLitArg != nil {
+				sw.Do("}\n", nil)
 			}
 		}
 		if cohortName != "" {

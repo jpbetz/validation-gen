@@ -71,14 +71,20 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			func() { // cohort intField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intField", func(o *SubStruct) *int { return &o.IntField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntField")
-				})...)
+				{
+					var match = func(o *SubStruct) *int { return &o.IntField }
+					errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
+						return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntField")
+					})...)
+				}
 			}()
 			func() { // cohort intPtrField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intPtrField", func(o *SubStruct) *int { return o.IntPtrField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntPtrField")
-				})...)
+				{
+					var match = func(o *SubStruct) *int { return o.IntPtrField }
+					errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intPtrField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
+						return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntPtrField")
+					})...)
+				}
 			}()
 			return
 		}(fldPath.Child("subStructField"), &obj.SubStructField, safe.Field(oldObj, func(oldObj *Struct) *SubStruct { return &oldObj.SubStructField }), oldObj != nil)...)
@@ -90,14 +96,20 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 // to declarative validation rules in the API schema.
 func Validate_StructWithSubfield(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *StructWithSubfield) (errs field.ErrorList) {
 	func() { // cohort intField
-		errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intField", func(o *StructWithSubfield) *int { return &o.IntField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
-			return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntField")
-		})...)
+		{
+			var match = func(o *StructWithSubfield) *int { return &o.IntField }
+			errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntField")
+			})...)
+		}
 	}()
 	func() { // cohort intPtrField
-		errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intPtrField", func(o *StructWithSubfield) *int { return o.IntPtrField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
-			return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntPtrField")
-		})...)
+		{
+			var match = func(o *StructWithSubfield) *int { return o.IntPtrField }
+			errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "intPtrField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *int) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "field IntPtrField")
+			})...)
+		}
 	}()
 
 	// field StructWithSubfield.TypeMeta has no validation

@@ -95,21 +95,24 @@ func Validate_CertificateSigningRequestStatus(ctx context.Context, op operation.
 			if earlyReturn {
 				return // do not proceed
 			}
-			errs = append(errs, validate.ZeroOrOneOfUnion(ctx, op, fldPath, obj, oldObj, zeroOrOneOfMembershipFor_k8s_io_api_certificates_v1beta1_CertificateSigningRequestStatus_conditions_, func(list []certificatesv1beta1.CertificateSigningRequestCondition) bool {
-				for i := range list {
-					if list[i].Type == "Approved" {
-						return true
+			{
+				var match = func(list []certificatesv1beta1.CertificateSigningRequestCondition) bool {
+					for i := range list {
+						if list[i].Type == "Approved" {
+							return true
+						}
 					}
+					return false
 				}
-				return false
-			}, func(list []certificatesv1beta1.CertificateSigningRequestCondition) bool {
-				for i := range list {
-					if list[i].Type == "Denied" {
-						return true
+				errs = append(errs, validate.ZeroOrOneOfUnion(ctx, op, fldPath, obj, oldObj, zeroOrOneOfMembershipFor_k8s_io_api_certificates_v1beta1_CertificateSigningRequestStatus_conditions_, match, func(list []certificatesv1beta1.CertificateSigningRequestCondition) bool {
+					for i := range list {
+						if list[i].Type == "Denied" {
+							return true
+						}
 					}
-				}
-				return false
-			})...)
+					return false
+				})...)
+			}
 			return
 		}(fldPath.Child("conditions"), obj.Conditions, safe.Field(oldObj, func(oldObj *certificatesv1beta1.CertificateSigningRequestStatus) []certificatesv1beta1.CertificateSigningRequestCondition {
 			return oldObj.Conditions

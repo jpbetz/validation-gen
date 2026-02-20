@@ -77,22 +77,28 @@ func Validate_ListStruct(ctx context.Context, op operation.Operation, fldPath *f
 			}
 			// call field-attached validations
 			// lists with map semantics require unique keys
-			errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a UnionItem, b UnionItem) bool { return a.Type == b.Type })...)
-			errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_native_unions_ListStruct_items_, func(list []UnionItem) bool {
-				for i := range list {
-					if list[i].Type == "a" {
-						return true
+			{
+				var match = func(a UnionItem, b UnionItem) bool { return a.Type == b.Type }
+				errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+			}
+			{
+				var match = func(list []UnionItem) bool {
+					for i := range list {
+						if list[i].Type == "a" {
+							return true
+						}
 					}
+					return false
 				}
-				return false
-			}, func(list []UnionItem) bool {
-				for i := range list {
-					if list[i].Type == "b" {
-						return true
+				errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_native_unions_ListStruct_items_, match, func(list []UnionItem) bool {
+					for i := range list {
+						if list[i].Type == "b" {
+							return true
+						}
 					}
-				}
-				return false
-			})...)
+					return false
+				})...)
+			}
 			return
 		}(fldPath.Child("items"), obj.Items, safe.Field(oldObj, func(oldObj *ListStruct) []UnionItem { return oldObj.Items }), oldObj != nil)...)
 
@@ -104,17 +110,20 @@ var unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_nat
 // Validate_Struct validates an instance of Struct according
 // to declarative validation rules in the API schema.
 func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Struct) (errs field.ErrorList) {
-	errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_native_unions_Struct_, func(obj *Struct) bool {
-		if obj == nil {
-			return false
+	{
+		var match = func(obj *Struct) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.UnionField1 != nil
 		}
-		return obj.UnionField1 != nil
-	}, func(obj *Struct) bool {
-		if obj == nil {
-			return false
-		}
-		return obj.UnionField2 != nil
-	}).MarkDeclarativeNative()...)
+		errs = append(errs, validate.Union(ctx, op, fldPath, obj, oldObj, unionMembershipFor_k8s_io_code_generator_cmd_validation_gen_output_tests_native_unions_Struct_, match, func(obj *Struct) bool {
+			if obj == nil {
+				return false
+			}
+			return obj.UnionField2 != nil
+		}).MarkDeclarativeNative()...)
+	}
 
 	// field Struct.TypeMeta has no validation
 

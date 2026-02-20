@@ -63,9 +63,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			func() { // cohort stringField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *InnerStruct) *string { return &o.StringField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-					return validate.NEQ(ctx, op, fldPath, obj, oldObj, "disallowed-subfield")
-				})...)
+				{
+					var match = func(o *InnerStruct) *string { return &o.StringField }
+					errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+						return validate.NEQ(ctx, op, fldPath, obj, oldObj, "disallowed-subfield")
+					})...)
+				}
 			}()
 			return
 		}(fldPath.Child("structField"), &obj.StructField, safe.Field(oldObj, func(oldObj *Struct) *InnerStruct { return &oldObj.StructField }), oldObj != nil)...)
@@ -86,9 +89,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 				return // do not proceed
 			}
 			func() { // cohort stringField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *InnerStruct) *string { return &o.StringField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-					return validate.NEQ(ctx, op, fldPath, obj, oldObj, "disallowed-subfield-ptr")
-				})...)
+				{
+					var match = func(o *InnerStruct) *string { return &o.StringField }
+					errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+						return validate.NEQ(ctx, op, fldPath, obj, oldObj, "disallowed-subfield-ptr")
+					})...)
+				}
 			}()
 			return
 		}(fldPath.Child("structPtrField"), obj.StructPtrField, safe.Field(oldObj, func(oldObj *Struct) *InnerStruct { return oldObj.StructPtrField }), oldObj != nil)...)
@@ -166,9 +172,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 // to declarative validation rules in the API schema.
 func Validate_ValidatedInnerStruct(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *ValidatedInnerStruct) (errs field.ErrorList) {
 	func() { // cohort stringField
-		errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *ValidatedInnerStruct) *string { return &o.StringField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-			return validate.NEQ(ctx, op, fldPath, obj, oldObj, "disallowed-typedef-struct")
-		})...)
+		{
+			var match = func(o *ValidatedInnerStruct) *string { return &o.StringField }
+			errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+				return validate.NEQ(ctx, op, fldPath, obj, oldObj, "disallowed-typedef-struct")
+			})...)
+		}
 	}()
 
 	// field ValidatedInnerStruct.StringField has no validation

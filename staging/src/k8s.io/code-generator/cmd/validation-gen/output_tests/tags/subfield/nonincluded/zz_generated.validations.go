@@ -61,9 +61,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			func() { // cohort stringField
-				errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", func(o *other.StructType) *string { return &o.StringField }, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.(other.StructType).StringField")
-				})...)
+				{
+					var match = func(o *other.StructType) *string { return &o.StringField }
+					errs = append(errs, validate.Subfield(ctx, op, fldPath, obj, oldObj, "stringField", match, validate.DirectEqualPtr, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *string) field.ErrorList {
+						return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "subfield Struct.(other.StructType).StringField")
+					})...)
+				}
 			}()
 			return
 		}(safe.Value(fldPath, func() *field.Path { return fldPath.Child("other.StructType") }), &obj.StructType, safe.Field(oldObj, func(oldObj *Struct) *other.StructType { return &oldObj.StructType }), oldObj != nil)...)

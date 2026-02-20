@@ -53,11 +53,17 @@ func RegisterValidations(scheme *testscheme.Scheme) error {
 // to declarative validation rules in the API schema.
 func Validate_ConflictingItemList(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj ConflictingItemList) (errs field.ErrorList) {
 	// lists with map semantics require unique keys
-	errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a DualItem, b DualItem) bool { return a.ID == b.ID })...)
+	{
+		var match = func(a DualItem, b DualItem) bool { return a.ID == b.ID }
+		errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+	}
 	func() { // cohort {"id": "target"}
-		errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
-			return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ConflictingItems[id=target] from typedef")
-		})...)
+		{
+			var match = func(item *DualItem) bool { return item.ID == "target" }
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, match, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ConflictingItems[id=target] from typedef")
+			})...)
+		}
 	}()
 
 	return errs
@@ -67,11 +73,17 @@ func Validate_ConflictingItemList(ctx context.Context, op operation.Operation, f
 // to declarative validation rules in the API schema.
 func Validate_DualItemList(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj DualItemList) (errs field.ErrorList) {
 	// lists with map semantics require unique keys
-	errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a DualItem, b DualItem) bool { return a.ID == b.ID })...)
+	{
+		var match = func(a DualItem, b DualItem) bool { return a.ID == b.ID }
+		errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+	}
 	func() { // cohort {"id": "typedef-target"}
-		errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "typedef-target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
-			return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item DualItems[id=typedef-target] from typedef")
-		})...)
+		{
+			var match = func(item *DualItem) bool { return item.ID == "typedef-target" }
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, match, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item DualItems[id=typedef-target] from typedef")
+			})...)
+		}
 	}()
 
 	return errs
@@ -81,21 +93,30 @@ func Validate_DualItemList(ctx context.Context, op operation.Operation, fldPath 
 // to declarative validation rules in the API schema.
 func Validate_ItemList(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj ItemList) (errs field.ErrorList) {
 	// lists with map semantics require unique keys
-	errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
+	{
+		var match = func(a Item, b Item) bool { return a.Key == b.Key }
+		errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+	}
 	func() { // cohort {"key": "immutable"}
 		earlyReturn := false
-		if e := validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key == "immutable" }, validate.DirectEqual, validate.Immutable); len(e) != 0 {
-			errs = append(errs, e...)
-			earlyReturn = true
-		}
-		if earlyReturn {
-			return // do not proceed
+		{
+			var match = func(item *Item) bool { return item.Key == "immutable" }
+			if e := validate.SliceItem(ctx, op, fldPath, obj, oldObj, match, validate.DirectEqual, validate.Immutable); len(e) != 0 {
+				errs = append(errs, e...)
+				earlyReturn = true
+			}
+			if earlyReturn {
+				return // do not proceed
+			}
 		}
 	}()
 	func() { // cohort {"key": "validated"}
-		errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key == "validated" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
-			return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ItemList[key=validated]")
-		})...)
+		{
+			var match = func(item *Item) bool { return item.Key == "validated" }
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, match, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ItemList[key=validated]")
+			})...)
+		}
 	}()
 
 	return errs
@@ -105,11 +126,17 @@ func Validate_ItemList(ctx context.Context, op operation.Operation, fldPath *fie
 // to declarative validation rules in the API schema.
 func Validate_ItemListAlias(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj ItemListAlias) (errs field.ErrorList) {
 	// lists with map semantics require unique keys
-	errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, func(a Item, b Item) bool { return a.Key == b.Key })...)
+	{
+		var match = func(a Item, b Item) bool { return a.Key == b.Key }
+		errs = append(errs, validate.Unique(ctx, op, fldPath, obj, oldObj, match)...)
+	}
 	func() { // cohort {"key": "aliased"}
-		errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *Item) bool { return item.Key == "aliased" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
-			return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ItemListAlias[key=aliased]")
-		})...)
+		{
+			var match = func(item *Item) bool { return item.Key == "aliased" }
+			errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, match, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *Item) field.ErrorList {
+				return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ItemListAlias[key=aliased]")
+			})...)
+		}
 	}()
 
 	return errs
@@ -153,9 +180,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			func() { // cohort {"id": "field-target"}
-				errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "field-target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item DualItems[id=field-target] from field")
-				})...)
+				{
+					var match = func(item *DualItem) bool { return item.ID == "field-target" }
+					errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, match, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
+						return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item DualItems[id=field-target] from field")
+					})...)
+				}
 			}()
 			// call the type's validation function
 			errs = append(errs, Validate_DualItemList(ctx, op, fldPath, obj, oldObj)...)
@@ -171,9 +201,12 @@ func Validate_Struct(ctx context.Context, op operation.Operation, fldPath *field
 			}
 			// call field-attached validations
 			func() { // cohort {"id": "target"}
-				errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, func(item *DualItem) bool { return item.ID == "target" }, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
-					return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ConflictingItems[id=target] from field")
-				})...)
+				{
+					var match = func(item *DualItem) bool { return item.ID == "target" }
+					errs = append(errs, validate.SliceItem(ctx, op, fldPath, obj, oldObj, match, validate.DirectEqual, func(ctx context.Context, op operation.Operation, fldPath *field.Path, obj, oldObj *DualItem) field.ErrorList {
+						return validate.FixedResult(ctx, op, fldPath, obj, oldObj, false, "item ConflictingItems[id=target] from field")
+					})...)
+				}
 			}()
 			// call the type's validation function
 			errs = append(errs, Validate_ConflictingItemList(ctx, op, fldPath, obj, oldObj)...)
