@@ -68,55 +68,55 @@ type T1 struct {
 	TypedefsE4Ptr *typedefs.E4 `json:"typedefse4Ptr"`
 
 	// +k8s:validateTrue="field T1.OtherString"
-	// +k8s:opaqueType
+	// +k8s:opaque
 	OtherString other.StringType `json:"otherString"`
 	// +k8s:validateTrue="field T1.OtherStringPtr"
-	// +k8s:opaqueType
+	// +k8s:opaque
 	OtherStringPtr *other.StringType `json:"otherStringPtr"`
 	// +k8s:validateTrue="field T1.OtherInt"
-	// +k8s:opaqueType
+	// +k8s:opaque
 	OtherInt other.IntType `json:"otherInt"`
 	// +k8s:validateTrue="field T1.OtherIntPtr"
-	// +k8s:opaqueType
+	// +k8s:opaque
 	OtherIntPtr *other.IntType `json:"otherIntPtr"`
 	// +k8s:validateTrue="field T1.OtherStruct"
-	// +k8s:opaqueType
+	// +k8s:opaque
 	OtherStruct other.StructType `json:"otherStruct"`
 	// +k8s:validateTrue="field T1.OtherStructPtr"
-	// +k8s:opaqueType
+	// +k8s:opaque
 	OtherStructPtr *other.StructType `json:"otherStructPtr"`
 
 	// +k8s:validateTrue="field T1.SliceOfOtherStruct"
 	// +k8s:eachVal=+k8s:validateTrue="field T1.SliceOfOtherStruct values"
-	// +k8s:eachVal=+k8s:opaqueType
+	// +k8s:eachVal=+k8s:opaque
 	SliceOfOtherStruct []other.StructType `json:"sliceOfOtherStruct"`
 
 	// +k8s:validateTrue="field T1.ListMapOfOtherStruct"
 	// +k8s:eachVal=+k8s:validateTrue="field T1.SliceOfOtherStruct values"
 	// +k8s:listType=map
 	// +k8s:listMapKey=stringField
-	// +k8s:eachVal=+k8s:opaqueType
+	// +k8s:eachVal=+k8s:opaque
 	ListMapOfOtherStruct []other.StructType `json:"listMapOfOtherStruct"`
 
 	// +k8s:validateTrue="field T1.MapOfOtherStringToOtherStruct"
 	// +k8s:eachKey=+k8s:validateTrue="field T1.MapOfOtherStringToOtherStruct keys"
 	// +k8s:eachVal=+k8s:validateTrue="field T1.MapOfOtherStringToOtherStruct values"
-	// +k8s:eachKey=+k8s:opaqueType
-	// +k8s:eachVal=+k8s:opaqueType
+	// +k8s:eachKey=+k8s:opaque
+	// +k8s:eachVal=+k8s:opaque
 	MapOfOtherStringToOtherStruct map[other.StringType]other.StructType `json:"mapOfOtherStringToOtherStruct"`
 }
 
 // TODO: the validateFalse test fixture doesn't handle map and slice types, and
 // fixing it requires fixing randfill.  That is a tomorrow problem.  For now, the
-// following types have been tested to fail without +k8s:opaqueType.
+// following types have been tested to fail without +k8s:opaque.
 
 /*
 // +k8s:validateTrue="type TypedefSliceOther"
-// +k8s:eachVal=+k8s:opaqueType
+// +k8s:eachVal=+k8s:opaque
 type TypedefSliceOther []other.StructType
 
 // +k8s:validateTrue="type TypedefMapOther"
-// +k8s:eachKey=+k8s:opaqueType
-// +k8s:eachVal=+k8s:opaqueType
+// +k8s:eachKey=+k8s:opaque
+// +k8s:eachVal=+k8s:opaque
 type TypedefMapOther map[other.StringType]other.StructType
 */

@@ -22,32 +22,32 @@ import (
 )
 
 const (
-	opaqueTypeTagName = "k8s:opaqueType"
+	opaqueTagName = "k8s:opaque"
 )
 
-type opaqueTypeTagValidator struct{}
+type opaqueTagValidator struct{}
 
 func init() {
-	RegisterTagValidator(opaqueTypeTagValidator{})
+	RegisterTagValidator(opaqueTagValidator{})
 }
 
-func (opaqueTypeTagValidator) Init(Config) {}
+func (opaqueTagValidator) Init(Config) {}
 
-func (opaqueTypeTagValidator) TagName() string {
-	return opaqueTypeTagName
+func (opaqueTagValidator) TagName() string {
+	return opaqueTagName
 }
 
-func (opaqueTypeTagValidator) ValidScopes() sets.Set[Scope] {
+func (opaqueTagValidator) ValidScopes() sets.Set[Scope] {
 	return sets.New(ScopeType, ScopeField, ScopeListVal, ScopeMapKey, ScopeMapVal)
 }
 
-func (opaqueTypeTagValidator) GetValidations(_ Context, _ codetags.Tag) (Validations, error) {
-	return Validations{OpaqueType: true}, nil
+func (opaqueTagValidator) GetValidations(_ Context, _ codetags.Tag) (Validations, error) {
+	return Validations{Opaque: true}, nil
 }
 
-func (opaqueTypeTagValidator) Docs() TagDoc {
+func (opaqueTagValidator) Docs() TagDoc {
 	doc := TagDoc{
-		Tag:            opaqueTypeTagName,
+		Tag:            opaqueTagName,
 		StabilityLevel: Alpha,
 		Scopes:         []Scope{ScopeField},
 		Description: "Indicates that any validations declared on the referenced type will be ignored. " +

@@ -107,7 +107,7 @@ func (evtv eachValTagValidator) GetValidations(context Context, tag codetags.Tag
 	if validations, err := evtv.validator.ExtractValidations(elemContext, *tag.ValueTag); err != nil {
 		return Validations{}, err
 	} else {
-		if validations.Empty() && !validations.OpaqueKeyType && !validations.OpaqueValType && !validations.OpaqueType {
+		if validations.Empty() && !validations.OpaqueKey && !validations.OpaqueVal && !validations.Opaque {
 			return Validations{}, fmt.Errorf("no validation functions found")
 		}
 		if len(validations.Variables) > 0 {
@@ -143,7 +143,7 @@ func ForEachVal(fldPath *field.Path, t *types.Type, fn FunctionGen) (Validations
 // typedef to a list, this is the alias type, not the underlying type.
 func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types.Type, validations Validations) (Validations, error) {
 	result := Validations{}
-	result.OpaqueValType = validations.OpaqueType
+	result.OpaqueVal = validations.Opaque
 
 	// This type is a "late" validator, so it runs after all the keys are
 	// registered.  See LateTagValidator() above.
@@ -206,7 +206,7 @@ func (evtv eachValTagValidator) getListValidations(fldPath *field.Path, t *types
 // typedef to a map, this is the alias type, not the underlying type.
 func (evtv eachValTagValidator) getMapValidations(t *types.Type, validations Validations) (Validations, error) {
 	result := Validations{}
-	result.OpaqueValType = validations.OpaqueType
+	result.OpaqueVal = validations.Opaque
 
 	nt := util.NativeType(t)
 	equivArg := Identifier(validateSemanticDeepEqual)
@@ -289,7 +289,7 @@ func (ektv eachKeyTagValidator) GetValidations(context Context, tag codetags.Tag
 func (ektv eachKeyTagValidator) getValidations(t *types.Type, validations Validations) (Validations, error) {
 	nt := util.NativeType(t)
 	result := Validations{}
-	result.OpaqueKeyType = validations.OpaqueType
+	result.OpaqueKey = validations.Opaque
 	for _, vfn := range validations.Functions {
 		comm := vfn.Comments
 		vfn.Comments = nil

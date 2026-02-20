@@ -438,13 +438,13 @@ func (td *typeDiscoverer) discoverType(t *types.Type, fldPath *field.Path) (*typ
 			case types.Slice:
 				// Validate each value.
 				if elemNode := underlying.node.elem.node; elemNode == nil {
-					if !thisNode.typeValidations.OpaqueValType {
+					if !thisNode.typeValidations.OpaqueVal {
 						return nil, fmt.Errorf("%v: value type %v is in a non-included package; "+
 							"either add this package to validation-gen's --readonly-pkg flag, "+
-							"or add +k8s:eachVal=+k8s:opaqueType to the field to skip validation",
+							"or add +k8s:eachVal=+k8s:opaque to the field to skip validation",
 							fldPath, underlying.node.elem.childType)
 					}
-				} else if thisNode.typeValidations.OpaqueValType {
+				} else if thisNode.typeValidations.OpaqueVal {
 					// If the type is marked as opaque, we can treat it as it is
 					// were in a non-included package.
 				} else {
@@ -470,13 +470,13 @@ func (td *typeDiscoverer) discoverType(t *types.Type, fldPath *field.Path) (*typ
 			case types.Map:
 				// Validate each key.
 				if keyNode := underlying.node.key.node; keyNode == nil {
-					if !thisNode.typeValidations.OpaqueKeyType {
+					if !thisNode.typeValidations.OpaqueKey {
 						return nil, fmt.Errorf("%v: key type %v is in a non-included package; "+
 							"either add this package to validation-gen's --readonly-pkg flag, "+
-							"or add +k8s:eachKey=+k8s:opaqueType to the field to skip validation",
+							"or add +k8s:eachKey=+k8s:opaque to the field to skip validation",
 							fldPath, underlying.node.elem.childType)
 					}
-				} else if thisNode.typeValidations.OpaqueKeyType {
+				} else if thisNode.typeValidations.OpaqueKey {
 					// If the type is marked as opaque, we can treat it as it is
 					// were in a non-included package.
 				} else {
@@ -501,13 +501,13 @@ func (td *typeDiscoverer) discoverType(t *types.Type, fldPath *field.Path) (*typ
 				}
 				// Validate each value.
 				if elemNode := underlying.node.elem.node; elemNode == nil {
-					if !thisNode.typeValidations.OpaqueValType {
+					if !thisNode.typeValidations.OpaqueVal {
 						return nil, fmt.Errorf("%v: value type %v is in a non-included package; "+
 							"either add this package to validation-gen's --readonly-pkg flag, "+
-							"or add +k8s:eachVal=+k8s:opaqueType to the field to skip validation",
+							"or add +k8s:eachVal=+k8s:opaque to the field to skip validation",
 							fldPath, underlying.node.elem.childType)
 					}
-				} else if thisNode.typeValidations.OpaqueValType {
+				} else if thisNode.typeValidations.OpaqueVal {
 					// If the type is marked as opaque, we can treat it as it is
 					// were in a non-included package.
 				} else {
@@ -684,13 +684,13 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 		switch util.NonPointer(childType).Kind {
 		case types.Struct, types.Alias:
 			if child.node == nil { // a non-included type
-				if !child.fieldValidations.OpaqueType {
+				if !child.fieldValidations.Opaque {
 					return fmt.Errorf("%v: type %v is in a non-included package; "+
 						"either add this package to validation-gen's --readonly-pkg flag, "+
-						"or add +k8s:opaqueType to the field to skip validation",
+						"or add +k8s:opaque to the field to skip validation",
 						childPath, childType.String())
 				}
-			} else if child.fieldValidations.OpaqueType {
+			} else if child.fieldValidations.Opaque {
 				// If the field is marked as opaque, we can treat it as it is
 				// were in a non-included package.
 				child.node = nil
@@ -708,13 +708,13 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 		case types.Slice:
 			// Validate each value of a list field.
 			if elemNode := child.node.elem.node; elemNode == nil {
-				if !child.fieldValidations.OpaqueValType {
+				if !child.fieldValidations.OpaqueVal {
 					return fmt.Errorf("%v: value type %v is in a non-included package; "+
 						"either add this package to validation-gen's --readonly-pkg flag, "+
-						"or add +k8s:eachVal=+k8s:opaqueType to the field to skip validation",
+						"or add +k8s:eachVal=+k8s:opaque to the field to skip validation",
 						childPath, childType.Elem.String())
 				}
-			} else if child.fieldValidations.OpaqueValType {
+			} else if child.fieldValidations.OpaqueVal {
 				// If the field is marked as opaque, we can treat it as it is
 				// were in a non-included package.
 			} else {
@@ -740,13 +740,13 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 		case types.Map:
 			// Validate each key of a map field.
 			if keyNode := child.node.key.node; keyNode == nil {
-				if !child.fieldValidations.OpaqueKeyType {
+				if !child.fieldValidations.OpaqueKey {
 					return fmt.Errorf("%v: key type %v is in a non-included package; "+
 						"either add this package to validation-gen's --readonly-pkg flag, "+
-						"or add +k8s:eachKey=+k8s:opaqueType to the field to skip validation",
+						"or add +k8s:eachKey=+k8s:opaque to the field to skip validation",
 						childPath, childType.Key.String())
 				}
-			} else if child.fieldValidations.OpaqueKeyType {
+			} else if child.fieldValidations.OpaqueKey {
 				// If the field is marked as opaque, we can treat it as it is
 				// were in a non-included package.
 			} else {
@@ -771,13 +771,13 @@ func (td *typeDiscoverer) discoverStruct(thisNode *typeNode, fldPath *field.Path
 			}
 			// Validate each value of a map field.
 			if elemNode := child.node.elem.node; elemNode == nil {
-				if !child.fieldValidations.OpaqueValType {
+				if !child.fieldValidations.OpaqueVal {
 					return fmt.Errorf("%v: value type %v is in a non-included package; "+
 						"either add this package to validation-gen's --readonly-pkg flag, "+
-						"or add +k8s:eachVal=+k8s:opaqueType to the field to skip validation",
+						"or add +k8s:eachVal=+k8s:opaque to the field to skip validation",
 						childPath, childType.Elem.String())
 				}
-			} else if child.fieldValidations.OpaqueValType {
+			} else if child.fieldValidations.OpaqueVal {
 				// If the field is marked as opaque, we can treat it as it is
 				// were in a non-included package.
 			} else {
