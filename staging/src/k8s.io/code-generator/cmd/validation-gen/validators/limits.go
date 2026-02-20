@@ -29,6 +29,7 @@ import (
 const (
 	maxItemsTagName      = "k8s:maxItems"
 	minimumTagName       = "k8s:minimum"
+	maximumTagName       = "k8s:maximum"
 	maxLengthTagName     = "k8s:maxLength"
 	minLengthTagName     = "k8s:minLength"
 	maxPropertiesTagName = "k8s:maxProperties"
@@ -38,6 +39,7 @@ func init() {
 	RegisterTagValidator(maxItemsTagValidator{})
 	RegisterTagValidator(maxPropertiesTagValidator{})
 	RegisterTagValidator(minimumTagValidator{})
+	RegisterTagValidator(maximumTagValidator{})
 	RegisterTagValidator(maxLengthTagValidator{})
 	RegisterTagValidator(minLengthTagValidator{})
 }
@@ -251,6 +253,56 @@ func (mtv minimumTagValidator) Docs() TagDoc {
 		Payloads: []TagPayloadDoc{{
 			Description: "<integer>",
 			Docs:        "This field must be greater than or equal to x.",
+		}},
+		PayloadsType:     codetags.ValueTypeInt,
+		PayloadsRequired: true,
+	}
+}
+
+type maximumTagValidator struct{}
+
+func (maximumTagValidator) Init(_ Config) {}
+
+func (maximumTagValidator) TagName() string {
+	return maximumTagName
+}
+
+var maximumTagValidScopes = sets.New(ScopeType, ScopeField, ScopeListVal, ScopeMapKey, ScopeMapVal)
+
+func (maximumTagValidator) ValidScopes() sets.Set[Scope] {
+	return maximumTagValidScopes
+}
+
+var (
+	maximumValidator = types.Name{Package: libValidationPkg, Name: "Maximum"}
+)
+
+func (maximumTagValidator) GetValidations(context Context, tag codetags.Tag) (Validations, error) {
+	var result Validations
+
+	// This tag can apply to value and pointer fields, as well as typedefs
+	// (which should never be pointers). We need to check the concrete type.
+	if t := util.NonPointer(util.NativeType(context.Type)); !types.IsInteger(t) {
+		return result, fmt.Errorf("can only be used on integer types (%s)", rootTypeString(context.Type, t))
+	}
+
+	intVal, err := strconv.Atoi(tag.Value)
+	if err != nil {
+		return result, fmt.Errorf("failed to parse tag payload as int: %w", err)
+	}
+	result.AddFunction(Function(maximumTagName, DefaultFlags, maximumValidator, intVal))
+	return result, nil
+}
+
+func (mtv maximumTagValidator) Docs() TagDoc {
+	return TagDoc{
+		Tag:            mtv.TagName(),
+		StabilityLevel: Stable,
+		Scopes:         mtv.ValidScopes().UnsortedList(),
+		Description:    "Indicates that a numeric field has a maximum value.",
+		Payloads: []TagPayloadDoc{{
+			Description: "<integer>",
+			Docs:        "This field must be less than or equal to x.",
 		}},
 		PayloadsType:     codetags.ValueTypeInt,
 		PayloadsRequired: true,
