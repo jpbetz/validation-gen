@@ -18,6 +18,8 @@ of truth from Day 1 with **no fallback handwritten code**.
 When a developer adds a new API or field and wants to use DV, the tags in
 `types.go` are the *only* validation logic for simple validations (complex/non-standard validations will still need hand-written code in a validations.go file).
 
+**Example PR:** See [kubernetes/kubernetes#137091](https://github.com/kubernetes/kubernetes/pull/137091) for an example of what an authoritative DV PR looks like. *(Note: Because this PR graduates existing alpha tags to stable, it includes the deletion of legacy handwritten code and tests. A true "net-new" API PR would simply add the tags without having any legacy code to delete, but the final state in `types.go` and `strategy.go` is identical).*
+
 Before reviewing the logic, familiarize yourself with the
 [Official Declarative Validation Tag Catalog](https://kubernetes.io/docs/reference/using-api/declarative-validation/).
 This is your reference for what tags exist, what they do, and their stability
@@ -123,6 +125,8 @@ Tests for DV rely on marking expected errors to confirm they came from the DV
 framework, not handwritten code. Because `WithDeclarativeEnforcement()` is used,
 errors from standard tags are marked as "Non-Shadowed" (meaning they are actively
 enforced).
+
+*(Note: If a PR is graduating a field to authoritative DV, as seen in the example PR above, you will see the deletion of handwritten validation tests. This is correct; the `declarative_validation_test.go` framework tests now cover these cases).*
 
 ```go
 "feature name too long": {
